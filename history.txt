@@ -1,0 +1,9 @@
+Version 0.2 (2011-10-01) 
+
+  * Fixed a bug when printing the default messages in English
+  * New errorlevels (now exits with the asigned drive number)
+  * Dutch translation
+  
+Version 0.1 (2011-09-30)
+
+  Initial version
