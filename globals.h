@@ -22,6 +22,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-01  Eduardo           change Errorlevels as per Bernd Blaauw suggestion
  */
 
 #include "kitten.h"
@@ -37,13 +39,14 @@
 #define FALSE	0
 
 #define ERR_SUCCESS	0
-#define ERR_LOADED	1
-#define ERR_WRONGOS	2
-#define ERR_NOVIRT	3
-#define ERR_NOSHF	4
-#define ERR_BADOPTS	5
-#define ERR_SYSTEM	6
-#define ERR_INSTLLD	7
+#define ERR_BADOPTS	248
+#define ERR_WRONGOS	249
+#define ERR_NOVIRT	250
+#define ERR_NOSHF	251
+#define ERR_NOINST 	252
+#define ERR_INSTLLD	253
+#define ERR_BADDRV	254
+#define ERR_SYSTEM	255
 
 #define VERB_PRINTF(...) if (verbose) printf(__VA_ARGS__)
 
