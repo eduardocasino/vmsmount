@@ -18,14 +18,18 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA  02110-1301, USA.
 #
+# 2011-10-01  Eduardo           Add UPX compression
+#
 
 CC = wcc
 AS = nasm
 LD = wlink
+UPX = upx
 RM = rm -f
 CFLAGS  = -3 -bt=dos -ms -q -s -oh -os
 ASFLAGS = -f obj -Worphan-labels -O9
 LDFLAGS = SYSTEM dos OPTION QUIET
+UPXFLAGS = -9
 
 TARGET = vmsmount.exe
 
@@ -39,6 +43,7 @@ clean:
 
 $(TARGET): $(OBJ)
 	$(LD) $(LDFLAGS) NAME $(TARGET) FILE {$(OBJ)} $(LIBPATH) $(LIBRARY)
+	$(UPX) $(UPXFLAGS) $(TARGET)
 
 kitten.obj:: kitten.h
 
