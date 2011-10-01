@@ -17,15 +17,16 @@ USAGE
 	/H                 - Prints help and exits
 	/V                 - Verbose: Prints information on system resources
 	/L:<drive letter>  - Drive letter to assign
-                         (if omitted, use the first available)
+	                     (if omitted, use the first available)
 
 ENVIRONMENT
 
 	TZ      - Valid POSIX timezone. If omitted, file times will be in UTC
-              (see http://www.gnu.org/s/hello/manual/libc/TZ-Variable.html)
+	          (see http://www.gnu.org/s/hello/manual/libc/TZ-Variable.html)
 	          Example: TZ=CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00
 	LANG    - Used by the Kitten library to show messages in the correct
-	          language. Currently only available in English and Spanish.
+	          language. Currently only available in English, Spanish and
+	          Dutch.
 	NLSPATH - Used by the Kitten library to find the message catalogs.
 	PATH    - VMSMOUNT searchs in the PATH for the unicode conversion
 	          tables.
