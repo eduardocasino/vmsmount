@@ -64,7 +64,7 @@ ACKNOWLEDGEMENTS
                     (http://open-vm-tools.sourceforge.net/)
    Info on the HGFS V3 protocol
    
- * Tom Tilli's <aitotat@gmail.com> TSR example in Watcom C for the 
+ * Tomi Tilli's <aitotat@gmail.com> TSR example in Watcom C for the 
                     Vintage Computer Forum (www.vintage-computer.com)
    The idea and some code for a lightweight TSR written in C
  
