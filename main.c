@@ -34,6 +34,10 @@
  *   Codepage change detection
  *   Long file names (really?)
  *
+ *
+ * 2011-10-01  Eduardo           * Fixed a bug in when printing default error messages
+ *                               * New errorlevels: If successful, returns drive number
+ *                                 (starting with A == 1)
  */ 
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <process.h>
@@ -139,11 +143,11 @@ static void GetFarPointersToResidentData(void)
 static void PrintUsageAndExit(int err)
 {
 
-	fputs( catgets( cat, 0, 0, MSG_HELP_0 ), stderr );
 	fputs( catgets( cat, 0, 1, MSG_HELP_1 ), stderr );
 	fputs( catgets( cat, 0, 2, MSG_HELP_2 ), stderr );
 	fputs( catgets( cat, 0, 3, MSG_HELP_3 ), stderr );
 	fputs( catgets( cat, 0, 4, MSG_HELP_4 ), stderr );
+	fputs( catgets( cat, 0, 5, MSG_HELP_5 ), stderr );
 	
 	exit( err );
 	
@@ -349,7 +353,7 @@ static void LoadUnicodeConversionTable(void)
 	if ( r.x.cflag ) {
 		// Can't get codepage. Use ASCII only
 		//
-		fputs( catgets( cat, 1, 16, MSG_WARN_CP ), stderr );
+		fputs( catgets( cat, 1, 15, MSG_WARN_CP ), stderr );
 		goto error;
 	}
 	
@@ -360,7 +364,7 @@ static void LoadUnicodeConversionTable(void)
 	_searchenv( filename, "PATH", fullpath);
 	if ( '\0' == fullpath[0] )
 	{
-		fprintf( stderr, catgets( cat, 1, 19, MSG_WARN_NOTBL ), filename );
+		fprintf( stderr, catgets( cat, 1, 12, MSG_WARN_NOTBL ), filename );
 		goto error;
 	}
 	
@@ -368,13 +372,13 @@ static void LoadUnicodeConversionTable(void)
 	
 	if ( NULL == f )
 	{
-		fprintf( stderr, catgets( cat, 1, 11, MSG_WARN_UNICODE ), filename );
+		fprintf( stderr, catgets( cat, 1, 13, MSG_WARN_UNICODE ), filename );
 		goto error;
 	}
 	
 	if ( EOF == fscanf_s( f, "Unicode (%s)", buffer, sizeof( buffer) ) )
 	{
-		fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 
@@ -382,13 +386,13 @@ static void LoadUnicodeConversionTable(void)
 
 	if ( ret != 3 || buffer[0] != '\r' || buffer[1] != '\n' || buffer[2] != 1 )
 	{
-		fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 	
 	if ( 256 != (ret = fread( buffer, 1, 256, f )) )
 	{
-		fprintf( stderr, catgets( cat, 1, 11, MSG_WARN_UNICODE ), filename );
+		fprintf( stderr, catgets( cat, 1, 13, MSG_WARN_UNICODE ), filename );
 		goto close;
 	}
 	
@@ -400,7 +404,7 @@ static void LoadUnicodeConversionTable(void)
 close:
 	fclose( f );
 error:
-	fputs( catgets( cat, 1, 17, MSG_WARN_CP ), stderr );
+	fputs( catgets( cat, 1, 16, MSG_WARN_437 ), stderr );
 	
 }
 
@@ -414,7 +418,7 @@ static void GetTimezoneOffset(void)
 	
 	if ( NULL == tz )
 	{
-		fputs( catgets( cat, 1, 12, MSG_WARN_TIMEZONE ), stderr );
+		fputs( catgets( cat, 1, 11, MSG_WARN_TIMEZONE ), stderr );
 	}
 	else
 	{
@@ -476,7 +480,7 @@ int main(int argc, char **argv)
 	{
 		case 0x01:
 			fputs( catgets(cat, 1, 6, MSG_ERROR_REDIR_NOT_ALLOWED ), stderr );
-			ret = ERR_SYSTEM;
+			ret = ERR_NOINST;
 			goto err_close;
 			/* NOTREACHED */
 			
@@ -484,7 +488,7 @@ int main(int argc, char **argv)
 			if ( magic == ~VMSMOUNT_MAGIC )
 			{
 				fputs( catgets(cat, 1, 7, MSG_ERROR_INSTALLED ), stderr );
-				ret = ERR_SYSTEM;
+				ret = ERR_INSTLLD;
 				goto err_close;
 			}
 			break;
@@ -518,7 +522,7 @@ int main(int argc, char **argv)
 	{
 		fprintf(stderr, catgets( cat, 1, 4, MSG_ERROR_INVALID_DRIVE ),
 							*fpDriveNum + 'A', fpSysVars->lastDrive + '@');
-		ret = ERR_SYSTEM;
+		ret = ERR_BADDRV;
 		goto err_close;
 	}
 	
@@ -537,7 +541,7 @@ int main(int argc, char **argv)
 	fprintf( stderr, catgets( cat, 2, 0, MSG_INFO_MOUNT ), *fpDriveNum + 'A' );
 	
 	flushall();		// Flush all streams before returning to DOS
-	_dos_keep( 0, paragraphs );
+	_dos_keep( *fpDriveNum + 1, paragraphs );
 
 err_close:
 	VMAuxEndSession();
