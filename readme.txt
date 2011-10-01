@@ -14,14 +14,14 @@ WARNING AND DISCLAIMER
 USAGE
 
  VMSMOUNT [/H][/V] [/L:<drive letter>]
-    /H                 - Prints help and exits
+	/H                 - Prints help and exits
 	/V                 - Verbose: Prints information on system resources
 	/L:<drive letter>  - Drive letter to assign
                          (if omitted, use the first available)
 
 ENVIRONMENT
 
-    TZ      - Valid POSIX timezone. If omitted, file times will be in UTC
+	TZ      - Valid POSIX timezone. If omitted, file times will be in UTC
               (see http://www.gnu.org/s/hello/manual/libc/TZ-Variable.html)
 	          Example: TZ=CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00
 	LANG    - Used by the Kitten library to show messages in the correct
@@ -49,11 +49,11 @@ RETURN CODES (ERRORLEVELS)
 	ERRORLEVEL  Meaning
 	~~~~~~~~~~  ~~~~~~~
 	    0       Not loaded (help screen requested)
-      248       Invalid command line option(s)
-      249       Unsupported DOS version
-      250       Not running in a virtual machine
-      251       Shared folders not enabled
-      252       Redirector not allowed to install
+	  248       Invalid command line option(s)
+	  249       Unsupported DOS version
+	  250       Not running in a virtual machine
+	  251       Shared folders not enabled
+	  252       Redirector not allowed to install
 	  253       Already installed
 	  254       Invalid drive letter
 	  255       Other system error
