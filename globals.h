@@ -23,7 +23,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  *
- * 2011-10-01  Eduardo           change Errorlevels as per Bernd Blaauw suggestion
+ * 2011-10-01  Eduardo           * change Errorlevels as per Bernd Blaauw suggestion
+ *                               * bump version number to 0.2
  */
 
 #include "kitten.h"
@@ -33,7 +34,7 @@
 #define PUBLIC
 
 #define VERSION_MAJOR	0
-#define VERSION_MINOR	1
+#define VERSION_MINOR	2
 
 #define TRUE	1
 #define FALSE	0
