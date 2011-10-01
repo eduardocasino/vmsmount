@@ -38,7 +38,26 @@ ENVIRONMENT
 	For convenience, I'm distributing with this package the translation
 	tables, which can be generated from the ASCII code tables provided at
 	www.unicode.orgw using the MK_TABLE program from DOSLFN
+
+RETURN CODES (ERRORLEVELS)
+
+	If loaded successfully, VMSMOUNT returns the number of the assigned drive
+	letterstarting with 1 ( A == 1, B == 2, C == 3, ... )
 	
+	If not loaded, errorlevel is set according to the following table:
+	
+	ERRORLEVEL  Meaning
+	~~~~~~~~~~  ~~~~~~~
+	    0       Not loaded (help screen requested)
+      248       Invalid command line option(s)
+      249       Unsupported DOS version
+      250       Not running in a virtual machine
+      251       Shared folders not enabled
+      252       Redirector not allowed to install
+	  253       Already installed
+	  254       Invalid drive letter
+	  255       Other system error
+ 
 LIMITATIONS
 
  * Does not work with DOS < 5 (Tested with latest FreeDOS kernel,
@@ -71,6 +90,8 @@ ACKNOWLEDGEMENTS
  * Jason Hood/Henrik Haftmann for the unicode translation tables in
    DOSLFN. Jason again for SHSUCDX, it's source code has been very
    helpful.
+ 
+ * Bernd Blaauw for his incredibly useful feedback and Dutch translation
  
  * And, of course, Pat Villani for the FreeDOS kernel.
    
