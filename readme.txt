@@ -38,12 +38,12 @@ ENVIRONMENT
 	source package for details(http://adoxa.110mb.com/doslfn/index.html)
 	For convenience, I'm distributing with this package the translation
 	tables, which can be generated from the ASCII code tables provided at
-	www.unicode.orgw using the MK_TABLE program from DOSLFN
+	www.unicode.org using the MK_TABLE program from DOSLFN
 
 RETURN CODES (ERRORLEVELS)
 
 	If loaded successfully, VMSMOUNT returns the number of the assigned drive
-	letterstarting with 1 ( A == 1, B == 2, C == 3, ... )
+	letter starting with 1 ( A == 1, B == 2, C == 3, ... )
 	
 	If not loaded, errorlevel is set according to the following table:
 	
