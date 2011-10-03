@@ -25,6 +25,7 @@
  *
  * 2011-10-01  Eduardo           * change Errorlevels as per Bernd Blaauw suggestion
  *                               * bump version number to 0.2
+ * 2011-10-02  Eduardo           * bump version number to 0.3
  */
 
 #include "kitten.h"
@@ -34,7 +35,7 @@
 #define PUBLIC
 
 #define VERSION_MAJOR	0
-#define VERSION_MINOR	2
+#define VERSION_MINOR	3
 
 #define TRUE	1
 #define FALSE	0
