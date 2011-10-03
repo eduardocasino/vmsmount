@@ -1,3 +1,4 @@
+0.0:  ====  Usar juego de caracteres IBM850 o IBM858 ====
 0.1:\nUso: VMSMOUNT [/H][/V] [/L:<letra unidad>]\n
 0.2:\t/H                  - Muestra este mensaje y termina\n
 0.3:\t/V                  - Muestra informaci¢n extra del sistema\n
