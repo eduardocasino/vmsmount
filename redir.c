@@ -84,28 +84,28 @@ static char fcbName[12];
  //
 void _chain_intr_local( void (__interrupt __far *)() );
 #pragma aux _chain_intr_local = \
-        "mov	cx, ax"		/* get offset and segment of previous int */ 	\
-        "mov	ax, dx"														\
-		"mov	sp, bp"														\
-		"xchg	cx, 20[bp]"	/* restore cx, & put in offset */				\
-		"xchg	ax, 22[bp]"	/* restore ax, & put in segment */				\
-		"mov	bx, 28[bp]"	/* restore flags... */							\
-        "and	bx, 0xfcff"	/* ...but not Interrupt and Trace Flags */		\
-        "push	bx"															\
-        "popf"																\
-        "pop	gs"			/* restore segment registers */					\
-        "pop	fs"															\
-        "pop	es"															\
-        "pop	ds"															\
-        "pop	di"															\
-        "pop	si"															\
-        "pop	bp"															\
-        "pop	bx"			/* skip SP */									\
-        "pop	bx"			/* restore general purpose registers */			\
-        "pop	dx"															\
-        "retf"				/* return to previous interrupt handler */		\
-		parm [dx ax]														\
-		modify [];
+	"mov	cx, ax"		/* get offset and segment of previous int */	\
+	"mov	ax, dx"														\
+	"mov	sp, bp"														\
+	"xchg	cx, 20[bp]"	/* restore cx, & put in offset */				\
+	"xchg	ax, 22[bp]"	/* restore ax, & put in segment */				\
+	"mov	bx, 28[bp]"	/* restore flags... */							\
+	"and	bx, 0xfcff"	/* ...but not Interrupt and Trace Flags */		\
+	"push	bx"															\
+	"popf"																\
+	"pop	gs"			/* restore segment registers */					\
+	"pop	fs"															\
+	"pop	es"															\
+	"pop	ds"															\
+	"pop	di"															\
+	"pop	si"															\
+	"pop	bp"															\
+	"pop	bx"			/* skip SP */									\
+	"pop	bx"			/* restore general purpose registers */			\
+	"pop	dx"															\
+	"retf"				/* return to previous interrupt handler */		\
+	parm [dx ax]														\
+	modify [];
 
 
 static void SetSftOwner( void );
