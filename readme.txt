@@ -27,7 +27,8 @@ ENVIRONMENT
 	LANG    - Used by the Kitten library to show messages in the correct
 	          language. Currently only available in English, Spanish and
 	          Dutch.
-	NLSPATH - Used by the Kitten library to find the message catalogs.
+	NLSPATH - Used by the Kitten library to find the message catalogs
+	          (VMSMOUNT.EN, VMSMOUNT.ES, VMSMOUNT.NL, ...)
 	PATH    - VMSMOUNT searchs in the PATH for the unicode conversion
 	          tables.
 	
