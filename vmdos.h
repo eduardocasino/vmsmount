@@ -22,6 +22,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-04  Eduardo           * New parameter for FNameToFcbName()
+ *                                 (Omit '.' and '..' if root dir)
+ *
  */
  
 #include <stdint.h>
@@ -36,7 +40,7 @@ uint32_t FTimeToFatTime( uint64_t );
 uint8_t FModeToFatAttr( VMShfAttr * );
 VMShfAttr *FatAttrToFMode( uint8_t );
 uint32_t DosExtActionToOpenAction( uint16_t );
-int FNameToFcbName( char *fcbName, char *fName, uint32_t fNameLen );
+int FNameToFcbName( char *fcbName, char *fName, uint32_t fNameLen, uint8_t isRoot );
 int DosPathToPortable(uint8_t *dst, uint8_t far *src);
 uint16_t VmshfStatusToDosError( uint32_t );
 
