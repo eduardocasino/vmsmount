@@ -19,6 +19,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-04  Eduardo           * Omit '.' and '..' from listing if root dir
+ *
  */
  
 #include <dos.h>
@@ -72,7 +75,8 @@ inline unsigned char toupper_local ( unsigned char c )
 int FNameToFcbName( 
 	char *fcbName,		// out : File name in FCB format. Must be 12 bytes long (we NULL-terminate it)
 	char *fName,		// in/out : File name in in UTF-8 on input, DOS filename on output
-	uint32_t fNameLen	// in : File name length
+	uint32_t fNameLen,	// in : File name length
+	uint8_t isRoot		// in : Flag: is root search?
 	)
 {
 	char *p;
@@ -85,16 +89,20 @@ int FNameToFcbName(
 
 	// Special case for '.' and '..'
 	//
-	if ( *(uint16_t *)fName == '..' && fName[2] == '\0' )
+	if ( ! isRoot )
 	{
-		*(uint16_t *)fcbName = *(uint16_t *)fName;
-		return 1;
+		if ( *(uint16_t *)fName == '..' && fName[2] == '\0' )
+		{
+			*(uint16_t *)fcbName = *(uint16_t *)fName;
+			return 1;
+		}
+		if ( *(uint16_t *)fName == '\0.' )
+		{
+			*fcbName = *fName;
+			return 1;
+		}
 	}
-	if ( *(uint16_t *)fName == '\0.' )
-	{
-		*fcbName = *fName;
-		return 1;
-	}
+	
 	if ( *fName == '.' )
 	{
 		return 0;
