@@ -18,6 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-04  Eduardo           * Detect and flag root dir searches
+ *
  */
 
 #include <dos.h>
@@ -682,7 +685,7 @@ static void FindNext( void )
 		}
 		fatAttr = FModeToFatAttr( fAttr );
 
-		if ( FNameToFcbName( fcbName, fName, fNameLen )
+		if ( FNameToFcbName( fcbName, fName, fNameLen, fpSDB->isRoot )
 				&& MatchNameMask( fcbName, fpSDB->searchMask ) 
 				&& MatchAttrMask( fatAttr, fpSDB->attrMask ) )
 		{
@@ -740,6 +743,8 @@ static void FindFirst( void )
 	// Open dir to perform search
 	//
 	*(p = _fstrrchr_local( fpFileName1, '\\' )) = 0;	// Get the directory part
+	
+	fpSDB->isRoot = ( *fpFileName1 == '\0' ) ? 1 : 0;
 	
 	ret = VMShfOpenDir( fpFileName1, &status, &handle );
 
