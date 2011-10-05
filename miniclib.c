@@ -19,6 +19,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-05  Tom Ehlert       Fast _fmemcpy_local() implementation
+ *
  */
 
  /*
@@ -48,17 +51,48 @@ char *strchr_local( const char *str, char c )
 	return (char *)&str[i];
 }
 
-void far *_fmemcpy_local( void far *dst, const void far *src, size_t num )
+void _fmemcpy_local( void far *dst, const void far *src, size_t num )
 {
-	char far *d = (char far *)dst;
-	char far *s = (char far *)src;
+	void far 		*d = dst;
+	const void far	*s = src;
+
+	// fastest implementation so far
+	// using rep movsD
 	
-	while ( num-- )
+	__asm
 	{
-		*d++ = *s++;
+		push es;
+		push ds;
+		push si;
+		push di;
+
+		mov cx, num;
+		les di, d;
+		lds si, s;
+
+		// push/pop strictly not necessary
+		// but doing the byte moves at last
+		// favors aligned buffers
+
+		shr cx,1;
+		pushf
+		shr cx,1;
+		rep movsd;
+
+		adc cx,cx;
+		rep movsw;
+
+		popf
+		adc cx,cx;
+		rep movsb;
+
+		pop di;
+		pop si;
+		pop ds;
+		pop es;
 	}
-	
-	return dst;
+
+	return;
 }
 
 char far *_fstrcpy_local( char far *dst, const char far *src )
