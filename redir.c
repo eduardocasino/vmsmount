@@ -20,6 +20,8 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-04  Eduardo           * Detect and flag root dir searches
+ * 2011-10-05  Tom Ehlert        * Remove unnecessary cli/sti pairs when
+ *                                 doing a "mov ss"
  *
  */
 
@@ -115,10 +117,8 @@ static void SetSftOwner( void );
 #pragma aux SetSftOwner = \
 	/* Set DOS DS and stack */									\
 	"mov curSP, sp"		/* Save current SP				*/		\
-	"cli"														\
 	"mov ss, dosSS"												\
 	"mov sp, dosSP"												\
-	"sti"														\
 	"push ds"													\
 	"mov ds, dosDS"												\
 																\
@@ -131,10 +131,8 @@ static void SetSftOwner( void );
 	/* Restore our DS and internal stack */						\
 	"pop bx"			/* Restore saved DS				*/		\
 	"mov ds, bx"												\
-	"cli"														\
 	"mov ss, bx"		/* Restore saved SS, same as DS	*/		\
 	"mov sp, curSP"		/* Restore saved SP				*/		\
-	"sti"														\
 	modify [ax bx es di];
 
 
@@ -142,10 +140,8 @@ static uint32_t GetDosTime( void );
 #pragma aux GetDosTime = \
 	/* Set DOS DS and stack */									\
 	"mov curSP, sp"		/* Save current SP				*/		\
-	"cli"														\
 	"mov ss, dosSS"												\
 	"mov sp, dosSP"												\
-	"sti"														\
 	"push ds"													\
 	"mov ds, dosDS"												\
 																\
@@ -158,10 +154,8 @@ static uint32_t GetDosTime( void );
 	/* Restore our DS and internal stack */						\
 	"pop bx"			/* Restore saved DS				*/		\
 	"mov ds, bx"												\
-	"cli"														\
 	"mov ss, bx"		/* Restore saved SS, same as DS	*/		\
 	"mov sp, curSP"		/* Restore saved SP				*/		\
-	"sti"														\
 	value [ax dx]												\
 	modify [bx];
 
@@ -730,12 +724,12 @@ static void FindFirst( void )
 
 		fpSDB->driveNumber = driveNum | 0x80;
 		fpSDB->dirEntryNum = 0;
-		(void) _fmemcpy_local( fpSDB->searchMask, fpFcbName1, 11 );
+		_fmemcpy_local( fpSDB->searchMask, fpFcbName1, 11 );
 		
 		fpFDB->fileAttr = _A_VOLID;
 		fpFDB->fileTime = GetDosTime();
 		fpFDB->fileSize = 0;
-		(void) _fmemcpy_local( fpFDB->fileName, MK_FP( myDS, volLabel ), 11 );
+		_fmemcpy_local( fpFDB->fileName, MK_FP( myDS, volLabel ), 11 );
 
 		return;
 	}
@@ -763,7 +757,7 @@ static void FindFirst( void )
 	{
 		// Initialise FindFirst/FindNext data block
 		//
-		(void) _fmemcpy_local( fpSDB->searchMask, fpFcbName1, 11 );
+		_fmemcpy_local( fpSDB->searchMask, fpFcbName1, 11 );
 		fpSDB->driveNumber	= driveNum | 0xC0;
 		fpSDB->attrMask		= fpSDA->attrMask;
 		fpSDB->dirEntryNum	= -1;
@@ -1077,10 +1071,8 @@ void __interrupt Int2fRedirector( union INTPACK regset )
 		mov dosBP, bp
 		mov ax, ds
 		mov myDS, ax
-		cli
 		mov ss, ax
 		mov sp, (offset newStack) + STACK_SIZE - 2
-		sti
 	};
 		
 	fpStackParam = (uint16_t far *)MK_FP( dosSS, dosBP + sizeof( union INTPACK ) ); 
@@ -1091,10 +1083,8 @@ void __interrupt Int2fRedirector( union INTPACK regset )
 
 	_asm
 	{
-		cli
 		mov ss, dosSS
 		mov sp, dosSP
-		sti
 	};
 
 	return;
