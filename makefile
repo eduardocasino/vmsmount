@@ -19,6 +19,7 @@
 # MA  02110-1301, USA.
 #
 # 2011-10-01  Eduardo           Add UPX compression
+# 2011-10-05  Tom Ehlert        Use Pentium optims for smaller code
 #
 
 CC = wcc
@@ -26,7 +27,7 @@ AS = nasm
 LD = wlink
 UPX = upx
 RM = rm -f
-CFLAGS  = -3 -bt=dos -ms -q -s -oh -os
+CFLAGS  = -5 -bt=dos -ms -q -s -oh -os
 ASFLAGS = -f obj -Worphan-labels -O9
 LDFLAGS = SYSTEM dos OPTION QUIET
 UPXFLAGS = -9
