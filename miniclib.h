@@ -28,7 +28,7 @@
  
  char far *_fstrrchr_local( const char far *str, char c );
  char *strchr_local( const char *str, char c );
- void far *_fmemcpy_local( void far *dst, const void far *src, size_t num );
+ void _fmemcpy_local( void far *dst, const void far *src, size_t num );
  char far *_fstrcpy_local( char far *dst, const char far *src );
  void *memcpy_local( void *dst, const void *src, size_t num );
  
