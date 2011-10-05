@@ -27,6 +27,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-05  Tom Ehlert        * New definitions for Request and
+ *                                 Reply macros for smaller code
  */
 
 #include <stdlib.h>
@@ -98,8 +101,8 @@ static int ExecuteRpc( uint32_t *length )
 /*
 	open a host file
 */
-#define Request	((VMShfOpenFileRequest *)&shf.buf[0])
-#define Reply ((VMShfOpenFileReply *)&shf.buf[0])
+#define Request	((VMShfOpenFileRequest *)buffer)
+#define Reply ((VMShfOpenFileReply *)buffer)
 
 int VMShfOpenFile(
 	uint32_t	access,			/* one of VMSHF_ACCESS_* values		*/
@@ -162,8 +165,8 @@ int VMShfOpenFile(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfReadFileRequest *)&shf.buf[0])
-#define Reply ((VMShfReadFileReply *)&shf.buf[0])
+#define Request	((VMShfReadFileRequest *)buffer)
+#define Reply ((VMShfReadFileReply *)buffer)
 
 int VMShfReadFile(
 	uint32_t	handle,		/* 10=> file handle returned by OPEN	*/
@@ -214,8 +217,8 @@ int VMShfReadFile(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfWriteFileRequest *)&shf.buf[0])
-#define Reply ((VMShfWriteFileReply *)&shf.buf[0])
+#define Request	((VMShfWriteFileRequest *)buffer)
+#define Reply ((VMShfWriteFileReply *)buffer)
 
 int VMShfWriteFile(
 	uint32_t	handle,			/* 10: file handle returned by OPEN */
@@ -272,8 +275,8 @@ int VMShfWriteFile(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfCloseFileDirRequest *)&shf.buf[0])
-#define Reply ((VMShfCloseFileDirReply *)&shf.buf[0])
+#define Request	((VMShfCloseFileDirRequest *)buffer)
+#define Reply ((VMShfCloseFileDirReply *)buffer)
 
 int VMShfCloseFileDir(
 	uint32_t	op,
@@ -311,8 +314,8 @@ int VMShfCloseFileDir(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfOpenDirRequest *)&shf.buf[0])
-#define Reply ((VMShfOpenDirReply *)&shf.buf[0])
+#define Request	((VMShfOpenDirRequest *)buffer)
+#define Reply ((VMShfOpenDirReply *)buffer)
 
 int VMShfOpenDir(
 	char far	*dirname,
@@ -364,8 +367,8 @@ int VMShfOpenDir(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfReadDirRequest *)&shf.buf[0])
-#define Reply ((VMShfReadDirReply *)&shf.buf[0])
+#define Request	((VMShfReadDirRequest *)buffer)
+#define Reply ((VMShfReadDirReply *)buffer)
 
 int VMShfReadDir(
 	uint32_t	handle,		/* 10: file handle returned by OPEN */
@@ -425,8 +428,8 @@ int VMShfReadDir(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfGetAttrRequest *)&shf.buf[0])
-#define Reply ((VMShfGetAttrReply *)&shf.buf[0])
+#define Request	((VMShfGetAttrRequest *)buffer)
+#define Reply ((VMShfGetAttrReply *)buffer)
 
 int VMShfGetAttr(
 	char far	*filename,
@@ -487,8 +490,8 @@ int VMShfGetAttr(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfSetAttrRequest *)&shf.buf[0])
-#define Reply ((VMShfSetAttrReply *)&shf.buf[0])
+#define Request	((VMShfSetAttrRequest *)buffer)
+#define Reply ((VMShfSetAttrReply *)buffer)
 
 int VMShfSetAttr(
 	VMShfAttr	*fileattr,
@@ -534,8 +537,8 @@ int VMShfSetAttr(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfCreateDirRequest *)&shf.buf[0])
-#define Reply ((VMShfCreateDirReply *)&shf.buf[0])
+#define Request	((VMShfCreateDirRequest *)buffer)
+#define Reply ((VMShfCreateDirReply *)buffer)
 
 int VMShfCreateDir(
 	uint8_t		dirmode,
@@ -579,8 +582,8 @@ int VMShfCreateDir(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfDeleteFileRequest *)&shf.buf[0])
-#define Reply ((VMShfDeleteFileReply *)&shf.buf[0])
+#define Request	((VMShfDeleteFileRequest *)buffer)
+#define Reply ((VMShfDeleteFileReply *)buffer)
 	
 int VMShfDeleteFileDir(
 	uint32_t	op,
@@ -623,8 +626,8 @@ int VMShfDeleteFileDir(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfMoveFileRequest *)&shf.buf[0])
-#define Reply ((VMShfMoveFileReply *)&shf.buf[0])
+#define Request	((VMShfMoveFileRequest *)buffer)
+#define Reply ((VMShfMoveFileReply *)buffer)
 
 int VMShfMoveFile(
 	char far	*srcname,
@@ -681,8 +684,8 @@ int VMShfMoveFile(
 */
 #undef Request
 #undef Reply
-#define Request	((VMShfGetDirSizeRequest *)&shf.buf[0])
-#define Reply ((VMShfGetDirSizeReply *)&shf.buf[0])
+#define Request	((VMShfGetDirSizeRequest *)buffer)
+#define Reply ((VMShfGetDirSizeReply *)buffer)
 
 int VMShfGetDirSize(
 	char far	*dirname,
