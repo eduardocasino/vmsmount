@@ -1,5 +1,5 @@
-#ifndef MINILIBC_H_
-#define MINILIBC_H_
+#ifndef MINICLIB_H_
+#define MINICLIB_H_
 #pragma once
 /*
  * VMSMOUNT
@@ -32,4 +32,4 @@
  char far *_fstrcpy_local( char far *dst, const char far *src );
  void *memcpy_local( void *dst, const void *src, size_t num );
  
-#endif /* MINILIBC_H_ */
+#endif /* MINICLIB_H_ */
