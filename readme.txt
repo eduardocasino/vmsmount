@@ -95,6 +95,8 @@ ACKNOWLEDGEMENTS
  
  * Bernd Blaauw for his incredibly useful feedback and Dutch translation
  
+ * Tom Ehlert for extensive feedback, code review and actual code
+ 
  * And, of course, Pat Villani for the FreeDOS kernel.
    
 
