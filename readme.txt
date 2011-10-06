@@ -95,7 +95,8 @@ ACKNOWLEDGEMENTS
  
  * Bernd Blaauw for his incredibly useful feedback and Dutch translation
  
- * Tom Ehlert for extensive feedback, code review and actual code
+ * Tom Ehlert for extensive feedback, code review, bug reports, ideas and
+   actual code
  
  * And, of course, Pat Villani for the FreeDOS kernel.
    
@@ -108,13 +109,12 @@ BUGS
 
  * When used with DOSLFN in FreeDOS, "." and ".." appear corrupted
    in the long name listing with DIR /LFN. I don't know if it is a
-   FreeDOS kernel, FreeCOM, DOSLFN or VMSMOUNT issue. It does not
-   happen with MS-DOS 7.
+   FreeDOS kernel, FreeCOM or DOSLFN bug. I assume it is not VMSMOUNT
+   because it also occurs with SHSUCDX. It does not happen with MS-DOS 7.
 
 TODO
  
  * Uninstallation
- * Some optimizations in the read and write functions
  * Code Page change detection (maybe)
  * Long file names (don't even know if I'll try)
  
