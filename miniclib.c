@@ -24,9 +24,6 @@
  *
  */
 
- /*
-  * TODO: Write more efficient versions, specially for *memcpy*
-  */
 #include <stddef.h>
 
 #pragma data_seg("BEGTEXT", "CODE");
