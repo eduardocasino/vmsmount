@@ -22,6 +22,7 @@
  * 2011-10-04  Eduardo           * Detect and flag root dir searches
  * 2011-10-05  Tom Ehlert        * Remove unnecessary cli/sti pairs when
  *                                 doing a "mov ss"
+ * 2011-10-06                    * Increase stack size
  *
  */
 
@@ -56,7 +57,7 @@ static char volLabel[12] = "SharedFldrs";
 
 // Stack management
 //
-#define STACK_SIZE 200
+#define STACK_SIZE 260
 uint8_t newStack[STACK_SIZE] = {0};
 static uint16_t far *fpStackParam;	// Far pointer to top os stack at entry
 static uint16_t dosSS;
