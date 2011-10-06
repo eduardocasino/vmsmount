@@ -1,3 +1,10 @@
+Version 0.3 (2011-10-07)
+
+  * BUGFIX: stack too small (Tom Ehlert)
+  * Improved performance: fast _fmemcpy() implementation
+    by Tom Ehlert
+  * Various enhancements for size reduction (Tom Ehlert)
+
 Version 0.2 (2011-10-01) 
 
   * Fixed a bug when printing the default messages in English
