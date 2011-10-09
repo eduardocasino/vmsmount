@@ -38,6 +38,8 @@
  * 2011-10-01  Eduardo           * Fixed a bug in when printing default error messages
  *                               * New errorlevels: If successful, returns drive number
  *                                 (starting with A == 1)
+ * 2011-10-09  Eduardo           * Add a CPU test
+ *
  */ 
 #define __STDC_WANT_LIB_EXT1__ 1
 #include <process.h>
@@ -90,13 +92,44 @@ PUBLIC shf_t	far *fpShf;
 static SysVars far *fpSysVars;
 static char far *rootPath = " :\\";
 
+// CPU identification routine
+// (Info from http://www.ukcpu.net/Programming/Hardware/x86/CPUID/x86-ID.asp)
+//
+// in 808x and 8018x, flags 12-15 are always set.
+// in 286, flags 12-15 are always clear in real mode.
+// in 32-bit processors, bit 15 is always clear in real mode.
+//                       bits 12-14 have the last value loaded into them.
+//
+static uint8_t RunningIn386OrHigher( void );
+#pragma aux RunningIn386OrHigher =									\
+	"pushf"				/* Save current flags */					\
+	"xor ax, ax"													\
+	"push ax"														\
+	"popf"				/* Load all flags cleared */				\
+	"pushf"															\
+	"pop ax"			/* Load flags back to ax */					\
+	"and ax, 0xf000"	/* If 86/186, flags 12-15 will be set */	\
+	"cmp ax, 0xf000"												\
+	"je return"														\
+	"mov ax, 0xf000"												\
+	"push ax"														\
+	"popf"				/* Load flags 12-15 set */					\
+	"pushf"															\
+	"pop ax"			/* Load flags back to ax */					\
+	"and ax, 0xf000"	/* If 286, flags 12-15 will be cleared */	\
+	"jz return"														\
+	"mov al, 0x01"													\
+	"return:"														\
+	"popf"				/* Restore flags */							\
+	value [al];
+
 //	00h not installed, OK to install
 //	01h not installed, not OK to install 
 //	FFh:
 //       *magic == ~VMSMOUNT_MAGIC, installed
 //       *magic == VMSMOUNT_MAGIC, OK to install
 //
-static uint8_t InstallationCheck(uint16_t *magic);
+static uint8_t InstallationCheck( uint16_t *magic );
 #pragma aux InstallationCheck =							\
 	"push word ptr [bx]"								\
 	"mov ax, 1100h"	/* Installation check */			\
@@ -105,7 +138,7 @@ static uint8_t InstallationCheck(uint16_t *magic);
 	parm [bx]											\
 	value [al];
 
-static void GetFarPointersToResidentData(void)
+static void GetFarPointersToResidentData( void )
 {
 	struct SREGS s;
 
@@ -449,21 +482,30 @@ int main(int argc, char **argv)
 		
 	fprintf( stderr, MSG_MY_NAME, VERSION_MAJOR, VERSION_MINOR);
 
-	// Check OS version. Only DOS >= 5.0 is supported
+	// Check that CPU is x386 or higher (to avoid nasty things if somebody
+	// tries to run this in a REAL machine
 	//
-	GetFarPointersToResidentData();
-	
-	if ( GetOptions( getcmd( argString ) ) )
+	if ( ! RunningIn386OrHigher() )
 	{
-		PrintUsageAndExit( ERR_BADOPTS );
+		fputs( catgets(cat, 1, 3, MSG_ERROR_NOVIRT ), stderr );
+		return( ERR_NOVIRT );
 	}
 	
+	// Check OS version. Only DOS >= 5.0 is supported
+	//
 	if ( _osmajor < 5 )
 	{
 		fprintf(stderr, catgets( cat, 1, 2, MSG_ERROR_BADOS ), _osmajor, _osminor );
 		return( ERR_WRONGOS );
 	}
 	
+	GetFarPointersToResidentData();
+	
+	if ( GetOptions( getcmd( argString ) ) )
+	{
+		PrintUsageAndExit( ERR_BADOPTS );
+	}
+
 	if ( VMAuxCheckVirtual() )
 	{
 		fputs( catgets(cat, 1, 3, MSG_ERROR_NOVIRT ), stderr );
