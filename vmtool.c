@@ -23,6 +23,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-11  Eduardo           * Remove unused VMRpcClose()
+ *
  */
  
 #include <stdint.h>
@@ -189,23 +192,3 @@ int VMRpcRecvDat(const rpc_t *rpc, unsigned char *data, uint32_t length, uint16_
 	return 0;
 }
 
-/*
-	close RPC channel
-*/
-int VMRpcClose(const rpc_t *rpc)
-{
-	r.eax.word = VMWARE_MAGIC;
-	r.ebx.word = 0;
-	r.ecx.word = VMCMD_INVOKE_RPC | VMRPC_CLOSE;
-	r.edx.word = rpc->channel | VMWARE_CMD_PORT;
-	r.ebp.word = 0;
-	r.esi.word = rpc->cookie1;
-	r.edi.word = rpc->cookie2;
-
-	VmwCommand( &r );
-
-	if ( r.eax.word || r.ecx.halfs.high == 0 )
-		return -1;
-
-	return 0;
-}
