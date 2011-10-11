@@ -23,6 +23,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-11  Eduardo           * Remove unused VMRpcClose()
+ *
  */
 
 #ifndef _VMTOOL_H_
@@ -187,11 +190,6 @@ int VMRpcRecvLen(const rpc_t *rpc, uint32_t *length, uint16_t *dataid);
 	receive data with command 0x1e, subcommands 4,5 and/or enhanced data channel
 */
 int VMRpcRecvDat(const rpc_t *rpc, unsigned char *data, uint32_t length, uint16_t dataid);
-
-/*
-	close an rpc channel with command 0x1e, subcommand 6
-*/
-int	VMRpcClose(const rpc_t *rpc);
 
 #ifdef __cplusplus
 }
