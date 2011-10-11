@@ -25,6 +25,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-11  Eduardo           * Inline assembly for RPC backdoor
+ *
  */
  
 #include <stdint.h>
@@ -89,9 +92,67 @@ typedef struct Regs {
 	} esi;
 } CREGS;
 
-extern void __cdecl VmwCommand(CREGS *);
-extern void __cdecl VmwRpcIns(CREGS *);
-extern void __cdecl VmwRpcOuts(CREGS *);
+#define LOAD_REGS \
+	"movzx eax,ax" \
+	"pushad" \
+	"push eax" \
+	"mov esi, 18h[eax]" \
+	"mov edi, 14h[eax]" \
+	"mov ebp, 10h[eax]" \
+	"mov edx, 0ch[eax]" \
+	"mov ecx, 08h[eax]" \
+	"mov ebx, 04h[eax]" \
+	"mov eax, 00h[eax]"
+
+#define STORE_REGS \
+	"xchg 00h[esp], eax" \
+	"mov 18h[eax], esi" \
+	"mov 14h[eax], edi" \
+	"mov 10h[eax], ebp" \
+	"mov 0ch[eax], edx" \
+	"mov 08h[eax], ecx" \
+	"mov 04h[eax], ebx" \
+	"pop dword ptr 00h[eax]" \
+	"popad"
+	
+static void _VmwCommand( CREGS *r );
+#pragma aux _VmwCommand = \
+	LOAD_REGS \
+	"in eax, dx" \
+	STORE_REGS \
+	parm [ax]	\
+	modify [ax];
+
+static void _VmwRpcOuts( CREGS *r );
+#pragma aux _VmwRpcOuts = \
+	LOAD_REGS \
+	"pushf" \
+	"cld" \
+	"rep outsb" \
+	"popf" \
+	STORE_REGS \
+	parm [ax]	\
+	modify [ax];
+
+static void _VmwRpcIns( CREGS *r );
+#pragma aux _VmwRpcIns = \
+	LOAD_REGS \
+	"push es" \
+	"push ds" \
+	"pop es" \
+	"pushf" \
+	"cld" \
+	"rep insb" \
+	"popf" \
+	"pop es" \
+	STORE_REGS \
+	parm [ax]	\
+	modify [ax];
+	
+
+extern void VmwCommand(CREGS *);
+extern void VmwRpcIns(CREGS *);
+extern void VmwRpcOuts(CREGS *);
 
 #endif	/* VMCALL_H_ */
 
