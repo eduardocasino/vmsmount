@@ -22,6 +22,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-15  Eduardo           * Support for configurable buffer size using
+ *                                 the transient code space
  */
 
 #include <dos.h>
@@ -46,7 +49,7 @@ extern char			far *fpCurrentPath;
 
 extern __segment myDS;
 
-void __interrupt far Int2fRedirector(union INTPACK);
-uint16_t GetSizeOfResidentSegmentInParagraphs(void);
+void __interrupt far Int2fRedirector( union INTPACK );
+uint16_t BeginOfTransientBlock( void );
 	
 #endif /* REDIR_H_ */

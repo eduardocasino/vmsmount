@@ -23,7 +23,8 @@
  * 2011-10-05  Tom Ehlert        * Remove unnecessary cli/sti pairs when
  *                                 doing a "mov ss"
  * 2011-10-06                    * Increase stack size
- *
+ * 2011-10-15  Eduardo           * Support for configurable buffer size using
+ *                                 the transient code space
  */
 
 #include <dos.h>
@@ -58,7 +59,7 @@ static char volLabel[12] = "SharedFldrs";
 // Stack management
 //
 #define STACK_SIZE 260
-uint8_t newStack[STACK_SIZE] = {0};
+static uint8_t newStack[STACK_SIZE] = {0};
 static uint16_t far *fpStackParam;	// Far pointer to top os stack at entry
 static uint16_t dosSS;
 static uint16_t dosSP;
@@ -775,7 +776,7 @@ static void FindFirst( void )
 	return;
 }
 
-void MakeFullPath( char far *fullPath, char far *dirName, char far *fcbName )
+static void MakeFullPath( char far *fullPath, char far *dirName, char far *fcbName )
 {
 	int i;
 	
@@ -935,7 +936,7 @@ static void SpecialOpen( void )
 	return;
 }
 
-int IsCallForUs( uint8_t function )
+static int IsCallForUs( uint8_t function )
 {
 
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
@@ -1101,13 +1102,7 @@ chain:
  * This function must be defined in the last source file if there are more than
  * one source file containing resident functions.
  */
-uint16_t GetSizeOfResidentSegmentInParagraphs( void )
+uint16_t BeginOfTransientBlock( void )
 {
-	uint16_t	sizeInBytes;
-	
-	sizeInBytes	= (uint16_t) GetSizeOfResidentSegmentInParagraphs;
-	sizeInBytes	+= 0x100;	// Size of PSP (do not add when building .COM executable)
-	sizeInBytes	+= 15;		// Make sure nothing gets lost in partial paragraph
-
-	return sizeInBytes >> 4;
+	return (uint16_t) BeginOfTransientBlock;	// Force some code
 }
