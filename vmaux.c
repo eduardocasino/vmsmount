@@ -26,6 +26,7 @@
  * MA  02110-1301, USA.
  *
  *  2011-10-11  Eduardo           * Use new inlined RPC backdoor functions
+ *  2011-10-15  Eduardo           * New verbosity options and code cleanup
  */
  
 /*
@@ -332,7 +333,7 @@ int VMAuxCheckVirtual(void)
 	if ( product > 4)
 		product = 0;
 		
-	VERB_PRINTF( catgets( cat, 9, 0, MSG_INFO_VMVERS ),
+	VERB_PRINTF( 2, catgets( cat, 9, 0, MSG_INFO_VMVERS ),
 		catgets( cat, prodName[product].set, prodName[product].number, prodName[product].name ),
 		version );
 	
@@ -383,9 +384,9 @@ int VMAuxBeginSession(void)
 		goto error_exit;
 	}
 
-	fpShf->rpc.channel = rpc.channel;
-	fpShf->rpc.cookie1 = rpc.cookie1;
-	fpShf->rpc.cookie2 = rpc.cookie2;
+	fpRpc->channel = rpc.channel;
+	fpRpc->cookie1 = rpc.cookie1;
+	fpRpc->cookie2 = rpc.cookie2;
 	
 	/* success */
 	return 0;
@@ -404,9 +405,9 @@ void VMAuxEndSession( void )
 {
 	rpc_t rpc;
 	
-	rpc.channel = fpShf->rpc.channel;
-	rpc.cookie1 = fpShf->rpc.cookie1;
-	rpc.cookie2 = fpShf->rpc.cookie2;
+	rpc.channel = fpRpc->channel;
+	rpc.cookie1 = fpRpc->cookie1;
+	rpc.cookie2 = fpRpc->cookie2;
 		
 	VMAuxRpcClose( &rpc );
 }
