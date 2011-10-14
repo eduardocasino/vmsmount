@@ -39,6 +39,8 @@
  *                               * New errorlevels: If successful, returns drive number
  *                                 (starting with A == 1)
  * 2011-10-09  Eduardo           * Add a CPU test
+ * 2011-10-15  Eduardo           * Configurable buffer size
+ *                               * New verbosity options
  *
  */ 
 #define __STDC_WANT_LIB_EXT1__ 1
@@ -60,10 +62,12 @@
 #include "vmaux.h"
 #include "dosdefs.h"
 #include "redir.h"
+#include "endtext.h"
 #include "unicode.h"
 
 PUBLIC nl_catd cat;
-PUBLIC int verbose = 0;
+PUBLIC int verbosity = 1;
+
 
 // Far pointers to resident data
 // These are set by GetFarPointersToResidentData()
@@ -87,7 +91,9 @@ static uint8_t	far * far *fpfpFUcase;
 static FChar	far * far *fpfpFChar;
 static int32_t	far *fpGmtOffset;
 
-PUBLIC shf_t	far *fpShf;
+PUBLIC rpc_t	far *fpRpc;
+static uint16_t	far *fpBufferSize;
+static uint16_t	far *fpMaxDataSize;
 
 static SysVars far *fpSysVars;
 static char far *rootPath = " :\\";
@@ -167,7 +173,9 @@ static void GetFarPointersToResidentData( void )
 	fpGmtOffset = s.cs:>&gmtOffset;
 	
 	// From vmshf.c
-	fpShf = s.cs:>&shf;
+	fpRpc = s.cs:>&rpc;
+	fpBufferSize = s.cs:>&bufferSize;
+	fpMaxDataSize = s.cs:>&maxDataSize;
 
 	return;
 	
@@ -175,12 +183,15 @@ static void GetFarPointersToResidentData( void )
 
 static void PrintUsageAndExit(int err)
 {
-
+	fprintf( stderr, MSG_COPYRIGHT );
 	fputs( catgets( cat, 0, 1, MSG_HELP_1 ), stderr );
 	fputs( catgets( cat, 0, 2, MSG_HELP_2 ), stderr );
 	fputs( catgets( cat, 0, 3, MSG_HELP_3 ), stderr );
 	fputs( catgets( cat, 0, 4, MSG_HELP_4 ), stderr );
 	fputs( catgets( cat, 0, 5, MSG_HELP_5 ), stderr );
+	fputs( catgets( cat, 0, 6, MSG_HELP_5 ), stderr );
+	fputs( catgets( cat, 0, 7, MSG_HELP_5 ), stderr );
+	fputs( catgets( cat, 0, 8, MSG_HELP_5 ), stderr );		
 	
 	exit( err );
 	
@@ -188,40 +199,103 @@ static void PrintUsageAndExit(int err)
 
 static int GetOptions(char *argString)
 {
-	int argIndex;
+	int argIndex, i;
+	uint32_t d, bufsiz= 0;
 	char c, *s;
+	int vset= 0;
+	int bset= 0;
+	int lset= 0;
 	
-	for ( argIndex= 0; argString[argIndex] != '\0'; ++argIndex ) {
-	
-		switch ( argString[argIndex] ) {
+	for ( argIndex= 0; argString[argIndex] != '\0'; ++argIndex )
+	{
+		switch ( argString[argIndex] )
+		{
 			case ' ':
 			case '\t':
 				break;	// Skip spaces
 			
 			case '/':
 			case '-':
-				switch ( c= toupper(argString[++argIndex]) ) {
+				switch ( c= toupper(argString[++argIndex]) )
+				{
 					case 'H':
 					case '?':
-						PrintUsageAndExit( ERR_SUCCESS );
+						return 1;
+						break;
+					case 'Q':
+						if ( vset++ )
+						{
+							return 2;	// /Q or /V already set
+						}
+						verbosity = 0;
 						break;
 					case 'V':
-						++verbose;
+						if ( vset++ )
+						{
+							return 2;	// /Q or /V already set
+						}
+						verbosity = 2;
+						break;
+					case 'B':
+						if ( bset++ || argString[++argIndex] != ':' )
+						{
+							return 2; // Already been here or option needs a number
+						}
+						s = &argString[++argIndex];
+						for ( i= 0; isdigit( s[i] ) ; ++i, ++argIndex );
+						if ( i != 0 )
+						{
+							d = 1;
+							while ( i-- )
+							{
+								bufsiz += ( s[i] - 0x30 ) * d;
+								if ( bufsiz > UINT16_MAX )
+								{
+									bufsiz = UINT16_MAX;
+									break; // bufsiz too large
+								}
+								d *= 10;
+							}
+							if ( toupper( argString[argIndex] ) == 'K' )
+							{
+								if ( bufsiz > ( UINT16_MAX >> 10 ) )
+								{
+									bufsiz = UINT16_MAX;
+								}
+								else
+								{
+									bufsiz <<= 10;
+								}
+							}
+							else
+							{
+								--argIndex;
+							}
+						}
+						else
+						{
+							return 2; // Not a number
+						}
+						*fpBufferSize = (uint16_t) bufsiz;
 						break;
 					case 'L':
-						if ( argString[++argIndex] != ':' )
-							return -1; // Needs a drive letter
+						if ( lset++ || argString[++argIndex] != ':' )
+						{
+							return 2; // /L already set or needs a drive letter
+						}
 						if ( !isalpha( c= toupper( argString[++argIndex] ) ) )
-							return -1; // Missing or invalid drive letter
+						{
+							return 2; // Missing or invalid drive letter
+						}
 						*fpDriveNum = c - 'A';
 						break;
 					default:
-						return -1; // Invalid option
+						return 2; // Invalid option
 				}
 				break;
 	
 			default:
-				return -1; // Non switch
+				return 2; // Non switch
 		}
 	}
 	
@@ -248,7 +322,7 @@ static int GetNLS(void)
 	intdosx( &r, &r, &s );
 
 	if ( r.x.cx != 5 )
-		return -1;
+		return 1;
 
 	*fpfpFUcase = (uint8_t far *)nlsTable.pTableData + 2;	// Skip size word
 
@@ -259,7 +333,7 @@ static int GetNLS(void)
 	intdosx( &r, &r, &s );
 
 	if ( r.x.cx != 5 )
-		return -1;
+		return 1;
 
 	*fpfpFChar = (FChar far *)nlsTable.pTableData ;
 	
@@ -279,7 +353,7 @@ static int GetSDA(void)
 	intdosx( &r, &r, &s );
 	
 	if ( !s.ds && !r.x.si )
-		return -1;
+		return 1;
 		
 	*fpfpSDA = (SDA far *) MK_FP( s.ds, r.x.si );
 	*fpfpSDB = &(*fpfpSDA)->findFirst;
@@ -301,7 +375,7 @@ static int GetSysVars(void)
 	intdosx(&r, &r, &s);
 	
 	if ( !s.es && !r.x.bx )
-		return -1;
+		return 1;
 
 	fpSysVars = (SysVars far *) MK_FP( s.es, r.x.bx - SYSVARS_DECR );
 	
@@ -318,7 +392,7 @@ static int SetCDS(void)
 		currDir = &fpSysVars->currDir[*fpDriveNum];
 		if ( currDir->flags & 0xC000 ) {
 			fprintf(stderr, catgets( cat, 1, 0, MSG_ERROR_INUSE ), *fpDriveNum + 'A');
-			return -1;
+			return 1;
 		}
 	}
 	else {
@@ -330,7 +404,7 @@ static int SetCDS(void)
 		
 		if ( *fpDriveNum == fpSysVars->lastDrive ) {
 			fprintf(stderr, catgets( cat, 1, 1, MSG_ERROR_NO_DRIVES ), fpSysVars->lastDrive + '@');
-			return -1;
+			return 1;
 		}
 	}
 	
@@ -392,7 +466,7 @@ static void LoadUnicodeConversionTable(void)
 	
 	sprintf( filename, r.x.bx > 999 ? "c%duni.tbl" : "cp%duni.tbl", r.x.bx );
 	
-	VERB_PRINTF( catgets( cat, 9, 2, MSG_INFO_TBL ), r.x.bx, filename );
+	VERB_PRINTF( 2, catgets( cat, 9, 2, MSG_INFO_TBL ), r.x.bx, filename );
 	
 	_searchenv( filename, "PATH", fullpath);
 	if ( '\0' == fullpath[0] )
@@ -464,9 +538,35 @@ static void GetTimezoneOffset(void)
 	
 		*fpGmtOffset = localTime - utcTime;
 	
-		VERB_PRINTF( catgets( cat, 9, 1, MSG_INFO_TZ ), *fpGmtOffset );
+		VERB_PRINTF( 2, catgets( cat, 9, 1, MSG_INFO_TZ ), *fpGmtOffset );
 	}
 	return;
+}
+
+static uint16_t SetActualBufferSize( void )
+{
+	uint16_t transientSize = (uint16_t) EndOfTransientBlock - (uint16_t) BeginOfTransientBlock;
+	
+	if (*fpBufferSize > transientSize || *fpBufferSize > VMSHF_MAX_BLOCK_SIZE
+													|| *fpBufferSize < VMSHF_MIN_BLOCK_SIZE )
+	{
+		return ( ( transientSize > VMSHF_MAX_BLOCK_SIZE ) ? VMSHF_MAX_BLOCK_SIZE : transientSize );
+	}
+
+	*fpMaxDataSize = VMSHF_MAX_DATA_SIZE( *fpBufferSize );
+	
+	return 0;
+}
+
+static uint16_t SizeOfResidentSegmentInParagraphs( void )
+{
+	uint16_t	sizeInBytes;
+	
+	sizeInBytes	= (uint16_t) BeginOfTransientBlock + *fpBufferSize;
+	sizeInBytes	+= 0x100;	// Size of PSP (do not add when building .COM executable)
+	sizeInBytes	+= 15;		// Make sure nothing gets lost in partial paragraph
+
+	return sizeInBytes >> 4;
 }
 
 int main(int argc, char **argv)
@@ -475,7 +575,7 @@ int main(int argc, char **argv)
 	char		argString[128];
 	uint16_t	magic= VMSMOUNT_MAGIC;
 	int			tblSize;
-	int			ret;
+	uint16_t	ret;
 	uint16_t	paragraphs;
 	
 	cat = catopen( "VMSMOUNT", 0 );
@@ -490,7 +590,7 @@ int main(int argc, char **argv)
 		fputs( catgets(cat, 1, 3, MSG_ERROR_NOVIRT ), stderr );
 		return( ERR_NOVIRT );
 	}
-	
+
 	// Check OS version. Only DOS >= 5.0 is supported
 	//
 	if ( _osmajor < 5 )
@@ -501,10 +601,18 @@ int main(int argc, char **argv)
 	
 	GetFarPointersToResidentData();
 	
-	if ( GetOptions( getcmd( argString ) ) )
+	ret = GetOptions( getcmd( argString ) );
+	
+	if ( ret == 1 )		// User requested help
+	{
+		PrintUsageAndExit( ERR_SUCCESS );
+	}
+	if ( ret == 2 )		// Invalid option
 	{
 		PrintUsageAndExit( ERR_BADOPTS );
 	}
+
+	VERB_PRINTF( 1, MSG_COPYRIGHT );
 
 	if ( VMAuxCheckVirtual() )
 	{
@@ -559,7 +667,16 @@ int main(int argc, char **argv)
 	
 	LoadUnicodeConversionTable();
 	GetTimezoneOffset();
-	
+
+	ret = SetActualBufferSize();
+
+	if ( ret )
+	{
+		fprintf( stderr, catgets( cat, 1, 17, MSG_ERROR_BUFFER ), VMSHF_MIN_BLOCK_SIZE, ret );
+		ret = ERR_BUFFER;
+		goto err_close;
+	}
+			
 	if ( *fpDriveNum != 0xFF && !( *fpDriveNum < fpSysVars->lastDrive ) )
 	{
 		fprintf(stderr, catgets( cat, 1, 4, MSG_ERROR_INVALID_DRIVE ),
@@ -573,15 +690,16 @@ int main(int argc, char **argv)
 		ret = ERR_SYSTEM;
 		goto err_close;
 	}
-	
+
 	*fpfpPrevInt2fHandler = _dos_getvect( 0x2F );
 	_dos_setvect( 0x2f, fpNewInt2fHandler );	
 
-	paragraphs = GetSizeOfResidentSegmentInParagraphs();
-	VERB_PRINTF( catgets( cat, 9, 3, MSG_INFO_LOAD ), paragraphs << 4 );
+	paragraphs = SizeOfResidentSegmentInParagraphs();
+	VERB_PRINTF( 2, catgets( cat, 9, 3, MSG_INFO_LOAD ), paragraphs << 4 );
 
 	fprintf( stderr, catgets( cat, 2, 0, MSG_INFO_MOUNT ), *fpDriveNum + 'A' );
 	
+	catclose( cat );
 	flushall();		// Flush all streams before returning to DOS
 	_dos_keep( *fpDriveNum + 1, paragraphs );
 
