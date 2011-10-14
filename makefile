@@ -23,6 +23,7 @@
 # 2011-10-14  Eduardo           Back to -3 optims as they generate the same
 #                               code. Use -0 for main.c and kitten.c to allow
 #                               execution of processor test.
+#                               Reorder segments to mark end of transient part
 #
 
 CC = wcc
@@ -32,12 +33,13 @@ UPX = upx
 RM = rm -f
 CFLAGS  = -bt=dos -ms -q -s -oh -os
 ASFLAGS = -f obj -Worphan-labels -O9
-LDFLAGS = SYSTEM dos OPTION QUIET OPTION MAP=vmsmount.map
+LDFLAGS = SYSTEM dos ORDER clname CODE segment BEGTEXT segment _TEXT segment ENDTEXT clname FAR_DATA clname BEGDATA clname DATA clname BSS clname STACK OPTION QUIET OPTION MAP=vmsmount.map
+#LDFLAGS = SYSTEM dos OPTION QUIET OPTION MAP=vmsmount.map
 UPXFLAGS = -9
 
 TARGET = vmsmount.exe
 
-OBJ = kitten.obj vmaux.obj main.obj miniclib.obj vmint.obj unicode.obj vmdos.obj vmcall.obj vmtool.obj vmshf.obj redir.obj
+OBJ = kitten.obj vmaux.obj main.obj miniclib.obj vmint.obj unicode.obj vmdos.obj vmcall.obj vmtool.obj vmshf.obj redir.obj endtext.obj
 
 
 all: $(TARGET)
@@ -60,7 +62,7 @@ kitten.obj: kitten.c
 
 kitten.obj: kitten.h
 
-main.obj: globals.h kitten.h messages.h vmaux.h vmshf.h vmtool.h dosdefs.h redir.h unicode.h
+main.obj: globals.h kitten.h messages.h vmaux.h vmshf.h vmtool.h dosdefs.h redir.h unicode.h endtext.h
 
 vmcall.obj: vmcall.h 
 
@@ -73,6 +75,7 @@ vmtool: vmtool.h vmcall.h
 vmshf: vmtool.h vmshf.h vmcall.h vmint.h vmdos.h redir.h miniclib.h
 
 vmdos: vmint.h dosdefs.h vmdos.h vmint.h vmshf.h vmtool.h vmcall.h miniclib.h unicode.h
+
 
 %.obj : %.c
 	$(CC) -3 $(CFLAGS) -fo=$@ $<
