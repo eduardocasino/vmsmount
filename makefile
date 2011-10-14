@@ -20,6 +20,9 @@
 #
 # 2011-10-01  Eduardo           Add UPX compression
 # 2011-10-05  Tom Ehlert        Use Pentium optims for smaller code
+# 2011-10-14  Eduardo           Back to -3 optims as they generate the same
+#                               code. Use -0 for main.c and kitten.c to allow
+#                               execution of processor test.
 #
 
 CC = wcc
@@ -27,9 +30,9 @@ AS = nasm
 LD = wlink
 UPX = upx
 RM = rm -f
-CFLAGS  = -5 -bt=dos -ms -q -s -oh -os
+CFLAGS  = -bt=dos -ms -q -s -oh -os
 ASFLAGS = -f obj -Worphan-labels -O9
-LDFLAGS = SYSTEM dos OPTION QUIET
+LDFLAGS = SYSTEM dos OPTION QUIET OPTION MAP=vmsmount.map
 UPXFLAGS = -9
 
 TARGET = vmsmount.exe
@@ -46,23 +49,33 @@ $(TARGET): $(OBJ)
 	$(LD) $(LDFLAGS) NAME $(TARGET) FILE {$(OBJ)} $(LIBPATH) $(LIBRARY)
 	$(UPX) $(UPXFLAGS) $(TARGET)
 
-kitten.obj:: kitten.h
+# main.obj and kitten.obj must be compiled with 8086 instructions only to gracefully
+#  execute the processor check in real, older machines
+#
+main.obj: main.c
+	$(CC) -0 $(CFLAGS) -fo=$@ $<
 
-main.obj:: globals.h kitten.h messages.h vmaux.h vmshf.h vmtool.h dosdefs.h redir.h unicode.h
+kitten.obj: kitten.c
+	$(CC) -0 $(CFLAGS) -fo=$@ $<
 
-vmaux.obj:: vmcall.h vmtool.h globals.h messages.h vmshf.h kitten.h
+kitten.obj: kitten.h
 
-redir.obj:: globals.h redir.h dosdefs.h vmshf.h vmtool.h vmcall.h vmdos.h vmint.h miniclib.h
+main.obj: globals.h kitten.h messages.h vmaux.h vmshf.h vmtool.h dosdefs.h redir.h unicode.h
 
-vmtool:: vmtool.h vmcall.h
+vmcall.obj: vmcall.h 
 
-vmshf:: vmtool.h vmshf.h vmcall.h vmint.h vmdos.h redir.h miniclib.h
+vmaux.obj: vmcall.h vmtool.h globals.h messages.h vmshf.h kitten.h
 
-vmdos:: vmint.h dosdefs.h vmdos.h vmint.h vmshf.h vmtool.h vmcall.h miniclib.h unicode.h
+redir.obj: globals.h redir.h dosdefs.h vmshf.h vmtool.h vmcall.h vmdos.h vmint.h miniclib.h
 
+vmtool: vmtool.h vmcall.h
+
+vmshf: vmtool.h vmshf.h vmcall.h vmint.h vmdos.h redir.h miniclib.h
+
+vmdos: vmint.h dosdefs.h vmdos.h vmint.h vmshf.h vmtool.h vmcall.h miniclib.h unicode.h
 
 %.obj : %.c
-	$(CC) $(CFLAGS) -fo=$@ $<
+	$(CC) -3 $(CFLAGS) -fo=$@ $<
 
 %.obj : %.asm
 	$(AS) $(ASFLAGS) -o $@ $<
