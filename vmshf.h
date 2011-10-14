@@ -29,20 +29,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-10-15  Eduardo           * Configurable buffer size and code cleanup
+ *
  */
 
 #include <stdint.h>
 #include "vmtool.h"
 
 /*
+	absolute maximum transfer block size for HGFS V3 servers. Do not exceed!!!
+*/
+#define VMSHF_MAX_BLOCK_SIZE	61440
+
+/*
 	default transfer block size
 */
-#define VMSHF_BLOCK_SIZE		4096
+#define VMSHF_DEF_BLOCK_SIZE	4096
+
+/*
+	minimum ransfer block size
+*/
+#define VMSHF_MIN_BLOCK_SIZE	2048
 
 /*
 	data transfer buffer size required for shared folder RPC call
 */
-#define VMSHF_MAX_DATA_SIZE	(VMSHF_BLOCK_SIZE - ( sizeof( DataReq ) -1 ) )
+#define VMSHF_MAX_DATA_SIZE(BLOCK_SIZE)	(BLOCK_SIZE - ( sizeof( DataReq ) -1 ) )
 
 /*
 	max path string length
@@ -596,16 +609,9 @@ typedef union {
 
 #pragma pack(pop)
 
-
-/*
-	shared folder context struct
-*/
-typedef struct {
-	rpc_t	rpc;				// RPC context
-	uint8_t *buf;				// data transfer buffer
-} shf_t;
-
-extern shf_t shf;
+extern rpc_t rpc;
+extern uint16_t bufferSize;
+extern uint16_t maxDataSize;
 
 #define VMShfCloseFile( H, ST )			VMShfCloseFileDir( VMSHF_CLOSE_FILE_V3, H, ST )
 #define VMShfCloseDir( H, ST )			VMShfCloseFileDir( VMSHF_CLOSE_DIR_V3, H, ST )

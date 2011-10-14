@@ -30,6 +30,8 @@
  *
  * 2011-10-05  Tom Ehlert        * New definitions for Request and
  *                                 Reply macros for smaller code
+ * 2011-10-15  Eduardo           * Configurable buffer size and code cleanup
+ *
  */
 
 #include <stdlib.h>
@@ -44,15 +46,16 @@
 #pragma data_seg("BEGTEXT", "CODE");
 #pragma code_seg("BEGTEXT", "CODE");
 
-static uint8_t buffer[VMSHF_BLOCK_SIZE] = {0};
+uint16_t bufferSize = VMSHF_DEF_BLOCK_SIZE;
+uint16_t maxDataSize = VMSHF_MAX_DATA_SIZE(VMSHF_DEF_BLOCK_SIZE);
 
-shf_t shf = {
-	{
-		0,				// channel
-		0,				// cookie1
-		0				// cookie2
-	},							// rpc
-	(uint8_t *)&buffer[0]
+static uint8_t *buffer = (uint8_t *) BeginOfTransientBlock;
+
+rpc_t rpc =
+{
+	0,				// channel
+	0,				// cookie1
+	0				// cookie2
 };
 
 /*
@@ -63,33 +66,33 @@ static int ExecuteRpc( uint32_t *length )
 	int ret;
 	uint16_t id;
 
-	ret = VMRpcSend( &(shf.rpc), shf.buf, *length );
+	ret = VMRpcSend( &rpc, buffer, *length );
 
 	if ( ret != VMTOOL_SUCCESS )
 	{
 		return ret;
 	}
 
-	ret = VMRpcRecvLen( &(shf.rpc), length, &id );
+	ret = VMRpcRecvLen( &rpc, length, &id );
 
 	if ( ret != VMTOOL_SUCCESS )
 	{
 		return ret;
 	}
 
-	if ( *length > VMSHF_BLOCK_SIZE )
+	if ( *length > bufferSize )
 	{
 		return VMTOOL_RPC_ERROR;
 	}
 
-	ret = VMRpcRecvDat( &(shf.rpc), shf.buf, *length, id );
+	ret = VMRpcRecvDat( &rpc, buffer, *length, id );
 
 	if ( ret != VMTOOL_SUCCESS )
 	{
 		return ret;
 	}
 
-	if ( *length < 10 || (char)shf.buf[0] != '1' || (char)shf.buf[1] != ' ' )
+	if ( *length < 10 || (char)buffer[0] != '1' || (char)buffer[1] != ' ' )
 	{
 		return VMTOOL_RPC_ERROR;
 	}	
@@ -186,7 +189,7 @@ int VMShfReadFile(
 	
 	Request->data.handle	= handle;
 	Request->data.offset	= offset;
-	Request->data.size		= *length > VMSHF_MAX_DATA_SIZE ? VMSHF_MAX_DATA_SIZE : *length;
+	Request->data.size		= *length > maxDataSize ? maxDataSize : *length;
 
 	datalen = sizeof( VMShfReadFileRequest );
 
@@ -242,7 +245,7 @@ int VMShfWriteFile(
 	Request->data.offset	= offset;
 	Request->data.reserved	= 0;
 	
-	datalen = *length > VMSHF_MAX_DATA_SIZE ? VMSHF_MAX_DATA_SIZE : *length;
+	datalen = *length > maxDataSize ? maxDataSize : *length;
 	
 	Request->data.size		= datalen;
 	_fmemcpy_local( MK_FP( myDS, &Request->data.data ), data, datalen ); 
