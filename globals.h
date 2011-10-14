@@ -27,6 +27,9 @@
  *                               * bump version number to 0.2
  * 2011-10-02  Eduardo           * bump version number to 0.3
  * 2011-10-09  Eduardo           * bump version number to 0.4
+ * 2011-10-15  Eduardo           * New errorlevel ERR_BUFFER
+ *                               * New verbosity options
+ *
  */
 
 #include "kitten.h"
@@ -42,6 +45,7 @@
 #define FALSE	0
 
 #define ERR_SUCCESS	0
+#define ERR_BUFFER	247
 #define ERR_BADOPTS	248
 #define ERR_WRONGOS	249
 #define ERR_NOVIRT	250
@@ -51,11 +55,12 @@
 #define ERR_BADDRV	254
 #define ERR_SYSTEM	255
 
-#define VERB_PRINTF(...) if (verbose) printf(__VA_ARGS__)
+
+#define VERB_PRINTF(L, ...) if ( verbosity >= L ) printf( __VA_ARGS__ )
 
 extern nl_catd cat;
-extern int verbose;
+extern int verbosity;
 
-extern shf_t far *fpShf;
+extern rpc_t far *fpRpc;
 
 #endif /* _GLOBALS_H */
