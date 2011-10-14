@@ -13,11 +13,14 @@ WARNING AND DISCLAIMER
  
 USAGE
 
- VMSMOUNT [/H][/V] [/L:<drive letter>]
+ VMSMOUNT [/H][/V] [/L:<drive letter>] [B:<size>[K]]
 	/H                 - Prints help and exits
 	/V                 - Verbose: Prints information on system resources
+	/Q                 - Quiet: Omits copyright message
 	/L:<drive letter>  - Drive letter to assign
 	                     (if omitted, use the first available)
+	/B:<size[K]>       - Size of read/write buffer
+	                     (4K default, higher values increase performance)
 
 ENVIRONMENT
 
@@ -51,6 +54,7 @@ RETURN CODES (ERRORLEVELS)
 	ERRORLEVEL  Meaning
 	~~~~~~~~~~  ~~~~~~~
 	    0       Not loaded (help screen requested)
+	  247       Invalid buffer size
 	  248       Invalid command line option(s)
 	  249       Unsupported DOS version
 	  250       Not running in a virtual machine
