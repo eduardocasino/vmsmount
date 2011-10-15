@@ -31,6 +31,8 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-15  Eduardo           * Configurable buffer size and code cleanup
+ *                               * Allow VMShfSetAttr() to be called by handle
+ *                                 (Needed for fixing the "write 0" bug)
  *
  */
 
@@ -694,6 +696,7 @@ int VMShfGetAttr(				// ret: backdoor error code
 int VMShfSetAttr(				// ret: backdoor error code
 	VMShfAttr	*fileattr,		// in : file attributes
 	char far	*filename,		// in : file name
+	uint32_t	handle,			// in : if valid, use instead of file name
 	uint32_t	*status);		// out: shared folder status
 
 /*

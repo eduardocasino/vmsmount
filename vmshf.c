@@ -31,6 +31,8 @@
  * 2011-10-05  Tom Ehlert        * New definitions for Request and
  *                                 Reply macros for smaller code
  * 2011-10-15  Eduardo           * Configurable buffer size and code cleanup
+ *                               * Allow VMShfSetAttr() to be called by handle
+ *                                 (Needed for fixing the "write 0" bug)
  *
  */
 
@@ -499,6 +501,7 @@ int VMShfGetAttr(
 int VMShfSetAttr(
 	VMShfAttr	*fileattr,
 	char far	*filename,
+	uint32_t	handle,
 	uint32_t	*status)
 {
 	uint32_t namelen, datalen;
@@ -510,16 +513,28 @@ int VMShfSetAttr(
 	Request->header.id			= 0;
 	Request->header.op			= VMSHF_SET_ATTR_V3;
 
-	Request->data.hints			= VMSHF_ATTR_HINT_NONE;
+	if ( handle != VMSHF_INVALID_HANDLE )
+	{
+		Request->data.hints			= VMSHF_ATTR_HINT_USE_HANDLE;
+		Request->data.file.flags	= VMSHF_FILE_NAME_USE_HANDLE;
+		namelen 					= 0;
+		Request->data.file.name[0]	= '\0';
+	}
+	else
+	{
+		Request->data.hints			= VMSHF_ATTR_HINT_NONE;
+		Request->data.file.flags	= VMSHF_FILE_NAME_USE_NAME;
+		namelen = DosPathToPortable( &Request->data.file.name, filename );
+	}
+	
+	
+	
 	Request->data.reserved		= 0;
+	Request->data.file.length	= namelen;
+	Request->data.file.caseType	= VMSHF_CASE_INSENSITIVE;
+	Request->data.file.handle	= handle;
 	
 	memcpy_local( &Request->data.attr, fileattr, sizeof ( VMShfAttr ) );
-	
-	namelen = DosPathToPortable( &Request->data.file.name, filename );
-	Request->data.file.length	= namelen;
-	Request->data.file.flags	= VMSHF_FILE_NAME_USE_NAME;
-	Request->data.file.caseType	= VMSHF_CASE_INSENSITIVE;
-	Request->data.file.handle	= VMSHF_INVALID_HANDLE;
 	
 	datalen = sizeof( VMShfSetAttrRequest ) + namelen;
 
