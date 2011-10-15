@@ -25,6 +25,8 @@
  * 2011-10-06                    * Increase stack size
  * 2011-10-15  Eduardo           * Support for configurable buffer size using
  *                                 the transient code space
+ * 2011-10-15  Eduardo           * BUGFIX: Handle the "write 0" case (writing
+ *                                 0 bytes to a file truncates it)
  */
 
 #include <dos.h>
@@ -385,7 +387,9 @@ static void WriteFile( void )
 	uint32_t status;
 	uint32_t length, towrite;
 	char far *buffer; 
-
+	VMShfAttr *oldAttr;
+	static VMShfAttr newAttr;
+	
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
 
 	if ( !(fpSFT->openMode & (O_WRONLY|O_RDWR)) )
@@ -393,9 +397,35 @@ static void WriteFile( void )
 		Failure( DOS_ACCESS );
 		return;
 	}
-	
+			
 	fpSFT->fileTime = GetDosTime();
 
+	// Tricky: If size is 0, truncate file
+	//
+	if ( ! r->w.cx )
+	{
+		ret = VMShfGetAttr( NULL, fpSFT->handle, &status, &oldAttr );
+		
+		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+		{
+			Failure( DOS_ACCESS );
+			return;
+		}
+
+		memcpy_local( &newAttr, oldAttr, sizeof( VMShfAttr ) );
+		newAttr.fsize = 0ui64;
+		
+		ret = VMShfSetAttr ( &newAttr, NULL, fpSFT->handle, &status );
+		
+		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+		{
+			Failure( DOS_ACCESS );
+			return;
+		}
+
+		return;
+	}
+		
 	buffer	= fpSDA->fpCurrentDTA;
 	towrite	= (uint32_t)r->w.cx;
 	
@@ -519,7 +549,7 @@ static void SetFileAttrib( void )
 		return;
 	}
 	
-	ret = VMShfSetAttr( FatAttrToFMode( (uint8_t) *fpStackParam ), fpFileName1, &status );
+	ret = VMShfSetAttr( FatAttrToFMode( (uint8_t) *fpStackParam ), fpFileName1, VMSHF_INVALID_HANDLE, &status );
 	
 	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 	{
