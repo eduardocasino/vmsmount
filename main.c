@@ -41,6 +41,7 @@
  * 2011-10-09  Eduardo           * Add a CPU test
  * 2011-10-15  Eduardo           * Configurable buffer size
  *                               * New verbosity options
+ *             Tom Ehlert        * Replace fscanf_s() with a much lighter implementation
  *
  */ 
 #define __STDC_WANT_LIB_EXT1__ 1
@@ -442,7 +443,7 @@ static void LoadUnicodeConversionTable(void)
 	char buffer[256];
 	struct stat filestat;
 	FILE *f;
-	int ret;
+	int i, ret;
 	
 	// get current Code Page
 	//
@@ -483,11 +484,38 @@ static void LoadUnicodeConversionTable(void)
 		goto error;
 	}
 	
+	// Tom: this fscanf_s implementation is VERY handy - but costs 5 K .exe size (3 K packed)
+	// therefore I'm tempted to implement this manually
+#if 0	
 	if ( EOF == fscanf_s( f, "Unicode (%s)", buffer, sizeof( buffer) ) )
 	{
 		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
+#else
+	if ( fread( buffer, 1, 9, f ) != 9 ||     // "Unicode (
+						memcmp( buffer, "Unicode (", 9 ) != 0 )
+	{
+		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
+		goto close;
+	}   
+
+	memset( buffer, 0, sizeof( buffer ) );
+	                                          
+	for ( i = 0; i < sizeof( buffer ); i++ )
+	{
+		if ( fread( buffer+i, 1, 1, f ) != 1 )
+		{
+			fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
+			goto close;
+		}
+		if ( buffer[i] == ')' )  
+		{
+			buffer[i] = 0;
+			break;	
+		}
+	}
+#endif	
 
 	ret = fread( buffer, 1, 3, f );
 
