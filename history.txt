@@ -1,7 +1,7 @@
 Version 0.4 (2011-??-??)
 
   * Add CPU test
-  * Optimizations and cleanup for smaller, more efficient code
+  * Optimizations and cleanup for smaller, more efficient code (Tom, me)
   * Configurable read/write buffer size (new /B option)
   * New /Q (quiet) option
   * ...
