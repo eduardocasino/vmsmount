@@ -1,3 +1,11 @@
+Version 0.4 (2011-??-??)
+
+  * Add CPU test
+  * Optimizations and cleanup for smaller, more efficient code (Tom, me)
+  * Configurable read/write buffer size (new /B option)
+  * New /Q (quiet) option
+  * ...
+
 Version 0.3 (2011-10-07)
 
   * BUGFIX: stack too small (Tom Ehlert)
