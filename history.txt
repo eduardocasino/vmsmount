@@ -1,5 +1,6 @@
 Version 0.4 (2011-??-??)
 
+  * BUGFIX: writing 0 bytes to a file MUST truncate it
   * Add CPU test
   * Optimizations and cleanup for smaller, more efficient code (Tom, me)
   * Configurable read/write buffer size (new /B option)
