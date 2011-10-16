@@ -400,7 +400,7 @@ static void WriteFile( void )
 			
 	fpSFT->fileTime = GetDosTime();
 
-	// Tricky: If size is 0, truncate file
+	// Tricky: If size is 0, truncate to current file position
 	//
 	if ( ! r->w.cx )
 	{
@@ -413,7 +413,7 @@ static void WriteFile( void )
 		}
 
 		memcpy_local( &newAttr, oldAttr, sizeof( VMShfAttr ) );
-		newAttr.fsize = 0ui64;
+		newAttr.fsize = (uint64_t) fpSFT->filePos;
 		
 		ret = VMShfSetAttr ( &newAttr, NULL, fpSFT->handle, &status );
 		
@@ -422,6 +422,8 @@ static void WriteFile( void )
 			Failure( DOS_ACCESS );
 			return;
 		}
+
+		fpSFT->fileSize = fpSFT->filePos;
 
 		return;
 	}
