@@ -461,7 +461,7 @@ static void LoadUnicodeConversionTable(void)
 	if ( r.x.cflag ) {
 		// Can't get codepage. Use ASCII only
 		//
-		fputs( catgets( cat, 1, 15, MSG_WARN_CP ), stderr );
+		fputs( catgets( cat, 1, 16, MSG_WARN_CP ), stderr );
 		goto error;
 	}
 	
@@ -472,7 +472,7 @@ static void LoadUnicodeConversionTable(void)
 	_searchenv( filename, "PATH", fullpath);
 	if ( '\0' == fullpath[0] )
 	{
-		fprintf( stderr, catgets( cat, 1, 12, MSG_WARN_NOTBL ), filename );
+		fprintf( stderr, catgets( cat, 1, 13, MSG_WARN_NOTBL ), filename );
 		goto error;
 	}
 	
@@ -480,7 +480,7 @@ static void LoadUnicodeConversionTable(void)
 	
 	if ( NULL == f )
 	{
-		fprintf( stderr, catgets( cat, 1, 13, MSG_WARN_UNICODE ), filename );
+		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_UNICODE ), filename );
 		goto error;
 	}
 	
@@ -489,14 +489,14 @@ static void LoadUnicodeConversionTable(void)
 #if 0	
 	if ( EOF == fscanf_s( f, "Unicode (%s)", buffer, sizeof( buffer) ) )
 	{
-		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 #else
 	if ( fread( buffer, 1, 9, f ) != 9 ||     // "Unicode (
 						memcmp( buffer, "Unicode (", 9 ) != 0 )
 	{
-		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}   
 
@@ -506,7 +506,7 @@ static void LoadUnicodeConversionTable(void)
 	{
 		if ( fread( buffer+i, 1, 1, f ) != 1 )
 		{
-			fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
+			fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_TBLFORMAT ), filename );
 			goto close;
 		}
 		if ( buffer[i] == ')' )  
@@ -521,13 +521,13 @@ static void LoadUnicodeConversionTable(void)
 
 	if ( ret != 3 || buffer[0] != '\r' || buffer[1] != '\n' || buffer[2] != 1 )
 	{
-		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 	
 	if ( 256 != (ret = fread( buffer, 1, 256, f )) )
 	{
-		fprintf( stderr, catgets( cat, 1, 13, MSG_WARN_UNICODE ), filename );
+		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_UNICODE ), filename );
 		goto close;
 	}
 	
@@ -539,7 +539,7 @@ static void LoadUnicodeConversionTable(void)
 close:
 	fclose( f );
 error:
-	fputs( catgets( cat, 1, 16, MSG_WARN_437 ), stderr );
+	fputs( catgets( cat, 1, 17, MSG_WARN_437 ), stderr );
 	
 }
 
@@ -553,7 +553,7 @@ static void GetTimezoneOffset(void)
 	
 	if ( NULL == tz )
 	{
-		fputs( catgets( cat, 1, 11, MSG_WARN_TIMEZONE ), stderr );
+		fputs( catgets( cat, 1, 12, MSG_WARN_TIMEZONE ), stderr );
 	}
 	else
 	{
@@ -700,7 +700,7 @@ int main(int argc, char **argv)
 
 	if ( ret )
 	{
-		fprintf( stderr, catgets( cat, 1, 17, MSG_ERROR_BUFFER ), VMSHF_MIN_BLOCK_SIZE, ret );
+		fprintf( stderr, catgets( cat, 1, 11, MSG_ERROR_BUFFER ), VMSHF_MIN_BLOCK_SIZE, ret );
 		ret = ERR_BUFFER;
 		goto err_close;
 	}
