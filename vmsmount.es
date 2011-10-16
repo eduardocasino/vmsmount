@@ -25,13 +25,13 @@
 1.8: ERROR: No se han encontrado Carpetas Compartidas.\n
 1.9: ERROR: No se puede obtener la SDA\n
 1.10: ERROR: No se pueden obtener las tablas NLS.\n
-1.11: ADVERTENCIA: TZ no definido, los tiempos se mostrar n en UTC.\n
-1.12: ADVERTENCIA: No se encontr¢ la tabla Unicode: %s
-1.13: ADVERTENCIA: No pudo cargarse tabla Unicode: %s
-1.14: ADVERTENCIA: Formato de archivo incorrecto: %s
-1.15: ADVERTENCIA: P gina de c¢digos activa no encontrada
-1.16:. Se usar  cp437.\n
-1.17: ERROR: Tama¤o del buffer debe estar entre %u y %u bytes\n
+1.11: ERROR: Tama¤o del buffer debe estar entre %u y %u bytes\n
+1.12: ADVERTENCIA: TZ no definido, los tiempos se mostrar n en UTC.\n
+1.13: ADVERTENCIA: No se encontr¢ la tabla Unicode: %s
+1.14: ADVERTENCIA: No pudo cargarse tabla Unicode: %s
+1.15: ADVERTENCIA: Formato de archivo incorrecto: %s
+1.16: ADVERTENCIA: P gina de c¢digos activa no encontrada
+1.17:. Se usar  cp437.\n
 2.0: Montando carpetas compartidas en %c:\n
 9.0: INFO: Funcionando en VMware %s Versi¢n %lu\n
 9.1: INFO: Diferencia con UTC en segundos: %ld\n
