@@ -25,13 +25,13 @@
 1.8: FOUT: Geen Shared Folders gevonden.\n
 1.9: FOUT: Kan de SDA niet achterhalen!\n
 1.10: FOUT: Kan de NLS tabellen niet achterhalen.\n
-1.11: WAARSCHUWING: TZ ongeldig of niet gedefinieerd, tijden worden weergegeven als UTC.\n
-1.12: WAARSCHUWING: Kan Unicode tabel niet vinden: %s
-1.13: WAARSCHUWING: Kan Unicode tabel niet laden: %s
-1.14: WAARSCHUWING: Ongeldig bestandsformaat: %s
-1.15: WAARSCHUWING: Actieve codepagina niet gevonden
-1.16:. Tijd om terug te vallen op cp437\n
-1.17: ERROR: Buffer size must be between %u and %u bytes\n
+1.11: ERROR: Buffer size must be between %u and %u bytes\n
+1.12: WAARSCHUWING: TZ ongeldig of niet gedefinieerd, tijden worden weergegeven als UTC.\n
+1.13: WAARSCHUWING: Kan Unicode tabel niet vinden: %s
+1.14: WAARSCHUWING: Kan Unicode tabel niet laden: %s
+1.15: WAARSCHUWING: Ongeldig bestandsformaat: %s
+1.16: WAARSCHUWING: Actieve codepagina niet gevonden
+1.17:. Tijd om terug te vallen op cp437\n
 2.0: Shared Folders gekoppeld onder %c:\n
 9.0: INFO: Werkend op VMware %s versie %lu\n
 9.1: INFO: UTC Offset is %ld seconds\n
