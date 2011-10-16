@@ -25,13 +25,13 @@
 1.8: ERROR: No Shared Folders found.\n
 1.9: ERROR: Can't get the SDA!\n
 1.10: ERROR: Can't get the NLS tables.\n
-1.11: WARNING: TZ invalid or not defined, times will be shown in UTC.\n
-1.12: WARNING: Can't find Unicode table: %s
-1.13: WARNING: Can't load Unicode table: %s
-1.14: WARNING: Invalid file format: %s
-1.15: WARNING: Active code page not found
-1.16:. Defaulting to cp437\n
-1.17: ERROR: Buffer size must be between %u and %u bytes\n
+1.11: ERROR: Buffer size must be between %u and %u bytes\n
+1.12: WARNING: TZ invalid or not defined, times will be shown in UTC.\n
+1.13: WARNING: Can't find Unicode table: %s
+1.14: WARNING: Can't load Unicode table: %s
+1.15: WARNING: Invalid file format: %s
+1.16: WARNING: Active code page not found
+1.17:. Defaulting to cp437\n
 2.0: Mounting Shared Folders in %c:\n
 9.0: INFO: Running on VMware %s Version %lu\n
 9.1: INFO: UTC Offset is %ld seconds\n
