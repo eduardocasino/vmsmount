@@ -25,6 +25,7 @@
  *
  * 2011-10-15  Eduardo           * Support for configurable buffer size using
  *                                 the transient code space
+ * 2011-10-17  Eduardo           * Signature struct for uninstallation
  */
 
 #include <dos.h>
@@ -33,6 +34,15 @@
 #include "vmshf.h"
 
 #define VMSMOUNT_MAGIC 'SF'
+
+#pragma pack(1)
+typedef struct {
+	char		signature[9];			// "VMSMOUNT"
+	uint16_t	psp;					// Our PSP
+	void far	*ourHandler;			// Our handler (points to Int2fRedirector() )
+	void far	*previousHandler;		// Handler we chain to and must be restored when uninstalled
+	rpc_t far	*fpRpc;					// Pointer to HGFS session data
+} Signature;
 
 extern void (__interrupt __far *fpPrevInt2fHandler)();
  
@@ -49,7 +59,7 @@ extern char			far *fpCurrentPath;
 
 extern __segment myDS;
 
-void __interrupt far Int2fRedirector( union INTPACK );
-uint16_t BeginOfTransientBlock( void );
+extern void __interrupt far Int2fRedirector( union INTPACK );
+extern uint16_t BeginOfTransientBlock( void );
 	
 #endif /* REDIR_H_ */
