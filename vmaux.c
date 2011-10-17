@@ -27,6 +27,8 @@
  *
  *  2011-10-11  Eduardo           * Use new inlined RPC backdoor functions
  *  2011-10-15  Eduardo           * New verbosity options and code cleanup
+ *  2011-10-17  Eduardo           * Pass session info as parameter to
+ *                                  VMAuxBeginSession() and VMAuxEndSession()
  */
  
 /*
@@ -344,7 +346,7 @@ int VMAuxCheckVirtual(void)
 /*
 	open an RPC channel for shared folder functions
 */
-int VMAuxBeginSession(void)
+int VMAuxBeginSession( rpc_t far *fpRpc )
 {
 	int ret;
 	uint32_t length;
@@ -401,7 +403,7 @@ error_exit:
 /*
 	release shared folder context
 */
-void VMAuxEndSession( void )
+void VMAuxEndSession( rpc_t far *fpRpc )
 {
 	rpc_t rpc;
 	

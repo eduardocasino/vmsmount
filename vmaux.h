@@ -22,15 +22,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ *  2011-10-17  Eduardo           * Pass session info as parameter to
+ *                                  VMAuxBeginSession() and VMAuxEndSession()
  */
 
 #include <stdint.h> 
 #include "redir.h"
 #include "vmshf.h"
  
-int VMAuxCheckVirtual(void);
-int VMAuxBeginSession(void);
-void VMAuxEndSession(void);
-
+int VMAuxCheckVirtual( void );
+int VMAuxBeginSession( rpc_t far * );
+void VMAuxEndSession( rpc_t far * );
 
 #endif /* _VMAUX_H_ */
