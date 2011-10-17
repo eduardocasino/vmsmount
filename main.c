@@ -35,16 +35,17 @@
  *   Long file names (really?)
  *
  *
- * 2011-10-01  Eduardo           * Fixed a bug in when printing default error messages
+ * 2011-10-01  Eduardo           * Fixed a bug when printing default error messages
  *                               * New errorlevels: If successful, returns drive number
  *                                 (starting with A == 1)
  * 2011-10-09  Eduardo           * Add a CPU test
  * 2011-10-15  Eduardo           * Configurable buffer size
  *                               * New verbosity options
  *             Tom Ehlert        * Replace fscanf_s() with a much lighter implementation
+ * 2011-10-17  Eduardo           * Fixed a (new) bug when printing default error messages
+ *                               * Uninstallation
  *
  */ 
-#define __STDC_WANT_LIB_EXT1__ 1
 #include <process.h>
 #include <dos.h>
 #include <env.h>
@@ -68,7 +69,9 @@
 
 PUBLIC nl_catd cat;
 PUBLIC int verbosity = 1;
+static int uninstall = 0;
 
+static struct SREGS segRegs;
 
 // Far pointers to resident data
 // These are set by GetFarPointersToResidentData()
@@ -97,7 +100,11 @@ static uint16_t	far *fpBufferSize;
 static uint16_t	far *fpMaxDataSize;
 
 static SysVars far *fpSysVars;
+static CDS far *currDir;
 static char far *rootPath = " :\\";
+
+static Signature signature;
+static char *myName = "VMSMOUNT";
 
 // CPU identification routine
 // (Info from http://www.ukcpu.net/Programming/Hardware/x86/CPUID/x86-ID.asp)
@@ -132,51 +139,42 @@ static uint8_t RunningIn386OrHigher( void );
 
 //	00h not installed, OK to install
 //	01h not installed, not OK to install 
-//	FFh:
-//       *magic == ~VMSMOUNT_MAGIC, installed
-//       *magic == VMSMOUNT_MAGIC, OK to install
+//	FFh some redirector is installed
 //
-static uint8_t InstallationCheck( uint16_t *magic );
+static uint8_t InstallationCheck( void );
 #pragma aux InstallationCheck =							\
-	"push word ptr [bx]"								\
 	"mov ax, 1100h"	/* Installation check */			\
 	"int 2fh"											\
-	"pop word ptr [bx]"									\
-	parm [bx]											\
 	value [al];
 
 static void GetFarPointersToResidentData( void )
 {
-	struct SREGS s;
-
-	segread( &s );	
-
 	// From redir.c
-	fpNewInt2fHandler		= s.cs:>Int2fRedirector;
-	fpfpPrevInt2fHandler	= s.cs:>&fpPrevInt2fHandler;
-	fpDriveNum = s.cs:>&driveNum;
-	fpfpSDA = s.cs:>&fpSDA;
-	fpfpCDS = s.cs:>&fpCDS;
-	fpfpSDB = s.cs:>&fpSDB;
-	fpfpFDB = s.cs:>&fpFDB;
-	fpfpFcbName1	= s.cs:>&fpFcbName1;
-	fpfpFcbName2	= s.cs:>&fpFcbName2;
-	fpfpFileName1	= s.cs:>&fpFileName1;
-	fpfpFileName2	= s.cs:>&fpFileName2;
-	fpfpCurrentPath	= s.cs:>&fpCurrentPath;
+	fpNewInt2fHandler		= segRegs.cs:>Int2fRedirector;
+	fpfpPrevInt2fHandler	= segRegs.cs:>&fpPrevInt2fHandler;
+	fpDriveNum = segRegs.cs:>&driveNum;
+	fpfpSDA = segRegs.cs:>&fpSDA;
+	fpfpCDS = segRegs.cs:>&fpCDS;
+	fpfpSDB = segRegs.cs:>&fpSDB;
+	fpfpFDB = segRegs.cs:>&fpFDB;
+	fpfpFcbName1	= segRegs.cs:>&fpFcbName1;
+	fpfpFcbName2	= segRegs.cs:>&fpFcbName2;
+	fpfpFileName1	= segRegs.cs:>&fpFileName1;
+	fpfpFileName2	= segRegs.cs:>&fpFileName2;
+	fpfpCurrentPath	= segRegs.cs:>&fpCurrentPath;
 
 	// From unicode.c
-	fpUnicodeTbl = s.cs:>&unicodeTbl;
+	fpUnicodeTbl = segRegs.cs:>&unicodeTbl;
 	
 	// From vmdos.c
-	fpfpFUcase = s.cs:>&fpFUcase;
-	fpfpFChar = s.cs:>&fpFChar;
-	fpGmtOffset = s.cs:>&gmtOffset;
+	fpfpFUcase = segRegs.cs:>&fpFUcase;
+	fpfpFChar = segRegs.cs:>&fpFChar;
+	fpGmtOffset = segRegs.cs:>&gmtOffset;
 	
 	// From vmshf.c
-	fpRpc = s.cs:>&rpc;
-	fpBufferSize = s.cs:>&bufferSize;
-	fpMaxDataSize = s.cs:>&maxDataSize;
+	fpRpc = segRegs.cs:>&rpc;
+	fpBufferSize = segRegs.cs:>&bufferSize;
+	fpMaxDataSize = segRegs.cs:>&maxDataSize;
 
 	return;
 	
@@ -190,10 +188,11 @@ static void PrintUsageAndExit(int err)
 	fputs( catgets( cat, 0, 3, MSG_HELP_3 ), stderr );
 	fputs( catgets( cat, 0, 4, MSG_HELP_4 ), stderr );
 	fputs( catgets( cat, 0, 5, MSG_HELP_5 ), stderr );
-	fputs( catgets( cat, 0, 6, MSG_HELP_5 ), stderr );
-	fputs( catgets( cat, 0, 7, MSG_HELP_5 ), stderr );
-	fputs( catgets( cat, 0, 8, MSG_HELP_5 ), stderr );		
-	
+	fputs( catgets( cat, 0, 6, MSG_HELP_6 ), stderr );
+	fputs( catgets( cat, 0, 7, MSG_HELP_7 ), stderr );
+	fputs( catgets( cat, 0, 8, MSG_HELP_8 ), stderr );		
+	fputs( catgets( cat, 0, 9, MSG_HELP_9 ), stderr );
+	fputs( catgets( cat, 0,10, MSG_HELP_10), stderr );		
 	exit( err );
 	
 }
@@ -236,6 +235,9 @@ static int GetOptions(char *argString)
 							return 2;	// /Q or /V already set
 						}
 						verbosity = 2;
+						break;
+					case 'U':
+						++uninstall;
 						break;
 					case 'B':
 						if ( bset++ || argString[++argIndex] != ':' )
@@ -384,14 +386,158 @@ static int GetSysVars(void)
 
 }
 
+static int AlreadyInstalled( void )
+{
+	int driveNum;
+	
+	for ( driveNum = 4; driveNum < fpSysVars->lastDrive; ++driveNum )
+	{
+		currDir = &fpSysVars->currDir[driveNum];
+		if ( currDir->u.Net.parameter == VMSMOUNT_MAGIC )
+		{
+			break;
+		}
+	}
+	
+	// I'm going to be a bit paranoid here
+	//
+	if ( driveNum < fpSysVars->lastDrive )
+	{
+		if ( (uint32_t) currDir->u.Net.redirIFSRecordPtr != 0ui32
+				&& (uint32_t) currDir->u.Net.redirIFSRecordPtr != 0xffffffffui32 )
+		{
+			if ( ! _fstrncmp( ((Signature far *) currDir->u.Net.redirIFSRecordPtr)->signature, segRegs.ds:>myName, 9 ) )
+			{
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static uint16_t savedSS, savedSP;
+
+// As we made the return address of the TSR PSP to point
+// to TerminateTsr, execution of UninstallDriver() continues here
+// 
+#pragma aux TerminateTsr aborts;
+void __declspec( naked ) TerminateTsr( void )
+{
+	_asm {
+	
+		// restore stack
+		//
+		mov		ax, seg savedSS
+		mov		ds, ax
+		mov		ss, savedSS
+		mov		sp, savedSP
+
+		// and registers
+		//
+		pop		di
+		pop		es
+		pop		ds
+		
+		// DOS 2+ internal - SET CURRENT PROCESS ID (SET PSP ADDRESS)
+		// AH = 50h
+		// BX = segment of PSP for new process
+		//	
+		mov		bx, _psp				// restore our PSP
+		mov		ah, 0x50
+		int		0x21
+		
+		// DOS 2+ - EXIT - TERMINATE WITH RETURN CODE
+		// AH = 4Ch
+		// AL = return code
+		//
+		mov		al, ERR_SUCCESS			// terminate successfully
+		mov		ah, 0x4c
+		int		0x21
+	}
+
+}
+
+// This call is made after AlreadyInstalled(), so currDir points to the
+// installed driver's CDS
+// WARNING: fpfpPrevInt2fHandler needs to be set!!
+//
+// This function only returns on error. If successful, execution continues
+// with TerminateTsr()
+//
+static void UninstallDriver( void )
+{
+	Signature far *sig = (Signature far *) currDir->u.Net.redirIFSRecordPtr;
+	uint16_t psp = sig->psp;
+		
+	if ( sig->ourHandler != *fpfpPrevInt2fHandler )
+	{
+		// Can't uninstall, another handler was installed
+		return;
+	}
+	
+	_dos_setvect( 0x2f, sig->previousHandler );
+	currDir->flags = currDir->flags & ~(NETWORK|PHYSICAL);			// Invalidate drive
+	currDir->u.Net.parameter = 0x00;
+	currDir->u.Net.redirIFSRecordPtr = (void far *)0xffffffffui32;
+
+	VMAuxEndSession( sig->fpRpc );									// Close HGFS session
+	
+	fputs( catgets( cat, 2, 1, MSG_INFO_UNINSTALL ), stderr );
+
+	// Switch PSP and Int 4Ch method of unloading the TSR
+	// (Undocumented DOS, Second Edition)
+	//
+	_asm {
+		// save registers
+		//
+		push	ds
+		push	es
+		push	di
+
+		// set TSR PSP return address to TerminateTsr
+		//
+		mov		es, psp
+		mov		di, 0x0a		// Position of terminate address of previous program
+		mov		ax, offset TerminateTsr
+		stosw
+		mov		ax, cs
+		stosw
+
+		// DOS 2+ internal - SET CURRENT PROCESS ID (SET PSP ADDRESS)
+		// AH = 50h
+		// BX = segment of PSP for new process
+		//
+		mov		bx, es			// set current PSP to TSR's
+		mov		ah, 0x50
+		int		0x21
+		
+		// save stack frame
+		//
+		mov		ax, seg savedSS
+		mov		ds, ax
+		mov		savedSS, ss
+		mov		savedSP, sp
+		
+		// DOS 2+ - EXIT - TERMINATE WITH RETURN CODE
+		// AH = 4Ch
+		// AL = return code
+		//
+		mov		ax, 0x4c00		// successfully terminate TSR
+		int		0x21
+		
+		/* execution continues in TerminateTsr() */
+	}
+	
+}
+
 static int SetCDS(void)
 {
-	static CDS far *currDir;
 	int rootPathLen;
 	
 	if ( *fpDriveNum != 0xFF ) {
 		currDir = &fpSysVars->currDir[*fpDriveNum];
-		if ( currDir->flags & 0xC000 ) {
+		if ( currDir->flags & (NETWORK|PHYSICAL) ) {
 			fprintf(stderr, catgets( cat, 1, 0, MSG_ERROR_INUSE ), *fpDriveNum + 'A');
 			return 1;
 		}
@@ -416,9 +562,11 @@ static int SetCDS(void)
 	
 	// Undocumented DOS 2nd Ed. p. 514
 	//   Set Network UserVal
+	// My own: use redirIFSRecordPtr to point to the driver signature
 	//
 	currDir->u.Net.parameter = VMSMOUNT_MAGIC;
-	
+	currDir->u.Net.redirIFSRecordPtr = MK_FP( _psp, 0x81 );
+
 	rootPathLen = _fstrlen( rootPath );
 	rootPath[rootPathLen - 3] = *fpDriveNum + 'A';
 	_fstrcpy( currDir->currentPath, rootPath );
@@ -437,7 +585,6 @@ static int SetCDS(void)
 static void LoadUnicodeConversionTable(void)
 {
 	union REGS r;
-	struct SREGS s;
 	char filename[13];
 	char fullpath[_MAX_PATH];
 	char buffer[256];
@@ -461,7 +608,7 @@ static void LoadUnicodeConversionTable(void)
 	if ( r.x.cflag ) {
 		// Can't get codepage. Use ASCII only
 		//
-		fputs( catgets( cat, 1, 16, MSG_WARN_CP ), stderr );
+		fputs( catgets( cat, 1, 18, MSG_WARN_CP ), stderr );
 		goto error;
 	}
 	
@@ -472,7 +619,7 @@ static void LoadUnicodeConversionTable(void)
 	_searchenv( filename, "PATH", fullpath);
 	if ( '\0' == fullpath[0] )
 	{
-		fprintf( stderr, catgets( cat, 1, 13, MSG_WARN_NOTBL ), filename );
+		fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_NOTBL ), filename );
 		goto error;
 	}
 	
@@ -480,7 +627,7 @@ static void LoadUnicodeConversionTable(void)
 	
 	if ( NULL == f )
 	{
-		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_UNICODE ), filename );
+		fprintf( stderr, catgets( cat, 1, 16, MSG_WARN_UNICODE ), filename );
 		goto error;
 	}
 	
@@ -489,14 +636,14 @@ static void LoadUnicodeConversionTable(void)
 #if 0	
 	if ( EOF == fscanf_s( f, "Unicode (%s)", buffer, sizeof( buffer) ) )
 	{
-		fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 #else
 	if ( fread( buffer, 1, 9, f ) != 9 ||     // "Unicode (
 						memcmp( buffer, "Unicode (", 9 ) != 0 )
 	{
-		fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}   
 
@@ -506,7 +653,7 @@ static void LoadUnicodeConversionTable(void)
 	{
 		if ( fread( buffer+i, 1, 1, f ) != 1 )
 		{
-			fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_TBLFORMAT ), filename );
+			fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_TBLFORMAT ), filename );
 			goto close;
 		}
 		if ( buffer[i] == ')' )  
@@ -521,25 +668,24 @@ static void LoadUnicodeConversionTable(void)
 
 	if ( ret != 3 || buffer[0] != '\r' || buffer[1] != '\n' || buffer[2] != 1 )
 	{
-		fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 	
 	if ( 256 != (ret = fread( buffer, 1, 256, f )) )
 	{
-		fprintf( stderr, catgets( cat, 1, 14, MSG_WARN_UNICODE ), filename );
+		fprintf( stderr, catgets( cat, 1, 16, MSG_WARN_UNICODE ), filename );
 		goto close;
 	}
 	
-	segread( &s );
-	_fmemcpy( fpUnicodeTbl, s.ds:>buffer, 256 );
+	_fmemcpy( fpUnicodeTbl, segRegs.ds:>buffer, 256 );
 	
 	return;
 
 close:
 	fclose( f );
 error:
-	fputs( catgets( cat, 1, 17, MSG_WARN_437 ), stderr );
+	fputs( catgets( cat, 1, 19, MSG_WARN_437 ), stderr );
 	
 }
 
@@ -553,7 +699,7 @@ static void GetTimezoneOffset(void)
 	
 	if ( NULL == tz )
 	{
-		fputs( catgets( cat, 1, 12, MSG_WARN_TIMEZONE ), stderr );
+		fputs( catgets( cat, 1, 14, MSG_WARN_TIMEZONE ), stderr );
 	}
 	else
 	{
@@ -597,16 +743,29 @@ static uint16_t SizeOfResidentSegmentInParagraphs( void )
 	return sizeInBytes >> 4;
 }
 
+static void SetSignature( void )
+{
+	strcpy( signature.signature, myName );
+	signature.psp = _psp;
+	signature.ourHandler = fpNewInt2fHandler;
+	signature.previousHandler = *fpfpPrevInt2fHandler;
+	signature.fpRpc = fpRpc;
+	_fmemcpy( MK_FP( _psp, 0x81 ), segRegs.ds:>&signature, sizeof( signature ) );
+	
+	return;
+}
+
 int main(int argc, char **argv)
 {
 
 	char		argString[128];
-	uint16_t	magic= VMSMOUNT_MAGIC;
 	int			tblSize;
 	uint16_t	ret;
 	uint16_t	paragraphs;
 	
-	cat = catopen( "VMSMOUNT", 0 );
+	segread( &segRegs );
+	
+	cat = catopen( myName, 0 );
 		
 	fprintf( stderr, MSG_MY_NAME, VERSION_MAJOR, VERSION_MINOR);
 
@@ -648,49 +807,58 @@ int main(int argc, char **argv)
 		return( ERR_NOVIRT );
 	}
 	
-	if ( VMAuxBeginSession() )
+	if ( 0x01 == InstallationCheck() )
 	{
-		fputs( catgets( cat, 1, 8, MSG_ERROR_NOSHF ), stderr );
-		return( ERR_NOSHF );
-	}
-		
-	switch ( InstallationCheck( &magic ) )
-	{
-		case 0x01:
-			fputs( catgets(cat, 1, 6, MSG_ERROR_REDIR_NOT_ALLOWED ), stderr );
-			ret = ERR_NOINST;
-			goto err_close;
-			/* NOTREACHED */
-			
-		case 0xff:
-			if ( magic == ~VMSMOUNT_MAGIC )
-			{
-				fputs( catgets(cat, 1, 7, MSG_ERROR_INSTALLED ), stderr );
-				ret = ERR_INSTLLD;
-				goto err_close;
-			}
-			break;
+		fputs( catgets(cat, 1, 6, MSG_ERROR_REDIR_NOT_ALLOWED ), stderr );
+		return( ERR_NOALLWD );
 	}
 		
 	if ( GetSysVars() )
 	{
 		fputs( catgets( cat, 1, 5, MSG_ERROR_LOL ), stderr );
-		ret = ERR_SYSTEM;
-		goto err_close;
+		return( ERR_SYSTEM );
+	}
+	
+	// Needed by UninstallDriver()
+	//
+	*fpfpPrevInt2fHandler = _dos_getvect( 0x2F );
+	
+	if ( AlreadyInstalled() )
+	{
+		if ( uninstall )
+		{
+			UninstallDriver();
+			
+			/* UninstallDriver() only returns on error */
+			
+			fputs( catgets( cat, 1, 12, MSG_ERROR_UNINSTALL ), stderr );
+			return( ERR_UNINST );
+		}
+		else
+		{
+			fputs( catgets( cat, 1, 7, MSG_ERROR_INSTALLED ), stderr );
+			return( ERR_INSTLLD );
+		}
+	}
+	else
+	{
+		if ( uninstall )
+		{
+			fputs( catgets( cat, 1, 13, MSG_ERROR_NOTINSTALLED ), stderr );
+			return( ERR_NOTINST );
+		}
 	}
 	
 	if ( GetSDA() )
 	{
 		fputs( catgets( cat, 1, 9, MSG_ERROR_SDA ), stderr );
-		ret = ERR_SYSTEM;
-		goto err_close;
+		return( ERR_SYSTEM );
 	}
 	
 	if ( GetNLS() )
 	{
 		fputs( catgets( cat, 1, 10, MSG_ERROR_NLSINFO ), stderr );
-		ret = ERR_SYSTEM;
-		goto err_close;
+		return( ERR_SYSTEM );
 	}
 	
 	LoadUnicodeConversionTable();
@@ -701,25 +869,30 @@ int main(int argc, char **argv)
 	if ( ret )
 	{
 		fprintf( stderr, catgets( cat, 1, 11, MSG_ERROR_BUFFER ), VMSHF_MIN_BLOCK_SIZE, ret );
-		ret = ERR_BUFFER;
-		goto err_close;
+		return( ERR_BUFFER );
 	}
 			
 	if ( *fpDriveNum != 0xFF && !( *fpDriveNum < fpSysVars->lastDrive ) )
 	{
 		fprintf(stderr, catgets( cat, 1, 4, MSG_ERROR_INVALID_DRIVE ),
 							*fpDriveNum + 'A', fpSysVars->lastDrive + '@');
-		ret = ERR_BADDRV;
-		goto err_close;
+		return( ERR_BADDRV );
 	}
 	
+	if ( VMAuxBeginSession( fpRpc ) )
+	{
+		fputs( catgets( cat, 1, 8, MSG_ERROR_NOSHF ), stderr );
+		return( ERR_NOSHF );
+	}
+		
 	if ( SetCDS() )
 	{
 		ret = ERR_SYSTEM;
 		goto err_close;
 	}
 
-	*fpfpPrevInt2fHandler = _dos_getvect( 0x2F );
+	SetSignature();
+	
 	_dos_setvect( 0x2f, fpNewInt2fHandler );	
 
 	paragraphs = SizeOfResidentSegmentInParagraphs();
@@ -732,6 +905,6 @@ int main(int argc, char **argv)
 	_dos_keep( *fpDriveNum + 1, paragraphs );
 
 err_close:
-	VMAuxEndSession();
+	VMAuxEndSession( fpRpc );
 	return ret;
 }
