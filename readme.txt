@@ -13,7 +13,8 @@ WARNING AND DISCLAIMER
  
 USAGE
 
- VMSMOUNT [/H][/V] [/L:<drive letter>] [B:<size>[K]]
+ VMSMOUNT [/H][/V|/Q] [/L:<drive letter>] [/B:<size[K]>]
+ VMSMOUNT [/V|/Q] /U
 	/H                 - Prints help and exits
 	/V                 - Verbose: Prints information on system resources
 	/Q                 - Quiet: Omits copyright message
@@ -21,6 +22,7 @@ USAGE
 	                     (if omitted, use the first available)
 	/B:<size[K]>       - Size of read/write buffer
 	                     (4K default, higher values increase performance)
+	/U                 - Uninstall
 
 ENVIRONMENT
 
@@ -53,7 +55,9 @@ RETURN CODES (ERRORLEVELS)
 	
 	ERRORLEVEL  Meaning
 	~~~~~~~~~~  ~~~~~~~
-	    0       Not loaded (help screen requested)
+	    0       Not loaded (help screen requested) or successfully uninstalled
+	  245       Unable to uninstall
+	  246       Driver not installed and tried to uninstall
 	  247       Invalid buffer size
 	  248       Invalid command line option(s)
 	  249       Unsupported DOS version
@@ -69,12 +73,11 @@ LIMITATIONS
  * Does not work with DOS < 5 (Tested with latest FreeDOS kernel,
    MS-DOS 6.22 and MS-DOS 7 (win95)
  * Does not support old versions of VMWare Workstation (Tested with
-   VMWare Player 3) 
+   VMWare Player 3 and 4) 
  * Shared folder names MUST be uppercase.
  * Does not support long names (long names and/or with illegal characters 
    are ignored)
  * Does not detect code page changes
- * Can't be uninstalled
 
 ACKNOWLEDGEMENTS
 
@@ -118,7 +121,6 @@ BUGS
 
 TODO
  
- * Uninstallation
  * Code Page change detection (maybe)
  * Long file names (don't even know if I'll try)
  
