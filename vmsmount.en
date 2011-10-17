@@ -7,13 +7,15 @@
 # added to the end of the lines.
 #
 0.1:\nUsage: VMSMOUNT [/H][/V|/Q] [/L:<drive letter>] [/B:<size[K]>]\n
-0.2:\t/H                  - Prints this message and exits\n
-0.3:\t/V                  - Verbose: Prints information on system resources\n
-0.4:\t/Q                  - Quiet: Omits copyright message\n
-0.5:\t/L:<drive letter>   - Drive letter to assign\n
-0.6:\t                      (if omitted, use first available)\n
-0.7:\t/B:<size[K]>        - Size of read/write buffer\n
-0.8:\t                      (4K default, higher values increase performance)\n
+0.2:       VMSMOUNT [/V|/Q] /U\n
+0.3:        /H                  - Prints this message and exits\n
+0.4:        /V                  - Verbose: Prints information on system resources\n
+0.5:        /Q                  - Quiet: Omits copyright message\n
+0.6:        /L:<drive letter>   - Drive letter to assign\n
+0.7:                              (if omitted, use first available)\n
+0.8:        /B:<size[K]>        - Size of read/write buffer\n
+0.9:                              (4K default, higher values increase performance)\n
+0.10:        /U                  - Uninstall\n
 1.0: ERROR: Drive %c: already in use\n
 1.1: ERROR: No drive letter available (LASTDRIVE is %c)\n
 1.2: ERROR: Usupported DOS version %d.%d. Need 5.0 or higher.\n
@@ -21,18 +23,21 @@
 1.4: ERROR: Invalid drive letter %c (LASTDRIVE is %c)\n
 1.5: ERROR: Can't get the List-Of-Lists!\n
 1.6: ERROR: Redirectors are not allowed.\n
-1.7: ERROR: Already installed.\n
+1.7: ERROR: Already installed. Use /U to uninstall.\n
 1.8: ERROR: No Shared Folders found.\n
 1.9: ERROR: Can't get the SDA!\n
 1.10: ERROR: Can't get the NLS tables.\n
 1.11: ERROR: Buffer size must be between %u and %u bytes\n
-1.12: WARNING: TZ invalid or not defined, times will be shown in UTC.\n
-1.13: WARNING: Can't find Unicode table: %s
-1.14: WARNING: Can't load Unicode table: %s
-1.15: WARNING: Invalid file format: %s
-1.16: WARNING: Active code page not found
-1.17:. Defaulting to cp437\n
+1.12: ERROR: Unable to uninstall.\n
+1.13: ERROR: Driver not installed.\n
+1.14: WARNING: TZ invalid or not defined, times will be shown in UTC.\n
+1.15: WARNING: Can't find Unicode table: %s
+1.16: WARNING: Can't load Unicode table: %s
+1.17: WARNING: Invalid file format: %s
+1.18: WARNING: Active code page not found
+1.19:. Defaulting to cp437\n
 2.0: Mounting Shared Folders in %c:\n
+2.1: Successfully uninstalled and removed from memory.\n
 9.0: INFO: Running on VMware %s Version %lu\n
 9.1: INFO: UTC Offset is %ld seconds\n
 9.2: INFO: Active page is cp%d. Loading unicode table %s\n
