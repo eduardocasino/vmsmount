@@ -27,6 +27,7 @@
  *                                 the transient code space
  * 2011-10-15  Eduardo           * BUGFIX: Handle the "write 0" case (writing
  *                                 0 bytes to a file truncates it)
+ * 2011-10-17  Eduardo           * Simplify installation check
  */
 
 #include <dos.h>
@@ -209,12 +210,7 @@ inline void FillFcbName( char far *fcbName, char far *fileName )
 
 static void InstallationCheck( void )
 {
-	if ( *fpStackParam == VMSMOUNT_MAGIC )
-	{
-		*fpStackParam = ~VMSMOUNT_MAGIC;
-	}
 	r->w.ax = (uint16_t) 0x00FF;		// Installed
-	r->w.flags &= ~INTR_CF;
 	
 	return;
 }
