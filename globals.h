@@ -29,6 +29,7 @@
  * 2011-10-09  Eduardo           * bump version number to 0.4
  * 2011-10-15  Eduardo           * New errorlevel ERR_BUFFER
  *                               * New verbosity options
+ * 2011-10-17  Eduardo           * New errorlevels ERR_UNINST/ERR_NOTINST
  *
  */
 
@@ -45,12 +46,14 @@
 #define FALSE	0
 
 #define ERR_SUCCESS	0
+#define ERR_UNINST	245
+#define ERR_NOTINST	246
 #define ERR_BUFFER	247
 #define ERR_BADOPTS	248
 #define ERR_WRONGOS	249
 #define ERR_NOVIRT	250
 #define ERR_NOSHF	251
-#define ERR_NOINST 	252
+#define ERR_NOALLWD	252
 #define ERR_INSTLLD	253
 #define ERR_BADDRV	254
 #define ERR_SYSTEM	255
@@ -60,7 +63,5 @@
 
 extern nl_catd cat;
 extern int verbosity;
-
-extern rpc_t far *fpRpc;
 
 #endif /* _GLOBALS_H */
