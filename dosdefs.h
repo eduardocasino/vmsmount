@@ -24,6 +24,7 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-04  Eduardo           * Add field to SDB to flag a root dir search
+ * 2011-10-17  Eduardo           * redirIFSRecordPtr is a far pointer 
  */
 
 #include <stdint.h>
@@ -115,7 +116,7 @@ typedef struct {
 			uint32_t	unknown;
 		} Local;
 		struct {
-			uint32_t	redirIFSRecordPtr;
+			void far	*redirIFSRecordPtr;
 			uint16_t	parameter;
 		} Net;
 	} u;
