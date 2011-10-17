@@ -22,18 +22,22 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-15  Eduardo           * Messages for verbosity and buffer options
+ * 2011-10-16  Eduardo           * Messages for uninstallation
+ *
  */
 
 #define MSG_MY_NAME				"VMSMOUNT %d.%d -"
 #define MSG_COPYRIGHT			" (C) 2011 Eduardo Casino - GNU GPL Ver. 2.0\n"
 #define MSG_HELP_1				"\nUsage: VMSMOUNT [/H][/V|/Q] [/L:<drive letter>] [/B:<size[K]>]\n"
-#define MSG_HELP_2				"\t/H                  - Prints this message and exits\n"
-#define MSG_HELP_3				"\t/V                  - Verbose: Prints information on system resources\n"
-#define MSG_HELP_4				"\t/Q                  - Quiet: Omits copyright message\n"
-#define MSG_HELP_5				"\t/L:<drive letter>   - Drive letter to assign\n"
-#define MSG_HELP_6				"\t                      (if omitted, use first available)\n"
-#define MSG_HELP_7				"\t/B:<size[K]>        - Size of read/write buffer\n"
-#define MSG_HELP_8				"\t                      (4K default, higher values increase performance)\n"
+#define MSG_HELP_2				"       VMSMOUNT [/V|/Q] /U\n"
+#define MSG_HELP_3				"        /H                  - Prints this message and exits\n"
+#define MSG_HELP_4				"        /V                  - Verbose: Prints information on system resources\n"
+#define MSG_HELP_5				"        /Q                  - Quiet: Omits copyright message\n"
+#define MSG_HELP_6				"        /L:<drive letter>   - Drive letter to assign\n"
+#define MSG_HELP_7				"                              (if omitted, use first available)\n"
+#define MSG_HELP_8				"        /B:<size[K]>        - Size of read/write buffer\n"
+#define MSG_HELP_9				"                              (4K default, higher values increase performance)\n"
+#define MSG_HELP_10				"        /U                  - Uninstall\n"
 #define MSG_ERROR_BUFFER		" ERROR: Buffer size must be between %u and %u bytes\n"
 #define MSG_ERROR_INUSE			" ERROR: Drive %c: already in use\n"
 #define MSG_ERROR_NO_DRIVES		" ERROR: No drive letter available (LASTDRIVE is %c)\n"
@@ -43,9 +47,12 @@
 #define MSG_ERROR_SDA			" ERROR: Can't get the SDA!\n"
 #define MSG_ERROR_NLSINFO		" ERROR: Can't get the NLS tables.\n"
 #define MSG_ERROR_NOVIRT		" ERROR: Not running on top of VMWARE.\n"
-#define MSG_ERROR_INSTALLED		" ERROR: Already installed.\n"
+#define MSG_ERROR_INSTALLED		" ERROR: Already installed. Use /U to uninstall.\n"
 #define MSG_ERROR_REDIR_NOT_ALLOWED " ERROR: Redirectors are not allowed.\n"
+#define MSG_ERROR_UNINSTALL		" ERROR: Unable to uninstall.\n"
+#define MSG_ERROR_NOTINSTALLED	" ERROR: Driver not installed.\n"
 #define MSG_INFO_MOUNT			" Mounting Shared Folders in %c:\n"
+#define MSG_INFO_UNINSTALL		" Successfully removed from memory.\n"
 #define MSG_INFO_VMVERS			" INFO: Running on VMware %s Version %lu\n"
 #define MSG_INFO_TZ				" INFO: UTC Offset is %ld seconds\n"
 #define MSG_INFO_TBL			" INFO: Active page is cp%d. Loading unicode table %s\n"
