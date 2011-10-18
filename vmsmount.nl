@@ -7,7 +7,7 @@
 # added to the end of the lines.
 #
 0.1:\nGebruik: VMSMOUNT [/H][/V|/Q] [/L:<schijfletter>] [/B:<grootte>[K]]\n
-0.2:       VMSMOUNT [/V|/Q] /U\n
+0.2:         VMSMOUNT [/V|/Q] /U\n
 0.3:      /H                - Geeft dit bericht weer en stopt\n
 0.4:      /V                - Verbaal: Geeft informatie weer over systeembronnen\n
 0.5:      /Q                - Stil: Laat copyright-melding achterwege\n
