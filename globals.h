@@ -41,7 +41,7 @@
 #define PUBLIC
 
 #define VERSION_MAJOR	0
-#define VERSION_MINOR	4
+#define VERSION_MINOR	5
 
 #define TRUE	1
 #define FALSE	0
