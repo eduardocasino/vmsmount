@@ -30,6 +30,7 @@
  * 2011-10-15  Eduardo           * New errorlevel ERR_BUFFER
  *                               * New verbosity options
  * 2011-10-17  Eduardo           * New errorlevels ERR_UNINST/ERR_NOTINST
+ * 2011-10-18  Eduardo           * bump version number to 0.5
  *
  */
 
