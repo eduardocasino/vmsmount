@@ -1,3 +1,8 @@
+Version 0.5 (2011-11-02)
+
+  * Partial LFN support: mangles long file names to valid DOS 8.3 names
+    (New options /LFN, /M:<number> and /CI or /CS)
+  
 Version 0.4 (2011-10-17)
 
   * BUGFIX: writing 0 bytes to a file MUST truncate it
