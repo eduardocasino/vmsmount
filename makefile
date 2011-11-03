@@ -24,6 +24,7 @@
 #                               code. Use -0 for main.c and kitten.c to allow
 #                               execution of processor test.
 #                               Reorder segments to mark end of transient part
+# 2011-11-01  Eduardo           Add LFN (new object and segment order)
 #
 
 CC = wcc
@@ -31,15 +32,23 @@ AS = nasm
 LD = wlink
 UPX = upx
 RM = rm -f
-CFLAGS  = -bt=dos -ms -q -s -oh -os
+CFLAGS  = -bt=dos -ms -q -s -oh -os -DREVERSE_HASH
 ASFLAGS = -f obj -Worphan-labels -O9
-LDFLAGS = SYSTEM dos ORDER clname CODE segment BEGTEXT segment _TEXT segment ENDTEXT clname FAR_DATA clname BEGDATA clname DATA clname BSS clname STACK OPTION QUIET OPTION MAP=vmsmount.map
-#LDFLAGS = SYSTEM dos OPTION QUIET OPTION MAP=vmsmount.map
+LDFLAGS =	SYSTEM dos \
+			ORDER \
+				clname CODE segment BEGTEXT segment _TEXT segment ENDTEXT \
+				clname FAR_DATA clname BEGDATA clname DATA clname BSS \
+				clname STACK \
+			OPTION QUIET \
+			OPTION MAP=vmsmount.map
+LDFLAGS2 = SYSTEM dos OPTION QUIET OPTION MAP=vmsmount.map
 UPXFLAGS = -9
 
 TARGET = vmsmount.exe
 
-OBJ = kitten.obj vmaux.obj main.obj miniclib.obj vmint.obj unicode.obj vmdos.obj vmcall.obj vmtool.obj vmshf.obj redir.obj endtext.obj
+OBJ =	kitten.obj vmaux.obj main.obj miniclib.obj vmint.obj unicode.obj \
+		vmdos.obj vmcall.obj vmtool.obj vmshf.obj redir.obj lfn.obj \
+		endtext.obj
 
 
 all: $(TARGET)
@@ -70,12 +79,13 @@ vmaux.obj: vmcall.h vmtool.h globals.h messages.h vmshf.h kitten.h
 
 redir.obj: globals.h redir.h dosdefs.h vmshf.h vmtool.h vmcall.h vmdos.h vmint.h miniclib.h
 
-vmtool: vmtool.h vmcall.h
+vmtool.obj: vmtool.h vmcall.h
 
-vmshf: vmtool.h vmshf.h vmcall.h vmint.h vmdos.h redir.h miniclib.h
+vmshf.obj: vmtool.h vmshf.h vmcall.h vmint.h vmdos.h redir.h miniclib.h globals.h
 
-vmdos: vmint.h dosdefs.h vmdos.h vmint.h vmshf.h vmtool.h vmcall.h miniclib.h unicode.h
+vmdos.obj: vmint.h dosdefs.h vmdos.h vmint.h vmshf.h vmtool.h vmcall.h miniclib.h unicode.h redir.h globals.h
 
+lfn.obj: lfn.h globals.h miniclib.h vmdos.h
 
 %.obj : %.c
 	$(CC) -3 $(CFLAGS) -fo=$@ $<
