@@ -21,24 +21,29 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-04  Eduardo           * Omit '.' and '..' from listing if root dir
+ * 2011-11-01  Eduardo           * Add LFN support
  *
  */
  
 #include <dos.h>
+#include "globals.h"
 #include "dosdefs.h"
 #include "vmint.h"
 #include "vmshf.h"
 #include "miniclib.h"
 #include "unicode.h"
+#include "redir.h"			// For myDS
+#include "lfn.h"
 
 #pragma data_seg("BEGTEXT", "CODE");
 #pragma code_seg("BEGTEXT", "CODE");
 
-uint8_t far *fpFUcase;
-FChar far *fpFChar;
-int32_t gmtOffset;
+PUBLIC uint8_t far *fpFUcase;
+PUBLIC FChar far *fpFChar;
+PUBLIC int32_t gmtOffset = 0;
+PUBLIC uint8_t caseSensitive = FALSE;
 
-static int IllegalChar( unsigned char c )
+PUBLIC int IllegalChar( unsigned char c )
 {
 	int i= 0;
 	
@@ -46,19 +51,19 @@ static int IllegalChar( unsigned char c )
 	{
 		if ( c == fpFChar->illegal[i] )
 		{
-			return 1;
+			return TRUE;
 		}
 	}
 	if ( 	 ( c < fpFChar->lowest || c > fpFChar->highest ) ||
 			!( c < fpFChar->firstX || c > fpFChar->lastX ) )
 	{
-		return 1;
+		return TRUE;
 	}
 	
-	return 0;
+	return FALSE;
 }
 
-inline unsigned char toupper_local ( unsigned char c )
+PUBLIC unsigned char toupper_local ( unsigned char c )
 {
 	if ( c > 0x60 && c < 0x7b )
 	{
@@ -68,47 +73,29 @@ inline unsigned char toupper_local ( unsigned char c )
 	return ( c < 0x80 ? c : fpFUcase[c - 0x80] );
 }
 
-// fcbName must be 12 bytes long (we NULL-terminate it)
+
+//  Returns non-zero if fName is a pure valid DOS 8.3 name, 0 otherwise
 //
-//  Returns TRUE if fName is a valid DOS 8.3 name, FALSE otherwise
-//
-int FNameToFcbName( 
+inline int NoMangleFNameToFcbName( 
 	char *fcbName,		// out : File name in FCB format. Must be 12 bytes long (we NULL-terminate it)
 	char *fName,		// in/out : File name in in UTF-8 on input, DOS filename on output
-	uint32_t fNameLen,	// in : File name length
-	uint8_t isRoot		// in : Flag: is root search?
+	uint8_t lfn
 	)
 {
 	char *p;
 	char *d;
 	int i;
-	
-	*(uint32_t *)(&fcbName[0]) = 0x20202020;
-	*(uint32_t *)(&fcbName[4]) = 0x20202020;
-	*(uint32_t *)(&fcbName[8]) = 0X00202020;
 
-	// Special case for '.' and '..'
-	//
-	if ( ! isRoot )
+	// Returns non-zero if any unsupported character is found
+	if ( Utf8ToLocal( fName, fName ) )
 	{
-		if ( *(uint16_t *)fName == '..' && fName[2] == '\0' )
-		{
-			*(uint16_t *)fcbName = *(uint16_t *)fName;
-			return 1;
-		}
-		if ( *(uint16_t *)fName == '\0.' )
-		{
-			*fcbName = *fName;
-			return 1;
-		}
+		return 0;
 	}
 	
 	if ( *fName == '.' )
 	{
 		return 0;
 	}
-	
-	(void) Utf8ToLocal( fName, fName );
 	
 	p = strchr_local( fName, '.' );
 
@@ -121,6 +108,12 @@ int FNameToFcbName(
 		else
 		{
 			fcbName[i] = toupper_local( fName[i] );
+			// Mangle if lowercase and char code > 127 or host FS is case sensitive
+			//
+			if ( lfn && fcbName[i] != fName[i] && ( fName[i] > 127 || caseSensitive ) )
+			{
+				return 0;
+			}
 		}
 	}
 
@@ -143,7 +136,15 @@ int FNameToFcbName(
 			}
 			else
 			{
-				*(d++) = toupper_local( p[i] );
+				*d = toupper_local( p[i] );
+				// Mangle if lowercase and char code > 127
+				// TODO: Make this configurable?
+				//
+				if ( lfn && *d != p[i] && p[i] > 127 )
+				{
+					return 0;
+				}
+				++d;
 			}
 		}
 		if (  p[i] != '\0' )
@@ -152,11 +153,59 @@ int FNameToFcbName(
 		}
 	}
 	
-	return 1;
+	return -1;
 	
 }
 
-VMShfAttr *FatAttrToFMode( uint8_t fileAttr )
+// fcbName must be 12 bytes long (we NULL-terminate it)
+//
+//  Returns non-zero if fName is a valid DOS 8.3 name, 0 otherwise
+//
+PUBLIC int FNameToFcbName( 
+	char *fcbName,		// out : File name in FCB format. Must be 12 bytes long (we NULL-terminate it)
+	char *fName,		// in/out : File name in in UTF-8 on input, DOS filename on output
+	uint16_t fNameLen,	// in : File name length
+	uint8_t isRoot,		// in : Flag: is root search?
+	uint8_t lfn
+	)
+{
+	uint32_t hash;
+	int ret;
+	
+	*(uint32_t *)(&fcbName[0]) = 0x20202020;
+	*(uint32_t *)(&fcbName[4]) = 0x20202020;
+	*(uint32_t *)(&fcbName[8]) = 0X00202020;
+
+	// Special case for '.' and '..'
+	//
+	if ( *(uint16_t *)fName == '..' && fName[2] == '\0' )
+	{
+		*(uint16_t *)fcbName = *(uint16_t *)fName;
+		return ( !isRoot );
+	}
+	if ( *(uint16_t *)fName == '\0.' )
+	{
+		*fcbName = *fName;
+		return ( !isRoot );
+	}
+
+	if ( lfn )
+	{
+		hash = LfnFNameHash( fName, fNameLen );
+	}
+		
+	ret = NoMangleFNameToFcbName( fcbName, fName, lfn );
+	
+	if ( ret == 0 && lfn )
+	{
+		ret= LfnMangleFNameToFcbName( hash, fcbName, fName, fNameLen );
+	}
+
+	return ret;
+	
+}
+
+PUBLIC VMShfAttr *FatAttrToFMode( uint8_t fileAttr )
 {
 	static VMShfAttr fAttr;
 
@@ -191,8 +240,7 @@ VMShfAttr *FatAttrToFMode( uint8_t fileAttr )
 	
 }
 
-
-uint8_t FModeToFatAttr( VMShfAttr * fAttr )
+PUBLIC uint8_t FModeToFatAttr( VMShfAttr * fAttr )
 {
 	uint8_t fileAttr;
 	
@@ -223,8 +271,7 @@ uint8_t FModeToFatAttr( VMShfAttr * fAttr )
 
 }
 
-
-uint32_t DosExtActionToOpenAction(uint16_t extAction)
+PUBLIC uint32_t DosExtActionToOpenAction(uint16_t extAction)
 {
 	uint32_t action;
 	
@@ -261,7 +308,7 @@ uint32_t DosExtActionToOpenAction(uint16_t extAction)
 	return action;
 
 }
-			
+	
   
 // MS-DOS date format can only represent dates between 1980/1/1 and 2107/12/31
 //   For simplicity, I'm not taking into account that 2100 will not be a leap year, so dates
@@ -275,7 +322,7 @@ uint32_t DosExtActionToOpenAction(uint16_t extAction)
 #define SECSTO100NSECS	10000000
 #define SECSPERDAY		86400
 
-uint32_t FTimeToFatTime( uint64_t filetime )
+PUBLIC uint32_t FTimeToFatTime( uint64_t filetime )
 {
 	uint32_t year	= 0;			// 1980
 	uint32_t month	= 1;
@@ -458,18 +505,39 @@ days:
 	return fatTime;
 }
 
-int DosPathToPortable( uint8_t *dst, uint8_t far *src )
+PUBLIC int DosPathToPortable( uint8_t *dst, uint8_t far *src, uint8_t utf )
 {
 	int len, i;
+
+	if ( src == (uint8_t far *)0 )
+	{
+		return -1;
+	}
 	
 	while ( '\\' == *src )						// Skip leading '\\'
 	{
 		++src;
 	}
 
-	len = LocalToUtf8( dst, src );					// Convert to Utf
-
-	while ( len && '\\' == *(dst + len - 1) )		// Remove trailing '\\'
+	if ( utf )
+	{
+		for ( len = 0; src[len]; ++len )			// Already in utf, just copy
+		{
+			dst[len] = src[len];
+		}
+		dst[len] = src[len];
+	}
+	else
+	{
+		len = LocalToUtf8( MK_FP( myDS, dst ), src, VMSHF_MAX_PATH );			// Convert to Utf
+	}
+	
+	if ( len < 0 )
+	{
+		return len;
+	}
+	
+	while ( len && '\\' == *(dst + len - 1) )	// Remove trailing '\\'
 	{
 		*(dst + len - 1) = '\0';
 		--len;
@@ -484,12 +552,12 @@ int DosPathToPortable( uint8_t *dst, uint8_t far *src )
 			*(dst + i) = '\0';
 		}
 	}
-
+	
 	return len;
 	
 }
 
-uint16_t VmshfStatusToDosError( uint32_t status )
+PUBLIC uint16_t VmshfStatusToDosError( uint32_t status )
 {
 	uint16_t errcode;
 	

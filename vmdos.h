@@ -25,6 +25,7 @@
  *
  * 2011-10-04  Eduardo           * New parameter for FNameToFcbName()
  *                                 (Omit '.' and '..' if root dir)
+ * 2011-11-01  Eduardo           * Add LFN support
  *
  */
  
@@ -35,13 +36,16 @@
 extern int32_t gmtOffset;
 extern uint8_t far *fpFUcase;
 extern FChar far *fpFChar;
+extern uint8_t caseSensitive;
 
-uint32_t FTimeToFatTime( uint64_t );
-uint8_t FModeToFatAttr( VMShfAttr * );
-VMShfAttr *FatAttrToFMode( uint8_t );
-uint32_t DosExtActionToOpenAction( uint16_t );
-int FNameToFcbName( char *fcbName, char *fName, uint32_t fNameLen, uint8_t isRoot );
-int DosPathToPortable(uint8_t *dst, uint8_t far *src);
-uint16_t VmshfStatusToDosError( uint32_t );
+extern unsigned char toupper_local ( unsigned char c );
+extern int IllegalChar( unsigned char c );
+extern uint32_t FTimeToFatTime( uint64_t );
+extern uint8_t FModeToFatAttr( VMShfAttr * );
+extern VMShfAttr *FatAttrToFMode( uint8_t );
+extern uint32_t DosExtActionToOpenAction( uint16_t );
+extern int FNameToFcbName( char *fcbName, char *fName, uint16_t fNameLen, uint8_t isRoot, uint8_t lfn );
+extern int DosPathToPortable(uint8_t *dst, uint8_t far *src, uint8_t utf );
+extern uint16_t VmshfStatusToDosError( uint32_t );
 
 #endif /* VMDOS_H_ */
