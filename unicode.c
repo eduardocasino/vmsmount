@@ -19,6 +19,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-11-01  Eduardo           * Buffer overflow control for LocalToUtf8
+ *                               * Identify unsupported chars in Utf8ToLocal()
  */
 
 #include <stdint.h>
@@ -26,12 +29,14 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "globals.h"
+
 #pragma data_seg("BEGTEXT", "CODE");
 #pragma code_seg("BEGTEXT", "CODE");
 
 // Initialised to cp437
 //
-uint16_t unicodeTbl[128] = {
+PUBLIC uint16_t unicodeTbl[128] = {
 	0x00C7, 0x00FC, 0x00E9, 0x00E2, 0x00E4, 0x00E0, 0x00E5, 0x00E7,
 	0x00EA, 0x00EB, 0x00E8, 0x00EF, 0x00EE, 0x00EC, 0x00C4, 0x00C5,
 	0x00C9, 0x00E6, 0x00C6, 0x00F4, 0x00F6, 0x00F2, 0x00FB, 0x00F9,
@@ -56,13 +61,14 @@ static uint8_t lookupCP( uint16_t cp )
 	
 	for ( i = 0; i < 128 && unicodeTbl[i] != cp; ++i );
 	
-	return ( i < 128 ? (uint8_t) i + 128 : '_' );
+	return ( i < 128 ? (uint8_t) i + 128 : '\0' );
 
 }
 
 // dst and src CAN'T BE THE SAME !!!!
+// Returns resulting length or -1 if buffer overflow
 //
-int LocalToUtf8(uint8_t *dst, uint8_t far *src)
+PUBLIC int LocalToUtf8( uint8_t far *dst, uint8_t far *src, int buflen )
 {
 	int len = 0;	// Resulting length
 	uint16_t cp;	// Unicode Code Point
@@ -75,9 +81,16 @@ int LocalToUtf8(uint8_t *dst, uint8_t far *src)
 		//
 		if ( ! (*src & 0x80) )
 		{	
-			*dst++ = *src;
-			++len;
-			goto cont;
+			if ( buflen > len )
+			{
+				*dst++ = *src;
+				++len;
+				goto cont;
+			}
+			else
+			{
+				return -1;
+			}
 		} 
 
 		cp = unicodeTbl[*src - 128];
@@ -88,9 +101,16 @@ int LocalToUtf8(uint8_t *dst, uint8_t far *src)
 		//		
 		if ( ! (cp & 0xF000) )
 		{
-			*dst++ = (uint8_t)( cp >> 6 ) | 0xC0;
-			*dst++ = (uint8_t)( cp & 0x3f ) | 0x80;
-			len += 2;
+			if ( buflen > len + 1 )
+			{
+				*dst++ = (uint8_t)( cp >> 6 ) | 0xC0;
+				*dst++ = (uint8_t)( cp & 0x3f ) | 0x80;
+				len += 2;
+			}
+			else
+			{
+				return -1;
+			}
 		}
 				
 		// UTF-8 bytes: 1110zzzz 10yyyyyy 10xxxxxx
@@ -99,10 +119,17 @@ int LocalToUtf8(uint8_t *dst, uint8_t far *src)
 		//
 		else
 		{
-			*dst++ = (uint8_t)( cp >> 12 ) | 0xE0;
-			*dst++ = (uint8_t)( (cp >> 6) & 0x3F ) | 0x80;
-			*dst++ = (uint8_t)( cp & 0x3F ) | 0x80;
-			len += 3;
+			if ( buflen > len +2 )
+			{
+				*dst++ = (uint8_t)( cp >> 12 ) | 0xE0;
+				*dst++ = (uint8_t)( (cp >> 6) & 0x3F ) | 0x80;
+				*dst++ = (uint8_t)( cp & 0x3F ) | 0x80;
+				len += 3;
+			}
+			else
+			{
+				return -1;
+			}
 		}
 cont:
 		++src;
@@ -115,10 +142,12 @@ cont:
 	return len;
 	
 }
-	
-int Utf8ToLocal(uint8_t *dst, uint8_t *src)
+
+// Returns 0 on success, -1 if any unsupported char is found
+//
+PUBLIC int Utf8ToLocal(uint8_t *dst, uint8_t *src)
 {
-	int len = 0;	// Resulting length
+	int ret = 0;	// Return code
 	uint16_t cp;	// Unicode Code point
 	
 	while ( *src )
@@ -142,6 +171,11 @@ int Utf8ToLocal(uint8_t *dst, uint8_t *src)
 		{
 			cp = ( (uint16_t)(*src & 0x1F) << 6 ) | *(src+1) & 0x3F;
 			*dst = lookupCP( cp );
+			if ( *dst == '\0' )
+			{
+				*dst = '_';
+				ret = -1;
+			}
 			src += 2;
 			goto cont;
 		}
@@ -154,6 +188,11 @@ int Utf8ToLocal(uint8_t *dst, uint8_t *src)
 		{
 			cp = ( (uint16_t)(*src & 0xF) << 12 ) | ( (uint16_t)(*(src+1) & 0x3F) << 6 ) | *(src+2) & 0x3F;
 			*dst = lookupCP( cp );
+			if ( *dst == '\0' )
+			{
+				*dst = '_';
+				ret = -1;
+			}
 			src += 3;
 			goto cont;
 		}
@@ -165,6 +204,7 @@ int Utf8ToLocal(uint8_t *dst, uint8_t *src)
 		if ( ! (*src & 0x08) )
 		{
 			*dst = '_';		// Currently unsupported
+			ret = -1;
 			src += 4;
 			goto cont;
 		}
@@ -172,10 +212,10 @@ int Utf8ToLocal(uint8_t *dst, uint8_t *src)
 		// Should not reach here
 		//
 		*dst = '_';
+		ret = -1;
 		++src;
 cont:
 		++dst;
-		++len;
 		
 	};
 	
@@ -183,6 +223,6 @@ cont:
 	//
 	*dst = '\0';
 
-	return len;
+	return ret;
 
 }
