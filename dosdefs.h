@@ -25,6 +25,7 @@
  *
  * 2011-10-04  Eduardo           * Add field to SDB to flag a root dir search
  * 2011-10-17  Eduardo           * redirIFSRecordPtr is a far pointer 
+ * 2011-11-01  Eduardo           * Add PSP and DOS 3.3 structures
  */
 
 #include <stdint.h>
@@ -105,6 +106,23 @@ typedef struct {
 #define SUBST			(1 << 12)
 #define REDIR_NOT_NET	(1 << 7)	// CDROM  (We'll use this, as Shared Folders aren't network drives either)
 #define UNWRITTEN		(1 << 6)
+
+typedef struct {
+	uint8_t		currentPath[MAX_CDSPATH];
+	uint16_t	flags;
+	uint8_t far	*dpb;
+	union {
+		struct {
+			uint16_t	startCluster;
+			uint32_t	unknown;
+		} Local;
+		struct {
+			uint32_t	redirIFSRecordPtr;
+			uint16_t	parameter;
+		} Net;
+	} u;
+	uint16_t	backslashOffset;
+} CDS_V3;
 
 typedef struct {
 	uint8_t		currentPath[MAX_CDSPATH];
@@ -203,7 +221,99 @@ typedef struct {
 } SFT;
 
 
-// MS-DOS Swappable DOS Area
+// MS-DOS Swappable DOS Area (V3)
+//
+#pragma pack(1)
+typedef struct {
+	uint8_t			criticalErrorFlag;
+	uint8_t			inDOSFlag;
+	uint8_t			errorDrive;
+	uint8_t			errorLocus;
+	uint16_t		extendedErrorCode;
+	uint8_t			suggestedAction;
+	uint8_t			errorClass;
+	void far *		errorEsDi;
+	uint8_t far *	fpCurrentDTA;
+	uint16_t		currentPSP;
+	uint16_t		int23SP;
+	uint16_t		waitStatus;
+	uint8_t			currentDrive;
+	uint8_t			breakFlag;
+	uint16_t		int21AX;
+	uint16_t		netPSP;
+	uint16_t		netNumber;
+	uint16_t		firstMem;
+	uint16_t		bestMem;
+	uint16_t		lastMem;
+	uint8_t			unknown2[10];
+	uint8_t			monthDay;
+	uint8_t			month;
+	uint16_t		year1980;
+	uint16_t		days;
+	uint8_t			weekDay;
+	uint8_t			unknown3[3];
+	uint8_t			driverRequestHeader[30];
+	void far *		driverEntryPoint;
+	uint8_t			driverRequestHeader2[22];
+	uint8_t			driverRequestHeader3[30];
+	uint8_t			PSPType;
+	uint8_t			unknown4[7];
+	uint8_t			clockTransfer[6];
+	uint8_t			unknown5[2];
+	uint8_t			fileName1[128];
+	uint8_t			fileName2[128];
+	SDB				findFirst;
+	FDB				foundEntry;
+	CDS				currentCDSCopy;
+	char			fcbName1[11];
+	uint8_t			unknown6;
+	char			fcbName2[11];
+	uint8_t			unknown7[9];
+	uint8_t			attrMask;
+	uint8_t			FCBType;
+	uint8_t			extAttr;
+	uint8_t			openMode;
+	uint8_t			unknown8[3];
+	uint8_t			dosFlag;
+	uint8_t			unknown9[9];
+	uint8_t			termType;
+	uint8_t			unknown10;
+	uint8_t			replaceByte;
+	void far *		errorDPB;
+	void far *		int21StackFrame;
+	uint16_t		storedSP;
+	void far *		dosDPB;	
+	uint16_t		unknown11[4];
+	uint8_t			mediaID;
+	uint16_t		unknown12[5];
+	SFT far *		currentSFT;
+	CDS far *		currentCDS;
+	void far *		callersFCB;
+	uint16_t		unknown14[2];
+	void far *		jft;
+	uint16_t		fileName1Off;
+	uint16_t		fileName2Off;
+	uint8_t			unknown15[18];
+	uint32_t		currOffset;
+	uint8_t			unknown16[12];
+	uint32_t		appendedBytes;
+	void far *		diskBuffer;
+	void far *		sft;
+	uint16_t		int21StoredBX;
+	uint16_t		int21StoredDS;
+	uint16_t		temporary;
+	void far *		prevCallFrame;
+	SDB				RenFindFirst;
+	FDB				RenFoundEntry;
+	uint8_t			errorStack[331];
+	uint8_t			diskStack[384];
+	uint8_t			ioStack[384];
+	uint8_t			drvrLookAheadFlag;
+	uint8_t			volChangeFlag;	
+	uint16_t		unknown17;
+} SDA_V3;
+
+// MS-DOS Swappable DOS Area (V4)
 //
 #pragma pack(1)
 typedef struct {
@@ -314,5 +424,26 @@ typedef struct {
 	uint16_t		tempDOSSysInit;
 } SDA;
 
+// PSP
+//
+#pragma pack(1)
+typedef struct {
+	uint16_t	int20hInstruction;
+	uint16_t	wSizeOfMemoryInParagraphs;
+	uint8_t		reservedAt4h;
+	uint8_t		callToDosFunctionDispatcher[5];
+	void far *	fpInt22hTerminate;
+	void far *	fpInt23hCtrlC;
+	void far *	fpInt24hCriticalError;
+	uint8_t		reservedAt16h[22];
+	uint16_t	wEnvironmentSegment;				// Can be freed
+	uint8_t		reservedAt2Eh[34];
+	uint8_t		int21hAndRetfInstructions[3];
+	uint8_t		reservedAt53h[9];
+	uint8_t		FCB1[16];
+	uint8_t		FCB2[20];
+	uint8_t		bCommandLineLength;					// Can be used for storage
+	uint8_t		szCommandLine[127];
+} PSP;
 
 #endif /* DOSDEFS_H_ */
