@@ -22,14 +22,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-11-01  Eduardo           * Buffer overflow control for LocalToUtf8
+ *
  */
  
 #include <stdint.h>
 
 extern uint16_t unicodeTbl[128];
 
-int LocalToUtf8(uint8_t *dst, uint8_t far *src);
-int Utf8ToLocal(uint8_t *dst, uint8_t *src);
+extern int LocalToUtf8( uint8_t far *dst, uint8_t far *src, int buflen );
+extern int Utf8ToLocal( uint8_t *dst, uint8_t *src );
 
 #endif
 
