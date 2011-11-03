@@ -28,6 +28,8 @@
  * 2011-10-15  Eduardo           * BUGFIX: Handle the "write 0" case (writing
  *                                 0 bytes to a file truncates it)
  * 2011-10-17  Eduardo           * Simplify installation check
+ * 2011-11-02  Eduardo           * Add partial Long File Name support
+ *
  */
 
 #include <dos.h>
@@ -45,6 +47,7 @@
 #include "vmcall.h"
 #include "vmdos.h"
 #include "miniclib.h"
+#include "lfn.h"
 
 
 #pragma data_seg("BEGTEXT", "CODE");
@@ -61,7 +64,7 @@ static char volLabel[12] = "SharedFldrs";
 
 // Stack management
 //
-#define STACK_SIZE 260
+#define STACK_SIZE 300
 static uint8_t newStack[STACK_SIZE] = {0};
 static uint16_t far *fpStackParam;	// Far pointer to top os stack at entry
 static uint16_t dosSS;
@@ -75,6 +78,7 @@ static redirFunction currFunction;
 static __segment dosDS;
 __segment myDS;
 
+uint8_t		lfn = 0;
 uint8_t		driveNum = 0xFF;
 CDS 		far *fpCDS;				// CDS for this drive
 SDA			far *fpSDA;
@@ -85,6 +89,8 @@ char		far *fpFcbName2;
 char		far *fpFileName1;
 char		far *fpFileName2;
 char		far *fpCurrentPath;
+char		far *fpLongFileName1;
+char		far *fpLongFileName2;
 
 static char fcbName[12];
 
@@ -220,7 +226,9 @@ static void RmDir( void )
 	int ret;
 	uint32_t status;
 	
-	ret = VMShfDeleteDir( fpFileName1, &status );
+	ret = VMShfDeleteDir(
+					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+					lfn, &status );
 	
 	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 	{
@@ -239,8 +247,11 @@ static void MkDir( void )
 {
 	int ret;
 	uint32_t status;
-	
-	ret = VMShfCreateDir( VMSHF_FILEMODE_ALL, fpFileName1, &status );
+
+	ret = VMShfCreateDir(
+					VMSHF_FILEMODE_ALL,
+					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+					lfn, &status );
 	
 	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 	{
@@ -266,8 +277,10 @@ static void ChDir( void )
 	{
 		// Check if path exists and is a directory
 		//
-		ret = VMShfGetAttr( fpFileName1, VMSHF_INVALID_HANDLE, &status, &fAttr );
-	
+		ret = VMShfGetAttr(
+						lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+						lfn, VMSHF_INVALID_HANDLE, &status, &fAttr );
+		
 		if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 		{
 			Failure( VmshfStatusToDosError( status ) );
@@ -400,7 +413,7 @@ static void WriteFile( void )
 	//
 	if ( ! r->w.cx )
 	{
-		ret = VMShfGetAttr( NULL, fpSFT->handle, &status, &oldAttr );
+		ret = VMShfGetAttr( NULL, 0, fpSFT->handle, &status, &oldAttr );
 		
 		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 		{
@@ -411,7 +424,7 @@ static void WriteFile( void )
 		memcpy_local( &newAttr, oldAttr, sizeof( VMShfAttr ) );
 		newAttr.fsize = (uint64_t) fpSFT->filePos;
 		
-		ret = VMShfSetAttr ( &newAttr, NULL, fpSFT->handle, &status );
+		ret = VMShfSetAttr ( &newAttr, NULL, 0, fpSFT->handle, &status );
 		
 		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 		{
@@ -478,18 +491,18 @@ static void GetDiskSpace( void )
 	uint64_t avail;
 	uint64_t total;
 	uint32_t sectSize = SECTOR_SIZE;
-
+	
 	if ( MK_FP( r->w.es, r->w.di ) == fpSDA->currentCDS )
 	{
 		// Called on current drive
-		path = fpCurrentPath;
+		path = lfn ? LfnGetTrueLongName( fpLongFileName2, fpCurrentPath ) : fpCurrentPath;
 	}
 	else
 	{
 		path = (char far *)NULL;
 	}
 	
-	if ( VMShfGetDirSize( path, &status, &avail, &total ) )
+	if ( VMShfGetDirSize( path, lfn, &status, &avail, &total ) )
 	{
 		Failure(r->w.ax);
 	}
@@ -513,7 +526,9 @@ static void GetFileAttrib( void )
 	uint32_t status;
 	VMShfAttr *fAttr;
 
-	ret = VMShfGetAttr( fpFileName1, VMSHF_INVALID_HANDLE, &status, &fAttr );
+	ret = VMShfGetAttr(
+					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+					lfn, VMSHF_INVALID_HANDLE, &status, &fAttr );
 		
 	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 	{
@@ -547,7 +562,10 @@ static void SetFileAttrib( void )
 		return;
 	}
 	
-	ret = VMShfSetAttr( FatAttrToFMode( (uint8_t) *fpStackParam ), fpFileName1, VMSHF_INVALID_HANDLE, &status );
+	ret = VMShfSetAttr(
+					FatAttrToFMode( (uint8_t) *fpStackParam ),
+					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+					lfn, VMSHF_INVALID_HANDLE, &status );
 	
 	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 	{
@@ -564,11 +582,12 @@ static void OpenOrCreateFile( uint16_t accessMode, uint32_t action, VMShfAttr *o
 	uint32_t handle;
 	VMShfAttr *fAttr;
 	uint8_t fatAttr;
-	
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
-
-	ret = VMShfOpenFile( (uint32_t) accessMode, action, openAttr->fmode, openAttr->attr,
-											fpFileName1, &status, &handle );
+	
+	ret = VMShfOpenFile(
+					(uint32_t) accessMode, action, openAttr->fmode, openAttr->attr,
+					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+					lfn, &status, &handle );
 		
 	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 	{
@@ -578,7 +597,7 @@ static void OpenOrCreateFile( uint16_t accessMode, uint32_t action, VMShfAttr *o
 	{
 		// Get file attributes using file handle
 		//
-		ret = VMShfGetAttr( NULL, handle, &status, &fAttr );
+		ret = VMShfGetAttr( NULL, 0, handle, &status, &fAttr );
 		
 		if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 		{
@@ -650,8 +669,7 @@ inline int MatchAttrMask( uint8_t fatAttr, uint8_t mask )
 			);
 }	
 
-
-static int MatchNameMask( char *fname, char far *mask )
+inline int MatchNameMask( char *fname, char far *mask )
 {
 	int i;
 	
@@ -665,7 +683,7 @@ static int MatchNameMask( char *fname, char far *mask )
 	return 1;
 }
 
-static int FcbNameHasWildCards( char far *fcbName )
+inline int FcbNameHasWildCards( char far *fcbName )
 {
 	int i;
 	
@@ -709,7 +727,7 @@ static void FindNext( void )
 		}
 		fatAttr = FModeToFatAttr( fAttr );
 
-		if ( FNameToFcbName( fcbName, fName, fNameLen, fpSDB->isRoot )
+		if ( FNameToFcbName( fcbName, fName, (uint16_t)fNameLen, fpSDB->isRoot, lfn )
 				&& MatchNameMask( fcbName, fpSDB->searchMask ) 
 				&& MatchAttrMask( fatAttr, fpSDB->attrMask ) )
 		{
@@ -763,14 +781,16 @@ static void FindFirst( void )
 
 		return;
 	}
-	
+
 	// Open dir to perform search
 	//
 	*(p = _fstrrchr_local( fpFileName1, '\\' )) = 0;	// Get the directory part
 	
 	fpSDB->isRoot = ( *fpFileName1 == '\0' ) ? 1 : 0;
-	
-	ret = VMShfOpenDir( fpFileName1, &status, &handle );
+		
+	ret = VMShfOpenDir(
+					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+					lfn, &status, &handle );
 
 	*p = '\\';
 
@@ -854,7 +874,9 @@ static void DeleteFile( void )
 
 			*p = '\\';
 			
-			ret = VMShfDeleteFile( fpFileName2, &status );
+			ret = VMShfDeleteFile(
+							lfn ? LfnGetTrueLongName( fpLongFileName2, fpFileName2 ) : fpFileName2,
+							lfn, &status );
 		
 			if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 			{
@@ -926,7 +948,10 @@ static void RenameFile( void )
 		
 		MakeFullPath( fpFileName2, fpFileName2, &fpFDB->fileName[0] );	// Make full path for source
 
-		ret = VMShfRenameFile( fpFileName1, fpFileName2, &status );
+		ret = VMShfRenameFile(
+						lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+						lfn ? LfnGetTrueLongName( fpLongFileName2, fpFileName2 ) : fpFileName2,
+						lfn, &status );
 	
 		if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
 		{
@@ -1126,11 +1151,11 @@ chain:
 /**
  * This function must the the last one in the BEGTEXT segment!
  *
- * GetSizeOfResidentSegment() must locate after all other resident functions and global variables.
+ * BeginOfTransientBlock() must locate after all other resident functions and global variables.
  * This function must be defined in the last source file if there are more than
  * one source file containing resident functions.
  */
-uint16_t BeginOfTransientBlock( void )
+uint16_t BeginOfTransientBlockNoLfn( void )
 {
-	return (uint16_t) BeginOfTransientBlock;	// Force some code
+	return (uint16_t) BeginOfTransientBlockNoLfn;	// Force some code
 }

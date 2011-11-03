@@ -26,6 +26,8 @@
  * 2011-10-15  Eduardo           * Support for configurable buffer size using
  *                                 the transient code space
  * 2011-10-17  Eduardo           * Signature struct for uninstallation
+ * 2011-11-02  Eduardo           * Add partial Long File Name support
+ *
  */
 
 #include <dos.h>
@@ -45,7 +47,8 @@ typedef struct {
 } Signature;
 
 extern void (__interrupt __far *fpPrevInt2fHandler)();
- 
+
+extern uint8_t		lfn;
 extern uint8_t		driveNum;
 extern CDS 			far *fpCDS;
 extern SDA			far *fpSDA;
@@ -56,10 +59,12 @@ extern char			far *fpFcbName2;
 extern char			far *fpFileName1;
 extern char			far *fpFileName2;
 extern char			far *fpCurrentPath;
+extern char			far *fpLongFileName1;
+extern char			far *fpLongFileName2;
 
 extern __segment myDS;
 
 extern void __interrupt far Int2fRedirector( union INTPACK );
-extern uint16_t BeginOfTransientBlock( void );
+extern uint16_t BeginOfTransientBlockNoLfn( void );
 	
 #endif /* REDIR_H_ */
