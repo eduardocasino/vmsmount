@@ -20,7 +20,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  *
- * 2011-10-05  Tom Ehlert       Fast _fmemcpy_local() implementation
+ * 2011-10-05  Tom Ehlert     * Fast _fmemcpy_local() implementation
+ * 2011-11-01  Eduardo        * Add strrchr_local() and _fstrchr_local()
  *
  */
 
@@ -28,6 +29,25 @@
 
 #pragma data_seg("BEGTEXT", "CODE");
 #pragma code_seg("BEGTEXT", "CODE");
+
+char *strrchr_local( const char *str, char c )
+ {
+	int i;
+	
+	for ( i = 0 ; str[i] != '\0' ; ++i );
+	for ( ; i && str[i] != c ; --i );
+	
+	return (char *)&str[i];
+}
+
+char *strchr_local( const char *str, char c )
+ {
+	int i;
+	
+	for ( i = 0 ; str[i] != '\0' && str[i] != c ; ++i );
+	
+	return (char *)&str[i];
+}
 
 char far *_fstrrchr_local( const char far *str, char c )
  {
@@ -39,13 +59,13 @@ char far *_fstrrchr_local( const char far *str, char c )
 	return (char far *)&str[i];
 }
 
-char *strchr_local( const char *str, char c )
+char far *_fstrchr_local( const char far *str, char c )
  {
 	int i;
 	
 	for ( i = 0 ; str[i] != '\0' && str[i] != c ; ++i );
 	
-	return (char *)&str[i];
+	return (char far *)&str[i];
 }
 
 void _fmemcpy_local( void far *dst, const void far *src, size_t num )
@@ -94,15 +114,13 @@ void _fmemcpy_local( void far *dst, const void far *src, size_t num )
 
 char far *_fstrcpy_local( char far *dst, const char far *src )
 {
-	int i;
-	
-	for ( i = 0 ; src[i] ; ++i )
+	while ( *src )
 	{
-		dst[i] = src[i];
+		*dst++ = *src++;
 	}
-	
-	return dst;
+	*dst = '\0';
 
+	return dst;
 }
 
 void *memcpy_local( void *dst, const void *src, size_t num )

@@ -22,12 +22,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2011-11-01  Eduardo        * Add strrchr_local() and _fstrchr_local()
+ *
  */
  
 #include <stddef.h>
  
- char far *_fstrrchr_local( const char far *str, char c );
  char *strchr_local( const char *str, char c );
+ char *strrchr_local( const char *str, char c );
+ char far *_fstrchr_local( const char far *str, char c );
+ char far *_fstrrchr_local( const char far *str, char c );
  void _fmemcpy_local( void far *dst, const void far *src, size_t num );
  char far *_fstrcpy_local( char far *dst, const char far *src );
  void *memcpy_local( void *dst, const void *src, size_t num );
