@@ -33,6 +33,7 @@
  * 2011-10-15  Eduardo           * Configurable buffer size and code cleanup
  *                               * Allow VMShfSetAttr() to be called by handle
  *                                 (Needed for fixing the "write 0" bug)
+ * 2011-11-01  Eduardo           * Long file name support
  *
  */
 
@@ -614,29 +615,32 @@ typedef union {
 extern rpc_t rpc;
 extern uint16_t bufferSize;
 extern uint16_t maxDataSize;
+extern uint8_t *buffer;
 
-#define VMShfCloseFile( H, ST )			VMShfCloseFileDir( VMSHF_CLOSE_FILE_V3, H, ST )
-#define VMShfCloseDir( H, ST )			VMShfCloseFileDir( VMSHF_CLOSE_DIR_V3, H, ST )
-#define VMShfDeleteFile( FN, ST )		VMShfDeleteFileDir( VMSHF_DELETE_FILE_V3, FN, ST )
-#define VMShfDeleteDir( DN, ST )		VMShfDeleteFileDir( VMSHF_DELETE_DIR_V3, DN, ST )
-#define VMShfRenameFile( FN1, FN2, ST )	VMShfMoveFile( FN1, FN2, VMSHF_RENAME_HINT_NO_REPLACE | VMSHF_RENAME_HINT_NO_COPY, ST )
+#define VMShfCloseFile( H, ST )				VMShfCloseFileDir( VMSHF_CLOSE_FILE_V3, H, ST )
+#define VMShfCloseDir( H, ST )				VMShfCloseFileDir( VMSHF_CLOSE_DIR_V3, H, ST )
+#define VMShfDeleteFile( FN, UTF, ST )		VMShfDeleteFileDir( VMSHF_DELETE_FILE_V3, FN, UTF, ST )
+#define VMShfDeleteDir( DN, UTF, ST )		VMShfDeleteFileDir( VMSHF_DELETE_DIR_V3, DN, UTF, ST )
+#define VMShfRenameFile( FN1, FN2, UTF, ST )	\
+								VMShfMoveFile( FN1, FN2, UTF, VMSHF_RENAME_HINT_NO_REPLACE | VMSHF_RENAME_HINT_NO_COPY, ST )
 
 /*
 	open a file in a shared folder
 */
-int VMShfOpenFile(				// ret: backdoor error code
+extern int VMShfOpenFile(				// ret: backdoor error code
 	uint32_t	access,			// in : access mode
 	uint32_t	action,			// in : open action
 	uint8_t		filemode,		// in : file permission
 	uint32_t	fileattr,		// in : file attributes
 	char far	*filename,		// in : file name
+	uint8_t		utf,			// in : filename is in UTF				*/
 	uint32_t	*status,		// out: shared folder status
 	uint32_t	*handle);		// out: file handle
 
 /*
 	read data from a shared file
 */
-int VMShfReadFile(				// ret: backdoor error code
+extern int VMShfReadFile(				// ret: backdoor error code
 	uint32_t	handle,			// in : file handle
 	uint64_t	offset,			// in : byte offset to read
 	uint32_t	*length,		// i/o: bytes to read / bytes retrieved
@@ -646,7 +650,7 @@ int VMShfReadFile(				// ret: backdoor error code
 /*
 	write data into a shared file
 */
-int VMShfWriteFile(				// ret: backdoor error code
+extern int VMShfWriteFile(				// ret: backdoor error code
 	uint32_t	handle,			// in : file handle
 	uint8_t		flags,			// in : currently, 0 or HGFS_WRITE_APPEND
 	uint64_t	offset,			// in : byte offset to write
@@ -657,7 +661,7 @@ int VMShfWriteFile(				// ret: backdoor error code
 /*
 	close a shared file/dir
 */
-int VMShfCloseFileDir(			// ret: backdoor error code
+extern int VMShfCloseFileDir(			// ret: backdoor error code
 	uint32_t	op,				// in : operation (VMSHF_CLOSE_FILE_V3 or VMSHF_CLOSE_DIR_V3)
 	uint32_t	handle,			// in : file handle
 	uint32_t	*status);		// out: shared folder status
@@ -665,15 +669,16 @@ int VMShfCloseFileDir(			// ret: backdoor error code
 /*
 	open a shared directory for file listing
 */
-int VMShfOpenDir(				// ret: backdoor error code
+extern int VMShfOpenDir(				// ret: backdoor error code
 	char far	*dirname,		// in : shared directory name
+	uint8_t		utf,			// in : filename is in UTF				*/
 	uint32_t	*status,		// out: shared folder status
 	uint32_t	*handle);		// out: directory handle
 
 /*
 	read a file entry from a shared directory
 */
-int VMShfReadDir(				// ret: backdoor error code
+extern int VMShfReadDir(				// ret: backdoor error code
 	uint32_t	handle,			// in : directory handle
 	uint32_t	index,			// in : 0 based index number
 	uint32_t	*status,		// out: shared folder status
@@ -684,8 +689,9 @@ int VMShfReadDir(				// ret: backdoor error code
 /*
 	get shared file attributes
 */
-int VMShfGetAttr(				// ret: backdoor error code
+extern int VMShfGetAttr(				// ret: backdoor error code
 	char far	*filename,		// in : shared file name
+	uint8_t		utf,			// in : filename is in UTF				*/
 	uint32_t	handle,			// in : if valid, use instead of file name
 	uint32_t	*status,		// out: shared folder status
 	VMShfAttr	**fileattr);	// out: file attributes
@@ -693,42 +699,47 @@ int VMShfGetAttr(				// ret: backdoor error code
 /*
 	set shared file attributes
 */
-int VMShfSetAttr(				// ret: backdoor error code
+extern int VMShfSetAttr(				// ret: backdoor error code
 	VMShfAttr	*fileattr,		// in : file attributes
 	char far	*filename,		// in : file name
+	uint8_t		utf,			// in : filename is in UTF				*/
 	uint32_t	handle,			// in : if valid, use instead of file name
 	uint32_t	*status);		// out: shared folder status
 
 /*
 	create a directory in a shared directory
 */
-int VMShfCreateDir(				// ret: backdoor error code
+extern int VMShfCreateDir(				// ret: backdoor error code
 	uint8_t		dirmode,		// in : directory permission
 	char far	*dirname,		// in : directory name
+	uint8_t		utf,			// in : filename is in UTF				*/
 	uint32_t	*status);		// out: shared folder status
 
 /*
 	move / rename a file an a shared directory
 */
-int VMShfMoveFile(				// ret: backdoor error code
+extern int VMShfMoveFile(				// ret: backdoor error code
 	char far	*srcname,		// in : source file name
 	char far	*dstname,		// in : destination file name
+	uint8_t		utf,			// in : filenames are in UTF				*/
 	uint64_t	hints,			// in : hints for move / rename
 	uint32_t	*status);		// out: shared folder status
 
 /*
 	delete a file/directory in a shared directory
 */
-int VMShfDeleteFileDir(			// ret: backdoor error code
+extern int VMShfDeleteFileDir(			// ret: backdoor error code
 	uint32_t	op,				// in : operation (VMSHF_DELETE_FILE_V3 or VMSHF_DELETE_DIR_V3)
 	char far	*filename,		// in : file name
+	uint8_t		utf,			// in : filename is in UTF				*/
 	uint32_t	*status);		// out: shared folder status
 
 /*
 	get shared directory size (?)
 */
-int VMShfGetDirSize(			// ret: backdoor error code
+extern int VMShfGetDirSize(			// ret: backdoor error code
 	char far	*dirname,		// in : directory name
+	uint8_t		utf,			// in : filename is in UTF				*/
 	uint32_t	*status,		// out: shared folder status
 	uint64_t	*avail,			// out: available size in bytes
 	uint64_t	*total);		// out: total size in bytes

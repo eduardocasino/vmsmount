@@ -33,11 +33,13 @@
  * 2011-10-15  Eduardo           * Configurable buffer size and code cleanup
  *                               * Allow VMShfSetAttr() to be called by handle
  *                                 (Needed for fixing the "write 0" bug)
+ * 2011-11-01  Eduardo           * Long file name support
  *
  */
 
 #include <stdlib.h>
 
+#include "globals.h"
 #include "miniclib.h"
 #include "vmint.h"
 #include "vmtool.h"
@@ -48,12 +50,12 @@
 #pragma data_seg("BEGTEXT", "CODE");
 #pragma code_seg("BEGTEXT", "CODE");
 
-uint16_t bufferSize = VMSHF_DEF_BLOCK_SIZE;
-uint16_t maxDataSize = VMSHF_MAX_DATA_SIZE(VMSHF_DEF_BLOCK_SIZE);
+PUBLIC uint16_t bufferSize = VMSHF_DEF_BLOCK_SIZE;
+PUBLIC uint16_t maxDataSize = VMSHF_MAX_DATA_SIZE(VMSHF_DEF_BLOCK_SIZE);
 
-static uint8_t *buffer = (uint8_t *) BeginOfTransientBlock;
+PUBLIC uint8_t *buffer = NULL;
 
-rpc_t rpc =
+PUBLIC rpc_t rpc =
 {
 	0,				// channel
 	0,				// cookie1
@@ -109,12 +111,13 @@ static int ExecuteRpc( uint32_t *length )
 #define Request	((VMShfOpenFileRequest *)buffer)
 #define Reply ((VMShfOpenFileReply *)buffer)
 
-int VMShfOpenFile(
+PUBLIC int VMShfOpenFile(
 	uint32_t	access,			/* one of VMSHF_ACCESS_* values		*/
-	uint32_t	action,			/* one of VMSHF_ACTION_* values	*/
+	uint32_t	action,			/* one of VMSHF_ACTION_* values		*/
 	uint8_t		filemode,		/* VMSHF_FILEMODE_* mask values		*/
 	uint32_t	fileattr,		/* one of VMSHF_ATTR_* values		*/
 	char far	*filename,		/* variable length file name		*/
+	uint8_t		utf,			/* filename is in UTF				*/
 	uint32_t	*status,		/* status							*/
 	uint32_t	*handle)		/* file handle						*/
 {
@@ -136,7 +139,12 @@ int VMShfOpenFile(
 	Request->data.reserved1	= 0;
 	Request->data.reserved2	= 0;
 	
-	namelen = DosPathToPortable( &Request->data.file.name, filename );
+	namelen = (uint32_t) DosPathToPortable( &Request->data.file.name, filename, utf );
+	if ( namelen == (uint32_t)-1 )
+	{
+		*status = VMSHF_EACCESS;
+		return VMTOOL_SUCCESS;
+	}
 	Request->data.file.length	= namelen;
 	Request->data.file.flags	= VMSHF_FILE_NAME_USE_NAME;
 	Request->data.file.caseType	= VMSHF_CASE_INSENSITIVE;
@@ -173,7 +181,7 @@ int VMShfOpenFile(
 #define Request	((VMShfReadFileRequest *)buffer)
 #define Reply ((VMShfReadFileReply *)buffer)
 
-int VMShfReadFile(
+PUBLIC int VMShfReadFile(
 	uint32_t	handle,		/* 10=> file handle returned by OPEN	*/
 	uint64_t	offset,		/* 14=> byte offset to stat reading		*/
 	uint32_t	*length,	/* 22-> number of bytes to read			*/
@@ -225,7 +233,7 @@ int VMShfReadFile(
 #define Request	((VMShfWriteFileRequest *)buffer)
 #define Reply ((VMShfWriteFileReply *)buffer)
 
-int VMShfWriteFile(
+PUBLIC int VMShfWriteFile(
 	uint32_t	handle,			/* 10: file handle returned by OPEN */
 	uint8_t		flags,
 	uint64_t	offset,			/* 15: byte offset to start writing	*/
@@ -283,7 +291,7 @@ int VMShfWriteFile(
 #define Request	((VMShfCloseFileDirRequest *)buffer)
 #define Reply ((VMShfCloseFileDirReply *)buffer)
 
-int VMShfCloseFileDir(
+PUBLIC int VMShfCloseFileDir(
 	uint32_t	op,
 	uint32_t	handle,		/* 10: file handle returned by OPEN */
 	uint32_t	*status)
@@ -322,8 +330,9 @@ int VMShfCloseFileDir(
 #define Request	((VMShfOpenDirRequest *)buffer)
 #define Reply ((VMShfOpenDirReply *)buffer)
 
-int VMShfOpenDir(
+PUBLIC int VMShfOpenDir(
 	char far	*dirname,
+	uint8_t		utf,			/* filename is in UTF				*/
 	uint32_t	*status,
 	uint32_t	*handle)
 {
@@ -338,7 +347,12 @@ int VMShfOpenDir(
 
 	Request->data.reserved		= 0;
 
-	namelen = DosPathToPortable( &Request->data.dir.name, dirname );
+	namelen = (uint32_t) DosPathToPortable( &Request->data.dir.name, dirname, utf );
+	if ( namelen == (uint32_t)-1 )
+	{
+		*status = VMSHF_EACCESS;
+		return VMTOOL_SUCCESS;
+	}
 	Request->data.dir.length	= namelen;
 	Request->data.dir.flags		= VMSHF_FILE_NAME_USE_NAME;
 	Request->data.dir.caseType	= VMSHF_CASE_INSENSITIVE;
@@ -375,7 +389,7 @@ int VMShfOpenDir(
 #define Request	((VMShfReadDirRequest *)buffer)
 #define Reply ((VMShfReadDirReply *)buffer)
 
-int VMShfReadDir(
+PUBLIC int VMShfReadDir(
 	uint32_t	handle,		/* 10: file handle returned by OPEN */
 	uint32_t	index,
 	uint32_t	*status,
@@ -436,8 +450,9 @@ int VMShfReadDir(
 #define Request	((VMShfGetAttrRequest *)buffer)
 #define Reply ((VMShfGetAttrReply *)buffer)
 
-int VMShfGetAttr(
+PUBLIC int VMShfGetAttr(
 	char far	*filename,
+	uint8_t		utf,			/* filename is in UTF				*/
 	uint32_t	handle,
 	uint32_t	*status,
 	VMShfAttr	**fileattr)
@@ -462,13 +477,18 @@ int VMShfGetAttr(
 	{
 		Request->data.hints			= VMSHF_ATTR_HINT_NONE;
 		Request->data.file.flags	= VMSHF_FILE_NAME_USE_NAME;
-		namelen = DosPathToPortable( &Request->data.file.name, filename );
+		namelen = (uint32_t) DosPathToPortable( &Request->data.file.name, filename, utf );
+		if ( namelen == (uint32_t)-1 )
+		{
+			*status = VMSHF_EACCESS;
+			return VMTOOL_SUCCESS;
+		}
 	}
 	Request->data.reserved		= 0;
 	Request->data.file.length	= namelen;
 	Request->data.file.caseType	= VMSHF_CASE_INSENSITIVE;
 	Request->data.file.handle	= handle;
-	
+
 	datalen = sizeof( VMShfGetAttrRequest ) + namelen;
 	
 	ret = ExecuteRpc( &datalen );
@@ -498,9 +518,10 @@ int VMShfGetAttr(
 #define Request	((VMShfSetAttrRequest *)buffer)
 #define Reply ((VMShfSetAttrReply *)buffer)
 
-int VMShfSetAttr(
+PUBLIC int VMShfSetAttr(
 	VMShfAttr	*fileattr,
 	char far	*filename,
+	uint8_t		utf,			/* filename is in UTF				*/
 	uint32_t	handle,
 	uint32_t	*status)
 {
@@ -524,11 +545,14 @@ int VMShfSetAttr(
 	{
 		Request->data.hints			= VMSHF_ATTR_HINT_NONE;
 		Request->data.file.flags	= VMSHF_FILE_NAME_USE_NAME;
-		namelen = DosPathToPortable( &Request->data.file.name, filename );
+		namelen = (uint32_t) DosPathToPortable( &Request->data.file.name, filename, utf );
+		if ( namelen == (uint32_t)-1 )
+		{
+			*status = VMSHF_EACCESS;
+			return VMTOOL_SUCCESS;
+		}
 	}
-	
-	
-	
+
 	Request->data.reserved		= 0;
 	Request->data.file.length	= namelen;
 	Request->data.file.caseType	= VMSHF_CASE_INSENSITIVE;
@@ -558,9 +582,10 @@ int VMShfSetAttr(
 #define Request	((VMShfCreateDirRequest *)buffer)
 #define Reply ((VMShfCreateDirReply *)buffer)
 
-int VMShfCreateDir(
+PUBLIC int VMShfCreateDir(
 	uint8_t		dirmode,
 	char far	*dirname,
+	uint8_t		utf,			/* filename is in UTF				*/
 	uint32_t	*status)
 {
 	uint32_t namelen, datalen;
@@ -575,7 +600,12 @@ int VMShfCreateDir(
 	Request->data.mask		= VMSHF_CREATE_DIR_VALID_FIELDS;
 	Request->data.fmode		= dirmode;
 	
-	namelen = DosPathToPortable( &Request->data.dir.name, dirname );
+	namelen = (uint32_t) DosPathToPortable( &Request->data.dir.name, dirname, utf );
+	if ( namelen == (uint32_t)-1 )
+	{
+		*status = VMSHF_EACCESS;
+		return VMTOOL_SUCCESS;
+	}
 	Request->data.dir.length	= namelen;
 	Request->data.dir.flags		= VMSHF_FILE_NAME_USE_NAME;
 	Request->data.dir.caseType	= VMSHF_CASE_INSENSITIVE;
@@ -603,9 +633,10 @@ int VMShfCreateDir(
 #define Request	((VMShfDeleteFileRequest *)buffer)
 #define Reply ((VMShfDeleteFileReply *)buffer)
 	
-int VMShfDeleteFileDir(
+PUBLIC int VMShfDeleteFileDir(
 	uint32_t	op,
 	char far	*filename,
+	uint8_t		utf,			/* filename is in UTF				*/
 	uint32_t	*status)
 {
 	uint32_t namelen, datalen;
@@ -619,7 +650,12 @@ int VMShfDeleteFileDir(
 
 	Request->data.hints			= VMSHF_DELETE_HINT_NONE;
 	Request->data.reserved		= 0;
-	namelen = DosPathToPortable( &Request->data.file.name, filename );
+	namelen = (uint32_t) DosPathToPortable( &Request->data.file.name, filename, utf );
+	if ( namelen == (uint32_t)-1 )
+	{
+		*status = VMSHF_EACCESS;
+		return VMTOOL_SUCCESS;
+	}
 	Request->data.file.length	= namelen;
 	Request->data.file.flags	= VMSHF_FILE_NAME_USE_NAME;
 	Request->data.file.caseType = VMSHF_CASE_INSENSITIVE;
@@ -647,9 +683,10 @@ int VMShfDeleteFileDir(
 #define Request	((VMShfMoveFileRequest *)buffer)
 #define Reply ((VMShfMoveFileReply *)buffer)
 
-int VMShfMoveFile(
+PUBLIC int VMShfMoveFile(
 	char far	*srcname,
 	char far	*dstname,
+	uint8_t		utf,			/* filenames are in UTF				*/
 	uint64_t	hints,
 	uint32_t	*status)
 {
@@ -666,7 +703,12 @@ int VMShfMoveFile(
 	Request->data.hints			= hints;
 	Request->data.reserved		= 0;
 
-	srclen = DosPathToPortable( &Request->data.src.name, srcname );
+	srclen = (uint32_t) DosPathToPortable( &Request->data.src.name, srcname, utf );
+	if ( srclen == (uint32_t)-1 )
+	{
+		*status = VMSHF_EACCESS;
+		return VMTOOL_SUCCESS;
+	}
 	Request->data.src.length	= srclen;
 	Request->data.src.flags		= VMSHF_FILE_NAME_USE_NAME;
 	Request->data.src.caseType 	= VMSHF_CASE_INSENSITIVE;
@@ -677,7 +719,12 @@ int VMShfMoveFile(
 	//
     dst = (VMShfFileName *)( (char *)&Request->data.src + sizeof( VMShfFileName ) + srclen );
 
-	dstlen = DosPathToPortable( &dst->name, dstname );
+	dstlen = (uint32_t) DosPathToPortable( &dst->name, dstname, utf );
+	if ( dstlen == (uint32_t)-1 )
+	{
+		*status = VMSHF_EACCESS;
+		return VMTOOL_SUCCESS;
+	}
 	dst->length		= dstlen;
 	dst->flags		= VMSHF_FILE_NAME_USE_NAME;
 	dst->caseType 	= VMSHF_CASE_INSENSITIVE;
@@ -705,8 +752,9 @@ int VMShfMoveFile(
 #define Request	((VMShfGetDirSizeRequest *)buffer)
 #define Reply ((VMShfGetDirSizeReply *)buffer)
 
-int VMShfGetDirSize(
+PUBLIC int VMShfGetDirSize(
 	char far	*dirname,
+	uint8_t		utf,			/* filename is in UTF				*/
 	uint32_t	*status,
 	uint64_t	*avail,
 	uint64_t	*total)
@@ -727,7 +775,12 @@ int VMShfGetDirSize(
 	}
 	else
 	{
-		namelen = DosPathToPortable( &Request->data.dir.name, dirname );
+		namelen = (uint32_t) DosPathToPortable( &Request->data.dir.name, dirname, utf );
+		if ( namelen == (uint32_t)-1 )
+		{
+			*status = VMSHF_EACCESS;
+			return VMTOOL_SUCCESS;
+		}
 	}
 	Request->data.dir.length	= namelen;
 	
