@@ -6,7 +6,7 @@
 # Spaces before text must be kept. Be sure that no spaces are
 # added to the end of the lines.
 #
-0.1:\nUsage: VMSMOUNT [/H][/V|/Q] [/L:<drive letter>] [/B:<size[K]>]\n
+0.1:\nUsage: VMSMOUNT [/H][/V|/Q] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]\n
 0.2:       VMSMOUNT [/V|/Q] /U\n
 0.3:        /H                  - Prints this message and exits\n
 0.4:        /V                  - Verbose: Prints information on system resources\n
@@ -15,7 +15,14 @@
 0.7:                              (if omitted, use first available)\n
 0.8:        /B:<size[K]>        - Size of read/write buffer\n
 0.9:                              (4K default, higher values increase performance)\n
-0.10:        /U                  - Uninstall\n
+0.10:        /LFN                - Long File Name support\n
+0.11:        /M:<n>              - Number of mangling chars for short names\n
+0.12:                              (2 minimum, 6 maximum, 3 default)\n
+0.13:        /CI                 - Host file system is case insensitive\n
+0.14:                              (default option)\n
+0.15:        /CS                 - Host file system is case sensitive\n
+0.16:                              (mangles file names whith lower case chars)\n
+0.17:        /U                  - Uninstall\n
 1.0: ERROR: Drive %c: already in use\n
 1.1: ERROR: No drive letter available (LASTDRIVE is %c)\n
 1.2: ERROR: Usupported DOS version %d.%d. Need 5.0 or higher.\n
@@ -30,12 +37,13 @@
 1.11: ERROR: Buffer size must be between %u and %u bytes\n
 1.12: ERROR: Unable to uninstall.\n
 1.13: ERROR: Driver not installed.\n
-1.14: WARNING: TZ invalid or not defined, times will be shown in UTC.\n
-1.15: WARNING: Can't find Unicode table: %s
-1.16: WARNING: Can't load Unicode table: %s
-1.17: WARNING: Invalid file format: %s
-1.18: WARNING: Active code page not found
-1.19:. Defaulting to cp437\n
+1.14: ERROR: Mangle characters must be between %u and %u\n
+1.15: WARNING: TZ invalid or not defined, times will be shown in UTC.\n
+1.16: WARNING: Can't find Unicode table: %s
+1.17: WARNING: Can't load Unicode table: %s
+1.18: WARNING: Invalid file format: %s
+1.19: WARNING: Active code page not found
+1.20:. Defaulting to cp437\n
 2.0: Mounting Shared Folders in %c:\n
 2.1: Successfully uninstalled and removed from memory.\n
 9.0: INFO: Running on VMware %s Version %lu\n
