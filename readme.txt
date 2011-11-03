@@ -13,7 +13,7 @@ WARNING AND DISCLAIMER
  
 USAGE
 
- VMSMOUNT [/H][/V|/Q] [/L:<drive letter>] [/B:<size[K]>]
+ VMSMOUNT [/H][/V|/Q] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]
  VMSMOUNT [/V|/Q] /U
 	/H                 - Prints help and exits
 	/V                 - Verbose: Prints information on system resources
@@ -22,6 +22,16 @@ USAGE
 	                     (if omitted, use the first available)
 	/B:<size[K]>       - Size of read/write buffer
 	                     (4K default, higher values increase performance)
+	/LFN               - Long File Name support
+	/M:<n>             - Number of mangling chars for short names
+	                     (2 minimum, 6 maximum, 3 default)
+	                     The default suits most use cases. Increase if the
+	                     host file system has many file with similar long
+	                     names.
+	/CI                - Host file system is case insensitive
+	                     (Windows hosts) This is the default. 
+	/CS                - Host file system is case sensitive (non-Windows
+	                     hosts) Mangles file names whith lower case chars.
 	/U                 - Uninstall
 
 ENVIRONMENT
@@ -75,8 +85,6 @@ LIMITATIONS
  * Does not support old versions of VMWare Workstation (Tested with
    VMWare Player 3 and 4) 
  * Shared folder names MUST be uppercase.
- * Does not support long names (long names and/or with illegal characters 
-   are ignored)
  * Does not detect code page changes
 
 ACKNOWLEDGEMENTS
@@ -122,7 +130,7 @@ BUGS
 TODO
  
  * Code Page change detection (maybe)
- * Long file names (don't even know if I'll try)
+ * Full Long file names support
  
 LICENSE
 
