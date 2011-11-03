@@ -21,11 +21,13 @@
  * MA  02110-1301, USA.
  *
  */
- 
+
+#include "globals.h"
+
 #pragma data_seg("ENDTEXT", "CODE");
 #pragma code_seg("ENDTEXT", "CODE");
 
-void EndOfTransientBlock( void )
+PUBLIC void EndOfTransientBlock( void )
 {
 	return;
 }
