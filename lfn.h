@@ -41,7 +41,7 @@ extern char longFileName2[VMSHF_MAX_PATH];
 // Claculates and returns hashLen bits length hash
 //
 extern uint32_t LfnFNameHash(
-	uint8_t *buf, 		// in : File name in UTF-8
+	uint8_t *name, 		// in : File name in UTF-8
 	uint16_t len		// in : File name length
 	);
 

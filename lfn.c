@@ -58,7 +58,7 @@ inline char hexDigit( uint8_t val )
 //
 #define FOLD_MASK(x) (((uint32_t)1<<(x))-1)
 PUBLIC uint32_t LfnFNameHash(
-	uint8_t *buf, 		// in : File name in UTF-8
+	uint8_t *name, 		// in : File name in UTF-8
 	uint16_t len		// in : File name length
 	)
 {
