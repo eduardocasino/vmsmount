@@ -29,10 +29,8 @@
  *  
  * TODO:
  *
- *   Read and write optimizations
- *   Uninstallation
  *   Codepage change detection
- *   Long file names (really?)
+ *   Full Long fil names support
  *
  *
  * 2011-10-01  Eduardo           * Fixed a bug when printing default error messages
@@ -44,6 +42,7 @@
  *             Tom Ehlert        * Replace fscanf_s() with a much lighter implementation
  * 2011-10-17  Eduardo           * Fixed a (new) bug when printing default error messages
  *                               * Uninstallation
+ * 2011-11-02  Eduardo           * Partial long file names support (with mangling)
  *
  */ 
 #include <process.h>
@@ -66,6 +65,9 @@
 #include "redir.h"
 #include "endtext.h"
 #include "unicode.h"
+#include "vmdos.h"
+#include "vmshf.h"
+#include "lfn.h"
 
 PUBLIC nl_catd cat;
 PUBLIC int verbosity = 1;
@@ -76,6 +78,7 @@ static struct SREGS segRegs;
 // Far pointers to resident data
 // These are set by GetFarPointersToResidentData()
 //
+static uint8_t	far * fpLfn;
 static uint8_t	far * fpDriveNum;
 static CDS 		far * far * fpfpCDS;
 static SDA		far * far * fpfpSDA;
@@ -88,16 +91,22 @@ static char		far * far * fpfpFileName2;
 static char		far * far * fpfpCurrentPath;
 static void		(__interrupt __far * far * fpfpPrevInt2fHandler)();
 static void 	(__interrupt __far *fpNewInt2fHandler)();
-
+static char		far * far * fpfpLongFileName1;
+static char		far * far * fpfpLongFileName2;
 static uint16_t far *fpUnicodeTbl;
 
 static uint8_t	far * far *fpfpFUcase;
 static FChar	far * far *fpfpFChar;
 static int32_t	far *fpGmtOffset;
+static uint8_t	far	*fpCaseSensitive;
+
+static uint8_t	far *fpHashLen;
+static uint8_t	far *fpManglingChars;
 
 PUBLIC rpc_t	far *fpRpc;
 static uint16_t	far *fpBufferSize;
 static uint16_t	far *fpMaxDataSize;
+static uint8_t	* far *fpBuffer;
 
 static SysVars far *fpSysVars;
 static CDS far *currDir;
@@ -152,6 +161,7 @@ static void GetFarPointersToResidentData( void )
 	// From redir.c
 	fpNewInt2fHandler		= segRegs.cs:>Int2fRedirector;
 	fpfpPrevInt2fHandler	= segRegs.cs:>&fpPrevInt2fHandler;
+	fpLfn = segRegs.cs:>&lfn;
 	fpDriveNum = segRegs.cs:>&driveNum;
 	fpfpSDA = segRegs.cs:>&fpSDA;
 	fpfpCDS = segRegs.cs:>&fpCDS;
@@ -162,7 +172,13 @@ static void GetFarPointersToResidentData( void )
 	fpfpFileName1	= segRegs.cs:>&fpFileName1;
 	fpfpFileName2	= segRegs.cs:>&fpFileName2;
 	fpfpCurrentPath	= segRegs.cs:>&fpCurrentPath;
-
+	
+	// from lfn.c
+	fpfpLongFileName1	= segRegs.cs:>&fpLongFileName1;
+	fpfpLongFileName2	= segRegs.cs:>&fpLongFileName2;
+	*fpfpLongFileName1	= segRegs.cs:>&longFileName1;
+	*fpfpLongFileName2	= segRegs.cs:>&longFileName2;
+	
 	// From unicode.c
 	fpUnicodeTbl = segRegs.cs:>&unicodeTbl;
 	
@@ -170,12 +186,18 @@ static void GetFarPointersToResidentData( void )
 	fpfpFUcase = segRegs.cs:>&fpFUcase;
 	fpfpFChar = segRegs.cs:>&fpFChar;
 	fpGmtOffset = segRegs.cs:>&gmtOffset;
-	
+	fpCaseSensitive = segRegs.cs:>&caseSensitive;
+		
+	// From lfnc.
+	fpManglingChars = segRegs.cs:>&manglingChars;
+	fpHashLen = segRegs.cs:>&hashLen;
+
 	// From vmshf.c
 	fpRpc = segRegs.cs:>&rpc;
 	fpBufferSize = segRegs.cs:>&bufferSize;
 	fpMaxDataSize = segRegs.cs:>&maxDataSize;
-
+	fpBuffer = segRegs.cs:>&buffer;
+	
 	return;
 	
 }
@@ -193,6 +215,13 @@ static void PrintUsageAndExit(int err)
 	fputs( catgets( cat, 0, 8, MSG_HELP_8 ), stderr );		
 	fputs( catgets( cat, 0, 9, MSG_HELP_9 ), stderr );
 	fputs( catgets( cat, 0,10, MSG_HELP_10), stderr );		
+	fputs( catgets( cat, 0,11, MSG_HELP_11), stderr );		
+	fputs( catgets( cat, 0,12, MSG_HELP_12), stderr );		
+	fputs( catgets( cat, 0,13, MSG_HELP_13), stderr );		
+	fputs( catgets( cat, 0,14, MSG_HELP_14), stderr );		
+	fputs( catgets( cat, 0,15, MSG_HELP_15), stderr );		
+	fputs( catgets( cat, 0,16, MSG_HELP_16), stderr );		
+	fputs( catgets( cat, 0,17, MSG_HELP_17), stderr );		
 	exit( err );
 	
 }
@@ -201,10 +230,14 @@ static int GetOptions(char *argString)
 {
 	int argIndex, i;
 	uint32_t d, bufsiz= 0;
+	uint8_t mangle = 0;
 	char c, *s;
 	int vset= 0;
 	int bset= 0;
 	int lset= 0;
+	int lfnset= 0;
+	int mset= 0;
+	int cset= 0;
 	
 	for ( argIndex= 0; argString[argIndex] != '\0'; ++argIndex )
 	{
@@ -282,15 +315,67 @@ static int GetOptions(char *argString)
 						*fpBufferSize = (uint16_t) bufsiz;
 						break;
 					case 'L':
-						if ( lset++ || argString[++argIndex] != ':' )
+						if ( toupper( argString[argIndex+1]) == 'F' && toupper( argString[argIndex+2]) == 'N' )
 						{
-							return 2; // /L already set or needs a drive letter
+							if ( lfnset++ )
+							{
+								return 2;	// LFN already set
+							}
+							*fpLfn = 1;
+							argIndex += 2;
 						}
-						if ( !isalpha( c= toupper( argString[++argIndex] ) ) )
+						else
 						{
-							return 2; // Missing or invalid drive letter
+							if ( lset++ || argString[++argIndex] != ':' )
+							{
+								return 2; // /L already set or needs a drive letter
+							}
+							if ( !isalpha( c= toupper( argString[++argIndex] ) ) )
+							{
+								return 2; // Missing or invalid drive letter
+							}
+							*fpDriveNum = c - 'A';
 						}
-						*fpDriveNum = c - 'A';
+						break;
+					case 'M':
+						if ( !lfnset || mset++ || argString[++argIndex] != ':' )
+						{
+							return 2; // Already been here or needs a number or LFN not set;
+						}
+						if ( ! isdigit( c = argString[++argIndex] ) )
+						{
+							return 2; // Argument must be a number
+						}
+						if ( isdigit( argString[argIndex+1] ) )
+						{
+							mangle = 10;	// Anything bigger than 8 would do
+							while ( isdigit( argString[argIndex+1] ) )
+							{
+								++argIndex;
+							}
+						}
+						else {
+							mangle = c - 0x30;
+						}
+						*fpManglingChars = mangle;
+						*fpHashLen = mangle << 2;	// Translate nibbles to bits
+						break;
+					case 'C':
+						if ( !lfnset || cset++ )
+						{
+							return 2;	// // Already been here or LFN not set;
+						}
+						switch ( toupper( argString[++argIndex] ) )
+						{
+							case 'S':
+								*fpCaseSensitive = TRUE;
+								break;
+							case 'I':
+								*fpCaseSensitive = FALSE;
+								break;
+							default:
+								return 2;
+						}
 						break;
 					default:
 						return 2; // Invalid option
@@ -608,7 +693,7 @@ static void LoadUnicodeConversionTable(void)
 	if ( r.x.cflag ) {
 		// Can't get codepage. Use ASCII only
 		//
-		fputs( catgets( cat, 1, 18, MSG_WARN_CP ), stderr );
+		fputs( catgets( cat, 1, 19, MSG_WARN_CP ), stderr );
 		goto error;
 	}
 	
@@ -619,7 +704,7 @@ static void LoadUnicodeConversionTable(void)
 	_searchenv( filename, "PATH", fullpath);
 	if ( '\0' == fullpath[0] )
 	{
-		fprintf( stderr, catgets( cat, 1, 15, MSG_WARN_NOTBL ), filename );
+		fprintf( stderr, catgets( cat, 1, 16, MSG_WARN_NOTBL ), filename );
 		goto error;
 	}
 	
@@ -627,7 +712,7 @@ static void LoadUnicodeConversionTable(void)
 	
 	if ( NULL == f )
 	{
-		fprintf( stderr, catgets( cat, 1, 16, MSG_WARN_UNICODE ), filename );
+		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_UNICODE ), filename );
 		goto error;
 	}
 	
@@ -636,14 +721,14 @@ static void LoadUnicodeConversionTable(void)
 #if 0	
 	if ( EOF == fscanf_s( f, "Unicode (%s)", buffer, sizeof( buffer) ) )
 	{
-		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 #else
 	if ( fread( buffer, 1, 9, f ) != 9 ||     // "Unicode (
 						memcmp( buffer, "Unicode (", 9 ) != 0 )
 	{
-		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}   
 
@@ -653,7 +738,7 @@ static void LoadUnicodeConversionTable(void)
 	{
 		if ( fread( buffer+i, 1, 1, f ) != 1 )
 		{
-			fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_TBLFORMAT ), filename );
+			fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
 			goto close;
 		}
 		if ( buffer[i] == ')' )  
@@ -668,13 +753,13 @@ static void LoadUnicodeConversionTable(void)
 
 	if ( ret != 3 || buffer[0] != '\r' || buffer[1] != '\n' || buffer[2] != 1 )
 	{
-		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_TBLFORMAT ), filename );
+		fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 	
 	if ( 256 != (ret = fread( buffer, 1, 256, f )) )
 	{
-		fprintf( stderr, catgets( cat, 1, 16, MSG_WARN_UNICODE ), filename );
+		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_UNICODE ), filename );
 		goto close;
 	}
 	
@@ -685,7 +770,7 @@ static void LoadUnicodeConversionTable(void)
 close:
 	fclose( f );
 error:
-	fputs( catgets( cat, 1, 19, MSG_WARN_437 ), stderr );
+	fputs( catgets( cat, 1, 20, MSG_WARN_437 ), stderr );
 	
 }
 
@@ -699,7 +784,7 @@ static void GetTimezoneOffset(void)
 	
 	if ( NULL == tz )
 	{
-		fputs( catgets( cat, 1, 14, MSG_WARN_TIMEZONE ), stderr );
+		fputs( catgets( cat, 1, 15, MSG_WARN_TIMEZONE ), stderr );
 	}
 	else
 	{
@@ -717,9 +802,15 @@ static void GetTimezoneOffset(void)
 	return;
 }
 
-static uint16_t SetActualBufferSize( void )
+static uint16_t SetBufferAndActualBufferSize( void )
 {
-	uint16_t transientSize = (uint16_t) EndOfTransientBlock - (uint16_t) BeginOfTransientBlock;
+	uint16_t transientSize;
+
+	*fpBuffer = ( *fpLfn ) ? (uint8_t *) BeginOfTransientBlockWithLfn
+							: (uint8_t *)  (uint8_t *) BeginOfTransientBlockNoLfn;
+	
+	transientSize = (uint16_t) EndOfTransientBlock
+		- ( ( *fpLfn ) ? (uint16_t) BeginOfTransientBlockWithLfn : (uint16_t) BeginOfTransientBlockNoLfn );
 	
 	if (*fpBufferSize > transientSize || *fpBufferSize > VMSHF_MAX_BLOCK_SIZE
 													|| *fpBufferSize < VMSHF_MIN_BLOCK_SIZE )
@@ -736,7 +827,9 @@ static uint16_t SizeOfResidentSegmentInParagraphs( void )
 {
 	uint16_t	sizeInBytes;
 	
-	sizeInBytes	= (uint16_t) BeginOfTransientBlock + *fpBufferSize;
+	sizeInBytes	=
+		( ( *fpLfn )? (uint16_t) BeginOfTransientBlockWithLfn : (uint16_t) BeginOfTransientBlockNoLfn )
+		+ *fpBufferSize;
 	sizeInBytes	+= 0x100;	// Size of PSP (do not add when building .COM executable)
 	sizeInBytes	+= 15;		// Make sure nothing gets lost in partial paragraph
 
@@ -800,7 +893,14 @@ int main(int argc, char **argv)
 	}
 
 	VERB_PRINTF( 1, MSG_COPYRIGHT );
-
+	
+	if ( *fpLfn 
+		&& (*fpManglingChars < MIN_MANGLING_CHARS || *fpManglingChars > MAX_MANGLING_CHARS ) )
+	{
+		fprintf( stderr, catgets(cat, 1, 14, MSG_ERROR_MANGLE ), MIN_MANGLING_CHARS, MAX_MANGLING_CHARS );
+		return( ERR_BADOPTS );
+	}
+	
 	if ( VMAuxCheckVirtual() )
 	{
 		fputs( catgets(cat, 1, 3, MSG_ERROR_NOVIRT ), stderr );
@@ -812,7 +912,7 @@ int main(int argc, char **argv)
 		fputs( catgets(cat, 1, 6, MSG_ERROR_REDIR_NOT_ALLOWED ), stderr );
 		return( ERR_NOALLWD );
 	}
-		
+	
 	if ( GetSysVars() )
 	{
 		fputs( catgets( cat, 1, 5, MSG_ERROR_LOL ), stderr );
@@ -864,7 +964,7 @@ int main(int argc, char **argv)
 	LoadUnicodeConversionTable();
 	GetTimezoneOffset();
 
-	ret = SetActualBufferSize();
+	ret = SetBufferAndActualBufferSize();
 
 	if ( ret )
 	{
