@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include "vmcall.h"
 #include "vmtool.h"
+#include "globals.h"
 
 #pragma data_seg("BEGTEXT", "CODE");
 #pragma code_seg("BEGTEXT", "CODE");
@@ -40,7 +41,7 @@ static CREGS r;
 /*
 	send RPC command
 */
-int VMRpcSend(const rpc_t *rpc, const unsigned char *command, uint32_t length)
+PUBLIC int VMRpcSend(const rpc_t *rpc, const unsigned char *command, uint32_t length)
 {
 	/* send command length */
 	
@@ -109,7 +110,7 @@ int VMRpcSend(const rpc_t *rpc, const unsigned char *command, uint32_t length)
 }
 
 
-int VMRpcRecvLen(const rpc_t *rpc, uint32_t *length, uint16_t *dataid)
+PUBLIC int VMRpcRecvLen(const rpc_t *rpc, uint32_t *length, uint16_t *dataid)
 {
 	/* receive result length */
 
@@ -132,7 +133,7 @@ int VMRpcRecvLen(const rpc_t *rpc, uint32_t *length, uint16_t *dataid)
 	return 0;
 }
 
-int VMRpcRecvDat(const rpc_t *rpc, unsigned char *data, uint32_t length, uint16_t dataid)
+PUBLIC int VMRpcRecvDat(const rpc_t *rpc, unsigned char *data, uint32_t length, uint16_t dataid)
 {
 	if ( rpc->cookie1 && rpc->cookie2 ) {
 		
