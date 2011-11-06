@@ -31,6 +31,7 @@
  *                               * New verbosity options
  * 2011-10-17  Eduardo           * New errorlevels ERR_UNINST/ERR_NOTINST
  * 2011-10-18  Eduardo           * bump version number to 0.5
+ * 2011-11-06  Eduardo           * New message printing macros
  *
  */
 
@@ -60,9 +61,12 @@
 #define ERR_SYSTEM	255
 
 
-#define VERB_PRINTF(L, ...) if ( verbosity >= L ) printf( __VA_ARGS__ )
+#define VERB_FPRINTF(L, F, ...) if ( verbosity >= L ) fprintf( F, __VA_ARGS__ )
+#define VERB_FPUTS(L, S, F) if ( verbosity >= L ) fputs( S, F )
+
+typedef enum { SILENT, QUIET, NORMAL, VERBOSE } Verbosity;
 
 extern nl_catd cat;
-extern int verbosity;
+extern Verbosity verbosity;
 
 #endif /* _GLOBALS_H */
