@@ -25,10 +25,11 @@
  * 2011-10-16  Eduardo           * Messages for uninstallation
  * 2011-11-02  Eduardo           * Messages for LFN support
  * 2011-11-06  Eduardo           * New /QQ option
+ * 2011-11-06  Eduardo           * Only for 0.5 branch: Add 'b' version
  *
  */
 
-#define MSG_MY_NAME				"VMSMOUNT %d.%d -"
+#define MSG_MY_NAME				"VMSMOUNT %d.%db -"
 #define MSG_COPYRIGHT			" (C) 2011 Eduardo Casino - GNU GPL Ver. 2.0\n"
 #define MSG_HELP_1				"\nUsage:\n"
 #define MSG_HELP_2				"   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CS|/CI]]\n"
