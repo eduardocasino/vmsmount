@@ -29,6 +29,7 @@
  *  2011-10-15  Eduardo           * New verbosity options and code cleanup
  *  2011-10-17  Eduardo           * Pass session info as parameter to
  *                                  VMAuxBeginSession() and VMAuxEndSession()
+ *  2011-11-06  Eduardo           * New message printing macros
  */
  
 /*
@@ -335,7 +336,7 @@ int VMAuxCheckVirtual(void)
 	if ( product > 4)
 		product = 0;
 		
-	VERB_PRINTF( 2, catgets( cat, 9, 0, MSG_INFO_VMVERS ),
+	VERB_FPRINTF( VERBOSE, stdout, catgets( cat, 9, 0, MSG_INFO_VMVERS ),
 		catgets( cat, prodName[product].set, prodName[product].number, prodName[product].name ),
 		version );
 	
