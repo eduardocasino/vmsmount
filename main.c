@@ -43,6 +43,7 @@
  * 2011-10-17  Eduardo           * Fixed a (new) bug when printing default error messages
  *                               * Uninstallation
  * 2011-11-02  Eduardo           * Partial long file names support (with mangling)
+ * 2011-11-06  Eduardo           * New /QQ option
  *
  */ 
 #include <process.h>
@@ -70,7 +71,7 @@
 #include "lfn.h"
 
 PUBLIC nl_catd cat;
-PUBLIC int verbosity = 1;
+PUBLIC Verbosity verbosity = NORMAL;
 static int uninstall = 0;
 
 static struct SREGS segRegs;
@@ -204,24 +205,27 @@ static void GetFarPointersToResidentData( void )
 
 static void PrintUsageAndExit(int err)
 {
-	fprintf( stderr, MSG_COPYRIGHT );
-	fputs( catgets( cat, 0, 1, MSG_HELP_1 ), stderr );
-	fputs( catgets( cat, 0, 2, MSG_HELP_2 ), stderr );
-	fputs( catgets( cat, 0, 3, MSG_HELP_3 ), stderr );
-	fputs( catgets( cat, 0, 4, MSG_HELP_4 ), stderr );
-	fputs( catgets( cat, 0, 5, MSG_HELP_5 ), stderr );
-	fputs( catgets( cat, 0, 6, MSG_HELP_6 ), stderr );
-	fputs( catgets( cat, 0, 7, MSG_HELP_7 ), stderr );
-	fputs( catgets( cat, 0, 8, MSG_HELP_8 ), stderr );		
-	fputs( catgets( cat, 0, 9, MSG_HELP_9 ), stderr );
-	fputs( catgets( cat, 0,10, MSG_HELP_10), stderr );		
-	fputs( catgets( cat, 0,11, MSG_HELP_11), stderr );		
-	fputs( catgets( cat, 0,12, MSG_HELP_12), stderr );		
-	fputs( catgets( cat, 0,13, MSG_HELP_13), stderr );		
-	fputs( catgets( cat, 0,14, MSG_HELP_14), stderr );		
-	fputs( catgets( cat, 0,15, MSG_HELP_15), stderr );		
-	fputs( catgets( cat, 0,16, MSG_HELP_16), stderr );		
-	fputs( catgets( cat, 0,17, MSG_HELP_17), stderr );		
+	VERB_FPRINTF( NORMAL, stderr, MSG_MY_NAME, VERSION_MAJOR, VERSION_MINOR );
+	VERB_FPRINTF( NORMAL, stderr, MSG_COPYRIGHT );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 1, MSG_HELP_1 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 2, MSG_HELP_2 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 3, MSG_HELP_3 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 4, MSG_HELP_4 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 5, MSG_HELP_5 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 6, MSG_HELP_6 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 7, MSG_HELP_7 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 8, MSG_HELP_8 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0, 9, MSG_HELP_9 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,10, MSG_HELP_10), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,11, MSG_HELP_11), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,12, MSG_HELP_12), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,13, MSG_HELP_13), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,14, MSG_HELP_14), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,15, MSG_HELP_15), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,16, MSG_HELP_16), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,17, MSG_HELP_17), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,18, MSG_HELP_18), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 0,19, MSG_HELP_19), stderr );
 	exit( err );
 	
 }
@@ -249,7 +253,7 @@ static int GetOptions(char *argString)
 			
 			case '/':
 			case '-':
-				switch ( c= toupper(argString[++argIndex]) )
+				switch ( c= toupper( argString[++argIndex] ) )
 				{
 					case 'H':
 					case '?':
@@ -258,16 +262,24 @@ static int GetOptions(char *argString)
 					case 'Q':
 						if ( vset++ )
 						{
-							return 2;	// /Q or /V already set
+							return 2;	// /Q, /QQ or /V already set
 						}
-						verbosity = 0;
+						if ( toupper( argString[argIndex+1] ) == 'Q' )
+						{
+							verbosity = SILENT;
+							++argIndex;
+						}
+						else
+						{
+							verbosity = QUIET;
+						}
 						break;
 					case 'V':
 						if ( vset++ )
 						{
 							return 2;	// /Q or /V already set
 						}
-						verbosity = 2;
+						verbosity = VERBOSE;
 						break;
 					case 'U':
 						++uninstall;
@@ -568,7 +580,7 @@ static void UninstallDriver( void )
 
 	VMAuxEndSession( sig->fpRpc );									// Close HGFS session
 	
-	fputs( catgets( cat, 2, 1, MSG_INFO_UNINSTALL ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 2, 1, MSG_INFO_UNINSTALL ), stderr );
 
 	// Switch PSP and Int 4Ch method of unloading the TSR
 	// (Undocumented DOS, Second Edition)
@@ -623,7 +635,7 @@ static int SetCDS(void)
 	if ( *fpDriveNum != 0xFF ) {
 		currDir = &fpSysVars->currDir[*fpDriveNum];
 		if ( currDir->flags & (NETWORK|PHYSICAL) ) {
-			fprintf(stderr, catgets( cat, 1, 0, MSG_ERROR_INUSE ), *fpDriveNum + 'A');
+			VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 0, MSG_ERROR_INUSE ), *fpDriveNum + 'A' );
 			return 1;
 		}
 	}
@@ -635,7 +647,7 @@ static int SetCDS(void)
 												&& *fpDriveNum < fpSysVars->lastDrive; ++*fpDriveNum );
 		
 		if ( *fpDriveNum == fpSysVars->lastDrive ) {
-			fprintf(stderr, catgets( cat, 1, 1, MSG_ERROR_NO_DRIVES ), fpSysVars->lastDrive + '@');
+			VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 1, MSG_ERROR_NO_DRIVES ), fpSysVars->lastDrive + '@' );
 			return 1;
 		}
 	}
@@ -693,18 +705,18 @@ static void LoadUnicodeConversionTable(void)
 	if ( r.x.cflag ) {
 		// Can't get codepage. Use ASCII only
 		//
-		fputs( catgets( cat, 1, 19, MSG_WARN_CP ), stderr );
+		VERB_FPUTS( QUIET, catgets( cat, 1, 19, MSG_WARN_CP ), stderr );
 		goto error;
 	}
 	
 	sprintf( filename, r.x.bx > 999 ? "c%duni.tbl" : "cp%duni.tbl", r.x.bx );
 	
-	VERB_PRINTF( 2, catgets( cat, 9, 2, MSG_INFO_TBL ), r.x.bx, filename );
+	VERB_FPRINTF( VERBOSE, stdout, catgets( cat, 9, 2, MSG_INFO_TBL ), r.x.bx, filename );
 	
 	_searchenv( filename, "PATH", fullpath);
 	if ( '\0' == fullpath[0] )
 	{
-		fprintf( stderr, catgets( cat, 1, 16, MSG_WARN_NOTBL ), filename );
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 16, MSG_WARN_NOTBL ), filename );
 		goto error;
 	}
 	
@@ -712,7 +724,7 @@ static void LoadUnicodeConversionTable(void)
 	
 	if ( NULL == f )
 	{
-		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_UNICODE ), filename );
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 17, MSG_WARN_UNICODE ), filename );
 		goto error;
 	}
 	
@@ -721,14 +733,14 @@ static void LoadUnicodeConversionTable(void)
 #if 0	
 	if ( EOF == fscanf_s( f, "Unicode (%s)", buffer, sizeof( buffer) ) )
 	{
-		fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 #else
 	if ( fread( buffer, 1, 9, f ) != 9 ||     // "Unicode (
 						memcmp( buffer, "Unicode (", 9 ) != 0 )
 	{
-		fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}   
 
@@ -738,7 +750,7 @@ static void LoadUnicodeConversionTable(void)
 	{
 		if ( fread( buffer+i, 1, 1, f ) != 1 )
 		{
-			fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
+			VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
 			goto close;
 		}
 		if ( buffer[i] == ')' )  
@@ -753,13 +765,13 @@ static void LoadUnicodeConversionTable(void)
 
 	if ( ret != 3 || buffer[0] != '\r' || buffer[1] != '\n' || buffer[2] != 1 )
 	{
-		fprintf( stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 18, MSG_WARN_TBLFORMAT ), filename );
 		goto close;
 	}
 	
 	if ( 256 != (ret = fread( buffer, 1, 256, f )) )
 	{
-		fprintf( stderr, catgets( cat, 1, 17, MSG_WARN_UNICODE ), filename );
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 17, MSG_WARN_UNICODE ), filename );
 		goto close;
 	}
 	
@@ -770,7 +782,7 @@ static void LoadUnicodeConversionTable(void)
 close:
 	fclose( f );
 error:
-	fputs( catgets( cat, 1, 20, MSG_WARN_437 ), stderr );
+	VERB_FPUTS( QUIET, catgets( cat, 1, 20, MSG_WARN_437 ), stderr );
 	
 }
 
@@ -784,7 +796,7 @@ static void GetTimezoneOffset(void)
 	
 	if ( NULL == tz )
 	{
-		fputs( catgets( cat, 1, 15, MSG_WARN_TIMEZONE ), stderr );
+		VERB_FPUTS( QUIET, catgets( cat, 1, 15, MSG_WARN_TIMEZONE ), stderr );
 	}
 	else
 	{
@@ -797,7 +809,7 @@ static void GetTimezoneOffset(void)
 	
 		*fpGmtOffset = localTime - utcTime;
 	
-		VERB_PRINTF( 2, catgets( cat, 9, 1, MSG_INFO_TZ ), *fpGmtOffset );
+		VERB_FPRINTF( VERBOSE, stdout, catgets( cat, 9, 1, MSG_INFO_TZ ), *fpGmtOffset );
 	}
 	return;
 }
@@ -860,31 +872,13 @@ int main(int argc, char **argv)
 	
 	cat = catopen( myName, 0 );
 		
-	fprintf( stderr, MSG_MY_NAME, VERSION_MAJOR, VERSION_MINOR);
-
-	// Check that CPU is x386 or higher (to avoid nasty things if somebody
-	// tries to run this in a REAL machine
-	//
-	if ( ! RunningIn386OrHigher() )
-	{
-		fputs( catgets(cat, 1, 3, MSG_ERROR_NOVIRT ), stderr );
-		return( ERR_NOVIRT );
-	}
-
-	// Check OS version. Only DOS >= 5.0 is supported
-	//
-	if ( _osmajor < 5 )
-	{
-		fprintf(stderr, catgets( cat, 1, 2, MSG_ERROR_BADOS ), _osmajor, _osminor );
-		return( ERR_WRONGOS );
-	}
-	
 	GetFarPointersToResidentData();
 	
 	ret = GetOptions( getcmd( argString ) );
 	
 	if ( ret == 1 )		// User requested help
 	{
+		verbosity = NORMAL;					// Ignore verbosity level
 		PrintUsageAndExit( ERR_SUCCESS );
 	}
 	if ( ret == 2 )		// Invalid option
@@ -892,30 +886,49 @@ int main(int argc, char **argv)
 		PrintUsageAndExit( ERR_BADOPTS );
 	}
 
-	VERB_PRINTF( 1, MSG_COPYRIGHT );
+	VERB_FPRINTF( QUIET, stderr, MSG_MY_NAME, VERSION_MAJOR, VERSION_MINOR );
+
+	VERB_FPRINTF( NORMAL, stdout, MSG_COPYRIGHT );
 	
+	// Check that CPU is x386 or higher (to avoid nasty things if somebody
+	// tries to run this in a REAL machine
+	//
+	if ( ! RunningIn386OrHigher() )
+	{
+		VERB_FPUTS( QUIET, catgets(cat, 1, 3, MSG_ERROR_NOVIRT ), stderr );
+		return( ERR_NOVIRT );
+	}
+
+	// Check OS version. Only DOS >= 5.0 is supported
+	//
+	if ( _osmajor < 5 )
+	{
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 2, MSG_ERROR_BADOS ), _osmajor, _osminor );
+		return( ERR_WRONGOS );
+	}
+
 	if ( *fpLfn 
 		&& (*fpManglingChars < MIN_MANGLING_CHARS || *fpManglingChars > MAX_MANGLING_CHARS ) )
 	{
-		fprintf( stderr, catgets(cat, 1, 14, MSG_ERROR_MANGLE ), MIN_MANGLING_CHARS, MAX_MANGLING_CHARS );
+		VERB_FPRINTF( QUIET, stderr, catgets(cat, 1, 14, MSG_ERROR_MANGLE ), MIN_MANGLING_CHARS, MAX_MANGLING_CHARS );
 		return( ERR_BADOPTS );
 	}
 	
 	if ( VMAuxCheckVirtual() )
 	{
-		fputs( catgets(cat, 1, 3, MSG_ERROR_NOVIRT ), stderr );
+		VERB_FPUTS( QUIET, catgets(cat, 1, 3, MSG_ERROR_NOVIRT ), stderr );
 		return( ERR_NOVIRT );
 	}
 	
 	if ( 0x01 == InstallationCheck() )
 	{
-		fputs( catgets(cat, 1, 6, MSG_ERROR_REDIR_NOT_ALLOWED ), stderr );
+		VERB_FPUTS( QUIET, catgets(cat, 1, 6, MSG_ERROR_REDIR_NOT_ALLOWED ), stderr );
 		return( ERR_NOALLWD );
 	}
 	
 	if ( GetSysVars() )
 	{
-		fputs( catgets( cat, 1, 5, MSG_ERROR_LOL ), stderr );
+		VERB_FPUTS( QUIET, catgets( cat, 1, 5, MSG_ERROR_LOL ), stderr );
 		return( ERR_SYSTEM );
 	}
 	
@@ -931,12 +944,12 @@ int main(int argc, char **argv)
 			
 			/* UninstallDriver() only returns on error */
 			
-			fputs( catgets( cat, 1, 12, MSG_ERROR_UNINSTALL ), stderr );
+			VERB_FPUTS( QUIET, catgets( cat, 1, 12, MSG_ERROR_UNINSTALL ), stderr );
 			return( ERR_UNINST );
 		}
 		else
 		{
-			fputs( catgets( cat, 1, 7, MSG_ERROR_INSTALLED ), stderr );
+			VERB_FPUTS( QUIET, catgets( cat, 1, 7, MSG_ERROR_INSTALLED ), stderr );
 			return( ERR_INSTLLD );
 		}
 	}
@@ -944,20 +957,20 @@ int main(int argc, char **argv)
 	{
 		if ( uninstall )
 		{
-			fputs( catgets( cat, 1, 13, MSG_ERROR_NOTINSTALLED ), stderr );
+			VERB_FPUTS( QUIET, catgets( cat, 1, 13, MSG_ERROR_NOTINSTALLED ), stderr );
 			return( ERR_NOTINST );
 		}
 	}
 	
 	if ( GetSDA() )
 	{
-		fputs( catgets( cat, 1, 9, MSG_ERROR_SDA ), stderr );
+		VERB_FPUTS( QUIET, catgets( cat, 1, 9, MSG_ERROR_SDA ), stderr );
 		return( ERR_SYSTEM );
 	}
 	
 	if ( GetNLS() )
 	{
-		fputs( catgets( cat, 1, 10, MSG_ERROR_NLSINFO ), stderr );
+		VERB_FPUTS( QUIET, catgets( cat, 1, 10, MSG_ERROR_NLSINFO ), stderr );
 		return( ERR_SYSTEM );
 	}
 	
@@ -968,20 +981,20 @@ int main(int argc, char **argv)
 
 	if ( ret )
 	{
-		fprintf( stderr, catgets( cat, 1, 11, MSG_ERROR_BUFFER ), VMSHF_MIN_BLOCK_SIZE, ret );
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 11, MSG_ERROR_BUFFER ), VMSHF_MIN_BLOCK_SIZE, ret );
 		return( ERR_BUFFER );
 	}
 			
 	if ( *fpDriveNum != 0xFF && !( *fpDriveNum < fpSysVars->lastDrive ) )
 	{
-		fprintf(stderr, catgets( cat, 1, 4, MSG_ERROR_INVALID_DRIVE ),
+		VERB_FPRINTF( QUIET, stderr, catgets( cat, 1, 4, MSG_ERROR_INVALID_DRIVE ),
 							*fpDriveNum + 'A', fpSysVars->lastDrive + '@');
 		return( ERR_BADDRV );
 	}
 	
 	if ( VMAuxBeginSession( fpRpc ) )
 	{
-		fputs( catgets( cat, 1, 8, MSG_ERROR_NOSHF ), stderr );
+		VERB_FPUTS( QUIET, catgets( cat, 1, 8, MSG_ERROR_NOSHF ), stderr );
 		return( ERR_NOSHF );
 	}
 		
@@ -996,9 +1009,9 @@ int main(int argc, char **argv)
 	_dos_setvect( 0x2f, fpNewInt2fHandler );	
 
 	paragraphs = SizeOfResidentSegmentInParagraphs();
-	VERB_PRINTF( 2, catgets( cat, 9, 3, MSG_INFO_LOAD ), paragraphs << 4 );
+	VERB_FPRINTF( VERBOSE, stdout, catgets( cat, 9, 3, MSG_INFO_LOAD ), paragraphs << 4 );
 
-	fprintf( stderr, catgets( cat, 2, 0, MSG_INFO_MOUNT ), *fpDriveNum + 'A' );
+	VERB_FPRINTF( QUIET, stderr, catgets( cat, 2, 0, MSG_INFO_MOUNT ), *fpDriveNum + 'A' );
 	
 	catclose( cat );
 	flushall();		// Flush all streams before returning to DOS
