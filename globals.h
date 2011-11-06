@@ -32,6 +32,7 @@
  * 2011-10-17  Eduardo           * New errorlevels ERR_UNINST/ERR_NOTINST
  * 2011-10-18  Eduardo           * bump version number to 0.5
  * 2011-11-06  Eduardo           * New message printing macros
+ * 2011-11-06  Eduardo           * bump version number to 0.6
  *
  */
 
@@ -42,7 +43,7 @@
 #define PUBLIC
 
 #define VERSION_MAJOR	0
-#define VERSION_MINOR	5
+#define VERSION_MINOR	6
 
 #define TRUE	1
 #define FALSE	0
