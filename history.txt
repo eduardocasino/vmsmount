@@ -1,3 +1,7 @@
+Version 0.5b (2011-11-06)
+
+  * Add support for lower case shares when /LFN is set
+  
 Version 0.5 (2011-11-06)
 
   * Partial LFN support: mangles long file names to valid DOS 8.3 names
