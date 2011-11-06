@@ -13,8 +13,8 @@ WARNING AND DISCLAIMER
  
 USAGE
 
- VMSMOUNT [/H][/V|/Q] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]
- VMSMOUNT [/V|/Q] /U
+ VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]
+ VMSMOUNT [/V|/Q|/QQ] /U
 	/H                 - Prints help and exits
 	/V                 - Verbose: Prints information on system resources
 	/Q                 - Quiet: Omits copyright message
