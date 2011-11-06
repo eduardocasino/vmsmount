@@ -6,23 +6,25 @@
 # Spaces before text must be kept. Be sure that no spaces are
 # added to the end of the lines.
 #
-0.1:\nUso: VMSMOUNT [/H][/V|/Q] [/L:<uni>] [/B:<tam>[K]] [/LFN [/M:<n>] [/CI|/CS]]\n
-0.2:     VMSMOUNT [/V|/Q] /U\n
-0.3:        /H               - Muestra este mensaje y termina\n
-0.4:        /V               - Muestra informaci¢n extra del sistema\n
-0.5:        /Q               - Omite el mensaje de copyright\n
-0.6:        /L:<unidad>      - Letra de unidad donde montar las carpetas\n
-0.7:                           (si se omite, usa la primera disponible)\n
-0.8:        /B:<tama¤o[K]>   - Tama¤o del buffer de lectura/escritura\n
-0.9:                           (4K por defecto, aumentarlo mejora el rendimiento)\n
-0.10:        /LFN             - Soporte para nombres de archivo largos\n
-0.11:        /M:<n>           - Caracteres para componer el nombre £nico\n
-0.12:                           (2 m¡nimo, 6 m ximo, 3 por defecto)\n
-0.13:        /CI              - Servidor no distingue may£sculas y min£sculas\n
-0.14:                           (Opci¢n por defecto)\n
-0.15:        /CS              - Servidor distingue may£sculas y min£sculas\n
-0.16:                           (genera nombres £nicos para archivos con min£sculas)\n
-0.17:        /U               - Desinstalar\n
+0.1:\nUso:\n
+0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<uni>] [/B:<tam>[K]] [/LFN [/M:<n>] [/CI|/CS]]\n
+0.3:   VMSMOUNT [/V|/Q|/QQ] /U\n
+0.4:        /H               - Muestra este mensaje y termina\n
+0.5:        /V               - Muestra informaci¢n extra del sistema\n
+0.6:        /Q               - Omite el mensaje de copyright\n
+0.7:        /QQ              - No muestra ning£n mensaje\n
+0.8:        /L:<unidad>      - Letra de unidad donde montar las carpetas\n
+0.9:                           (si se omite, usa la primera disponible)\n
+0.10:        /B:<tama¤o[K]>   - Tama¤o del buffer de lectura/escritura\n
+0.11:                           (4K por defecto, aumentarlo mejora el rendimiento)\n
+0.12:        /LFN             - Soporte para nombres de archivo largos\n
+0.13:        /M:<n>           - Caracteres para componer el nombre £nico\n
+0.14:                           (2 m¡nimo, 6 m ximo, 3 por defecto)\n
+0.15:        /CI              - Servidor no distingue may£sculas y min£sculas\n
+0.16:                           (Opci¢n por defecto)\n
+0.17:        /CS              - Servidor distingue may£sculas y min£sculas\n
+0.18:                           (genera nombres £nicos para archivos con min£sculas)\n
+0.19:        /U               - Desinstalar\n
 1.0: ERROR: La unidad %c: ya est  en uso\n
 1.1: ERROR: No hay letras de unidades disponibles (LASTDRIVE es %c)\n
 1.2: ERROR: Versi¢n %d.%d de DOS no soportada. Se necesita 5.0 o superior.\n

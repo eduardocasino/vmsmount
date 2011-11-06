@@ -6,23 +6,25 @@
 # Spaces before text must be kept. Be sure that no spaces are
 # added to the end of the lines.
 #
-0.1:\nUsage: VMSMOUNT [/H][/V|/Q] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]\n
-0.2:       VMSMOUNT [/V|/Q] /U\n
-0.3:        /H                  - Prints this message and exits\n
-0.4:        /V                  - Verbose: Prints information on system resources\n
-0.5:        /Q                  - Quiet: Omits copyright message\n
-0.6:        /L:<drive letter>   - Drive letter to assign\n
-0.7:                              (if omitted, use first available)\n
-0.8:        /B:<size[K]>        - Size of read/write buffer\n
-0.9:                              (4K default, higher values increase performance)\n
-0.10:        /LFN                - Long File Name support\n
-0.11:        /M:<n>              - Number of mangling chars for short names\n
-0.12:                              (2 minimum, 6 maximum, 3 default)\n
-0.13:        /CI                 - Host file system is case insensitive\n
-0.14:                              (default option)\n
-0.15:        /CS                 - Host file system is case sensitive\n
-0.16:                              (mangles file names whith lower case chars)\n
-0.17:        /U                  - Uninstall\n
+0.1:\nUsage:\n
+0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]\n
+0.3:   VMSMOUNT [/V|/Q|/QQ] /U\n
+0.4:        /H                  - Prints this message and exits\n
+0.5:        /V                  - Verbose: Prints information on system resources\n
+0.6:        /Q                  - Quiet: Omits copyright message\n
+0.7:        /QQ                 - Silent: Does not print any messages at all\n
+0.8:        /L:<drive letter>   - Drive letter to assign\n
+0.9:                              (if omitted, use first available)\n
+0.10:        /B:<size[K]>        - Size of read/write buffer\n
+0.11:                              (4K default, higher values increase performance)\n
+0.12:        /LFN                - Long File Name support\n
+0.13:        /M:<n>              - Number of mangling chars for short names\n
+0.14:                              (2 minimum, 6 maximum, 3 default)\n
+0.15:        /CI                 - Host file system is case insensitive\n
+0.16:                              (default option)\n
+0.17:        /CS                 - Host file system is case sensitive\n
+0.18:                              (mangles file names whith lower case chars)\n
+0.19:        /U                  - Uninstall\n
 1.0: ERROR: Drive %c: already in use\n
 1.1: ERROR: No drive letter available (LASTDRIVE is %c)\n
 1.2: ERROR: Usupported DOS version %d.%d. Need 5.0 or higher.\n
