@@ -20,6 +20,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  *
+ * 2011-11-06  Eduardo           * Add support for lower case shares
+ *
  */
 
 #include <stdint.h>
@@ -144,6 +146,7 @@ inline char far *FindRealName(
 	uint32_t fNameLen;
 	char *fName;
 	char far *d;
+	uint8_t isRoot = ( *(path+1) == '\0' );
 
 	ret = VMShfOpenDir( path, 1, &status, &handle );
 
@@ -171,7 +174,7 @@ inline char far *FindRealName(
 		}
 		d = _fstrcpy_local( dest, MK_FP( myDS, fName ) );
 		
-		if ( FNameToFcbName( fcbName, fName, (uint16_t)fNameLen, 0, 1 )
+		if ( FNameToFcbName( fcbName, fName, (uint16_t)fNameLen, isRoot, 1 )
 				&& MatchFcbNameToFileName( fcbName, fileName ) )
 		{
 			(void) VMShfCloseDir( handle, &status );
