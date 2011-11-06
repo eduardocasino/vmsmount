@@ -6,23 +6,25 @@
 # Spaces before text must be kept. Be sure that no spaces are
 # added to the end of the lines.
 #
-0.1:\nGebruik: VMSMOUNT [/H][/V|/Q] [/L:<sch>] [/B:<gr>[K]] [/LFN [/M:<n>] [/CI|/CS]]\n
-0.2:         VMSMOUNT [/V|/Q] /U\n
-0.3:      /H                - Geeft dit bericht weer en stopt\n
-0.4:      /V                - Verbaal: Geeft informatie weer over systeembronnen\n
-0.5:      /Q                - Stil: Laat copyright-melding achterwege\n
-0.6:      /L:<schijfletter> - Toe te kennen schijfletter\n
-0.7:                          (indien weggelaten, gebruikt eerst beschikbare)\n
-0.8:      /B:<grootte[K]>   - Grootte van lees/schrijf-buffer\n
-0.9:                          (standaard 4K, hogere waardes verhogen de prestaties)\n
-0.10:      /LFN              - Long File Name support\n
-0.11:      /M:<n>            - Number of mangling chars for short names\n
-0.12:                          (2 minimum, 6 maximum, 3 default)\n
-0.13:      /CI               - Host file system is case insensitive\n
-0.14:                          (default option)\n
-0.15:      /CS               - Host file system is case sensitive\n
-0.16:                          (mangles file names whith lower case chars)\n
-0.17:      /U                - Desinstalleren\n
+0.1:\nGebruik:\n
+0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<sch>] [/B:<gr>[K]] [/LFN [/M:<n>] [/CI|/CS]]\n
+0.3:   VMSMOUNT [/V|/Q|/QQ] /U\n
+0.4:      /H                - Geeft dit bericht weer en stopt\n
+0.5:      /V                - Verbaal: Geeft informatie weer over systeembronnen\n
+0.6:      /Q                - Stil: Laat copyright-melding achterwege\n
+0.7:      /QQ               - Stil: Laat geen enkele melding zien\n
+0.8:      /L:<schijfletter> - Toe te kennen schijfletter\n
+0.9:                          (indien weggelaten, gebruikt eerst beschikbare)\n
+0.10:      /B:<grootte[K]>   - Grootte van lees/schrijf-buffer\n
+0.11:                          (standaard 4K, hogere waardes verhogen de prestaties)\n
+0.12:      /LFN              - Ondersteuning voor lange bestandsnamen\n
+0.13:      /M:<n>            - Aantal te vermengen tekens voor korte namen\n
+0.14:                          (minstens 2, maximaal 6, standaard 3)\n
+0.15:      /CI               - Host bestandssysteem is niet hoofdlettergevoelig\n
+0.16:                          (standaard instelling)\n
+0.17:      /CS               - Host bestandssysteem is hoofdlettergevoelig\n
+0.18:                          (vermengt bestandsnamen met lower-case tekens)\n
+0.19:      /U                - Desinstalleren\n
 1.0: FOUT: Schijfaanduiding %c: is al in gebruik\n
 1.1: FOUT: Geen schijfletter beschikbaar (LASTDRIVE is %c)\n
 1.2: FOUT: Niet ondersteunde DOS versie %d.%d. Versie 5.0 of nieuwer benodigd.\n
@@ -37,7 +39,7 @@
 1.11: FOUT: Buffergrootte dient tussen %u en %u bytes te zijn\n
 1.12: FOUT: Niet gelukt om te desinstalleren.\n
 1.13: FOUT: Stuurprogramma niet geinstalleerd.\n
-1.14: ERROR: Mangle characters must be between %u and %u\n
+1.14: FOUT: Aantal te vermengen karakters moet tussen %u en %u liggen\n
 1.15: WAARSCHUWING: TZ ongeldig of niet gedefinieerd, tijden worden weergegeven als UTC.\n
 1.16: WAARSCHUWING: Kan Unicode tabel niet vinden: %s
 1.17: WAARSCHUWING: Kan Unicode tabel niet laden: %s
