@@ -94,7 +94,7 @@ LIMITATIONS
    MS-DOS 6.22 and MS-DOS 7 (win95)
  * Does not support old versions of VMWare Workstation (Tested with
    VMWare Player 3 and 4) 
- * Shared folder names MUST be uppercase.
+ * Shared folder names MUST be uppercase if /LFN is not set
  * Does not detect code page changes
 
 ACKNOWLEDGEMENTS
