@@ -22,6 +22,7 @@
  *
  * 2011-10-04  Eduardo           * Omit '.' and '..' from listing if root dir
  * 2011-11-01  Eduardo           * Add LFN support
+ * 2011-11-06  Eduardo           * Add support for lower case shares
  *
  */
  
@@ -79,7 +80,8 @@ PUBLIC unsigned char toupper_local ( unsigned char c )
 inline int NoMangleFNameToFcbName( 
 	char *fcbName,		// out : File name in FCB format. Must be 12 bytes long (we NULL-terminate it)
 	char *fName,		// in/out : File name in in UTF-8 on input, DOS filename on output
-	uint8_t lfn
+	uint8_t lfn,
+	uint8_t isRoot
 	)
 {
 	char *p;
@@ -108,9 +110,10 @@ inline int NoMangleFNameToFcbName(
 		else
 		{
 			fcbName[i] = toupper_local( fName[i] );
-			// Mangle if lowercase and char code > 127 or host FS is case sensitive
+			// Mangle if lowercase and char code > 127 or host FS is case sensitive or it is
+			// a share name 
 			//
-			if ( lfn && fcbName[i] != fName[i] && ( fName[i] > 127 || caseSensitive ) )
+			if ( lfn && fcbName[i] != fName[i] && ( fName[i] > 127 || caseSensitive || isRoot ) )
 			{
 				return 0;
 			}
@@ -194,7 +197,7 @@ PUBLIC int FNameToFcbName(
 		hash = LfnFNameHash( fName, fNameLen );
 	}
 		
-	ret = NoMangleFNameToFcbName( fcbName, fName, lfn );
+	ret = NoMangleFNameToFcbName( fcbName, fName, lfn, isRoot );
 	
 	if ( ret == 0 && lfn )
 	{
