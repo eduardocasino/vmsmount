@@ -18,20 +18,30 @@ USAGE
 	/H                 - Prints help and exits
 	/V                 - Verbose: Prints information on system resources
 	/Q                 - Quiet: Omits copyright message
+	/QQ                - Silent: Does not print any messages at all
 	/L:<drive letter>  - Drive letter to assign
 	                     (if omitted, use the first available)
 	/B:<size[K]>       - Size of read/write buffer
 	                     (4K default, higher values increase performance)
-	/LFN               - Long File Name support
+	/LFN               - Long File Name support. "Mangles" long file names
+	                     (or those with illegal or unconvertibe characters)
+	                     to valid 8.3 names, using a hash algorithm. For
+	                     example, "This is a long file.name" will translate
+	                     into "THIS~2BF.NAM"
 	/M:<n>             - Number of mangling chars for short names
-	                     (2 minimum, 6 maximum, 3 default)
+	                     (2 minimum, 6 maximum, 3 default) For example, the
+	                     same "This is a long file.name" will translate into
+	                     "THISI~02.NAM" if /M:2 or "TH~0BAC0.NAM" if /M:5.
 	                     The default suits most use cases. Increase if the
-	                     host file system has many file with similar long
+	                     host file system has many files with similar long
 	                     names.
-	/CI                - Host file system is case insensitive
-	                     (Windows hosts) This is the default. 
+	/CI                - Host file system is case insensitive, so
+	                     "example.txt" and "ExaMPLe.Txt" are the same. This is
+	                     the default behaviour. 
 	/CS                - Host file system is case sensitive (non-Windows
-	                     hosts) Mangles file names whith lower case chars.
+	                     hosts) Mangles file names whith lower case chars. For
+	                     example, "EXAMPLE.TXT" will be left unchanged, but
+	                     "Example.txt" will be translated into "EXAM~4F0.TXT"
 	/U                 - Uninstall
 
 ENVIRONMENT
