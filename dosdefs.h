@@ -26,6 +26,7 @@
  * 2011-10-04  Eduardo           * Add field to SDB to flag a root dir search
  * 2011-10-17  Eduardo           * redirIFSRecordPtr is a far pointer 
  * 2011-11-01  Eduardo           * Add PSP and DOS 3.3 structures
+ * 2020-08-18  Eduardo           * Change name of SFT member devInfoWord to flags
  */
 
 #include <stdint.h>
@@ -204,11 +205,13 @@ typedef struct {
 //
 #pragma pack(1)
 
+#define SFT_FDATE       0x4000  // File date set
+#define SFT_FCLEAN      0x0040  // File has not been written to
 typedef struct {
 	uint16_t		handleCount;
 	uint16_t		openMode;
 	uint8_t			fileAttr;
-	uint16_t		devInfoWord;
+	uint16_t		flags;
 	uint8_t far *	devDrvrPtr;
 	uint16_t		unused1;
 	uint32_t		fileTime;

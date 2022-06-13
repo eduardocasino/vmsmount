@@ -23,6 +23,7 @@
  * 2011-10-04  Eduardo           * Omit '.' and '..' from listing if root dir
  * 2011-11-01  Eduardo           * Add LFN support
  * 2011-11-06  Eduardo           * Add support for lower case shares
+ * 2020-08-18  Eduardo           * New support function FatTimeToFTime()
  *
  */
  
@@ -506,6 +507,135 @@ days:
 	fatTime = (secs >> 1) + (min << 5) + (hour << 11) + (day << 16) + (month << 21) + (year << 25);
 
 	return fatTime;
+}
+
+PUBLIC uint64_t FatTimeToFTime( uint32_t fatTime)
+{
+	union {
+		uint64_t fTime64;
+		uint32_t fTime32;
+	} t;
+
+	union {
+		uint32_t year;
+		uint32_t hour;
+		uint32_t secs;
+	} yh;
+
+	union {
+		uint32_t month;
+		uint32_t mins;
+		uint32_t secs;
+	} mm;
+
+	union {
+		uint32_t day;
+		uint32_t secs;
+	} ds;
+
+	uint64_t delta;
+
+	yh.year  =  fatTime >> 25;		// Years from 1980
+	mm.month = (fatTime >> 21) & 0x0f;	// 1 for January
+	ds.day   = (fatTime >> 16) & 0x1f;	// 1 to 31
+
+	// Calculate number of days since 1980/1/1
+	//
+	u32mul32( &t.fTime32, yh.year, 365 );
+	t.fTime32 += ((yh.year+3) >> 2) + ds.day - 1;
+  
+	if (mm.month > 1)
+	{
+		t.fTime32 += 31;
+	}
+
+	if (mm.month > 2)
+	{
+		t.fTime32 += (yh.year & 3) ? 28 : 29;
+	}
+
+	if (mm.month > 3)
+	{
+		t.fTime32 += 31;
+	}
+
+	if (mm.month > 4)
+	{
+		t.fTime32 += 30;
+	}
+
+	if (mm.month > 5)
+	{
+		t.fTime32 += 31;
+	}
+
+	if (mm.month > 6)
+	{
+		t.fTime32 += 30;
+	}
+
+	if (mm.month > 7)
+	{
+		t.fTime32 += 31;
+	}
+
+	if (mm.month > 8)
+	{
+		t.fTime32 += 31;
+	}
+
+	if (mm.month > 9)
+	{
+		t.fTime32 += 30;
+	}
+
+	if (mm.month > 10)
+	{
+		t.fTime32 += 31;
+	}
+
+	if (mm.month > 11)
+	{
+		t.fTime32 += 30;
+	}
+
+	t.fTime64 &= 0xffffffff;
+
+	// Add time delta
+	//
+	u64add32( &t.fTime64, t.fTime64, FILETIME_DELTA );
+
+	// Convert to seconds and add time
+	//
+	u64mul32( &t.fTime64, t.fTime64, SECSPERDAY );
+
+	yh.hour = (fatTime >> 11) & 0x1f;	// 0 to 23
+	mm.mins = (fatTime >>  5) & 0x3f;	// 0 to 59
+	ds.secs =  fatTime        & 0x1f;	// 0 to 29 (seconds/2)
+	ds.secs=ds.secs+ds.secs;
+
+	u32mul32( &yh.secs, yh.hour, 3600);
+	u32mul32( &mm.secs, mm.mins,  60);
+	u64add32( &t.fTime64, t.fTime64, yh.secs);
+	u64add32( &t.fTime64, t.fTime64, mm.secs);
+	u64add32( &t.fTime64, t.fTime64, ds.secs);
+
+	// Calculate GMT offset
+	//
+	if ( gmtOffset < 0 )
+	{
+		u64add32( &t.fTime64, t.fTime64, (uint32_t)-gmtOffset);
+	}
+	else
+	{
+		u64sub32( &t.fTime64, t.fTime64, (uint32_t)gmtOffset);
+	}
+
+	// Convert to vmware format
+	//
+	u64mul32( &t.fTime64, t.fTime64, SECSTO100NSECS );
+
+	return t.fTime64;
 }
 
 PUBLIC int DosPathToPortable( uint8_t *dst, uint8_t far *src, uint8_t utf )

@@ -61,7 +61,7 @@ ENVIRONMENT
 	VMware's UTF encoding to the correct code page, provided that the
 	necessary conversion table is found.  It uses the same table format
 	as Volkov Commander and DOSLFN. Please refer to TBL.TXT in the DOSLFN
-	source package for details(http://adoxa.110mb.com/doslfn/index.html)
+	source package for details(http://adoxa.altervista.org/doslfn/index.html)
 	For convenience, I'm distributing with this package the translation
 	tables, which can be generated from the ASCII code tables provided at
 	www.unicode.org using the MK_TABLE program from DOSLFN
@@ -123,6 +123,8 @@ ACKNOWLEDGEMENTS
  * Tom Ehlert for extensive feedback, code review, bug reports, ideas and
    actual code
  
+ * Alan Kamrowski II for extensive bug report, testing and code review
+
  * And, of course, Pat Villani for the FreeDOS kernel.
    
 
