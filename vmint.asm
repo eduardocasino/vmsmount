@@ -20,6 +20,8 @@
 ; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 ; MA  02110-1301, USA.
 ;
+; 2020-08-18  Eduardo           * New support functions u64mul32() and u32mul32()
+;
 
 CPU 386
 BITS 16
@@ -28,10 +30,49 @@ SEGMENT BEGTEXT CLASS=CODE PUBLIC
 
 JUMP_ALIGN EQU 2
 
+GLOBAL _u64mul32
+GLOBAL _u32mul32
 GLOBAL _u64div32
 GLOBAL _u32div32
 GLOBAL _u64add32
 GLOBAL _u64sub32
+
+; void __cdecl u64mul32( uint64_t *result, uint64_t multiplicand, uint32_t multiplier )
+;   *result = multiplicand * multiplier
+;
+ALIGN JUMP_ALIGN
+_u64mul32:
+        push ebx
+        push ecx
+        mov bx, word [esp+0x0a]         ; Pointer to result
+        mov eax, dword [esp+0x0c]       ; Low word of multiplicand
+        mov ecx, dword [esp+0x14]       ; Multiplier
+        mul ecx
+        mov dword [bx], eax             ; Low dword of result
+	mov dword [bx+4], edx           ; Temporary store high dwprd of result
+        mov eax, dword [esp+0x10]       ; High word of multiplicand
+        mov ecx, dword [esp+0x14]       ; Multiplier
+        mul ecx
+		add dword [bx+4], eax
+        pop ecx
+        pop ebx
+        ret
+
+; void __cdecl u32mul32( uint32_t *result, uint32_t multiplicand, uint32_t multiplier )
+;   *result = multiplicand * multiplier
+;
+ALIGN JUMP_ALIGN
+_u32mul32:
+	push ebx
+	push ecx
+	mov bx, word [esp+0x0a]		; Pointer to result
+	mov eax, dword [esp+0x0c]	; Multiplicand
+	mov ecx, dword [esp+0x10]	; Multiplier
+	mul ecx
+	mov dword [bx], eax		; Low dword of result
+	pop ecx
+	pop ebx
+	ret
 
 ; uint32_t __cdecl u64div32( uint64_t *quotient, uint64_t dividend, uint32_t divisor )
 ;   *quotient = dividend / divisor, returns remainder

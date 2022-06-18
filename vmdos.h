@@ -26,6 +26,7 @@
  * 2011-10-04  Eduardo           * New parameter for FNameToFcbName()
  *                                 (Omit '.' and '..' if root dir)
  * 2011-11-01  Eduardo           * Add LFN support
+ * 2020-08-18  Eduardo           * New support function FatTimeToFTime()
  *
  */
  
@@ -41,6 +42,7 @@ extern uint8_t caseSensitive;
 extern unsigned char toupper_local ( unsigned char c );
 extern int IllegalChar( unsigned char c );
 extern uint32_t FTimeToFatTime( uint64_t );
+extern uint64_t FatTimeToFTime( uint32_t );
 extern uint8_t FModeToFatAttr( VMShfAttr * );
 extern VMShfAttr *FatAttrToFMode( uint8_t );
 extern uint32_t DosExtActionToOpenAction( uint16_t );

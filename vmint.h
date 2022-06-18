@@ -22,10 +22,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
+ *
+ * 2020-08-18  Eduardo           * New support functions u64mul32() and u32mul32()
  */
 
 #include <stdint.h>
 
+void __cdecl u64mul32( uint64_t *result, uint64_t multiplicand, uint32_t multiplier );
+void __cdecl u32mul32( uint32_t *result, uint32_t multiplicand, uint32_t multiplier );
 uint32_t __cdecl u64div32( uint64_t *quotient, uint64_t dividend, uint32_t divisor );
 uint32_t __cdecl u32div32( uint32_t *quotient, uint32_t dividend, uint32_t divisor );
 void __cdecl u64add32( uint64_t *result, uint64_t value1, uint32_t value2 );

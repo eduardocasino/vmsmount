@@ -29,6 +29,7 @@
  *                                 0 bytes to a file truncates it)
  * 2011-10-17  Eduardo           * Simplify installation check
  * 2011-11-02  Eduardo           * Add partial Long File Name support
+ * 2020-08-18  Eduardo           * Fix: Update file modification time in CloseFile()
  *
  */
 
@@ -310,8 +311,34 @@ static void ChDir( void )
 static void CloseFile( void )
 {
 	uint32_t status;
+	static VMShfAttr newAttr = {0};
 	
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
+
+	// Check if date/time is to be set from clock at CLOSE.
+	if (!(fpSFT->flags & SFT_FCLEAN))
+	{
+		if (!(fpSFT->flags & SFT_FDATE))
+		{
+			fpSFT->fileTime = GetDosTime();
+		}
+	}
+
+	if ((fpSFT->flags & (SFT_FCLEAN|SFT_FDATE)) != SFT_FCLEAN) {
+		// Set modification time
+		newAttr.mask = VMSHF_VALID_ATTR_UTIME;
+		newAttr.utime = FatTimeToFTime( fpSFT->fileTime );
+
+		if ( !(fpSFT->fileAttr & _A_RDONLY) )
+		{
+  			(void) VMShfSetAttr( &newAttr, NULL, 0, fpSFT->handle, &status );
+		}
+		else
+		{
+			(void) VMShfSetAttr( &newAttr, lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
+                                        lfn, VMSHF_INVALID_HANDLE, &status );
+		}
+	}
 
 	if ( fpSFT->handleCount )		// Decrement handle count
 	{
@@ -406,8 +433,8 @@ static void WriteFile( void )
 		Failure( DOS_ACCESS );
 		return;
 	}
-			
-	fpSFT->fileTime = GetDosTime();
+	// mark file as modified and set date not valid any more
+	fpSFT->flags &= ~(SFT_FCLEAN|SFT_FDATE);
 
 	// Tricky: If size is 0, truncate to current file position
 	//
@@ -595,6 +622,11 @@ static void OpenOrCreateFile( uint16_t accessMode, uint32_t action, VMShfAttr *o
 	}
 	else
 	{
+		fpSFT->flags &= ~SFT_FDATE;
+		// use FCLEAN even on replaced/created files: the bit is reset
+		// if the file is written to later
+		fpSFT->flags |= SFT_FCLEAN;
+
 		// Get file attributes using file handle
 		//
 		ret = VMShfGetAttr( NULL, 0, handle, &status, &fAttr );
@@ -616,7 +648,7 @@ static void OpenOrCreateFile( uint16_t accessMode, uint32_t action, VMShfAttr *o
 			{
 				fpSFT->openMode	= accessMode;
 				fpSFT->fileAttr	= fatAttr;
-				fpSFT->devInfoWord= ( NETWORK | UNWRITTEN | driveNum );
+				fpSFT->flags	= ( NETWORK | UNWRITTEN | driveNum );
 				fpSFT->devDrvrPtr	= (char far *) NULL;
 				fpSFT->fileTime	= FTimeToFatTime( fAttr->utime );
 				fpSFT->fileSize	= (fAttr->fsize > 0xffffffffui64) ? 0xffffffff: (uint32_t) fAttr->fsize;
@@ -1001,7 +1033,7 @@ static int IsCallForUs( uint8_t function )
 	
 	if ( function == 0x21 || (function >= 0x06 && function <= 0x0B) )
 	{
-		return ( (fpSFT->devInfoWord & 0x3F) == driveNum );
+		return ( (fpSFT->flags & 0x3F) == driveNum );
 	}
 	
 	if ( function == 0x1C )		// FindNext
