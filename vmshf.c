@@ -34,6 +34,7 @@
  *                               * Allow VMShfSetAttr() to be called by handle
  *                                 (Needed for fixing the "write 0" bug)
  * 2011-11-01  Eduardo           * Long file name support
+ * 2020-08-18  Eduardo           * Allow setting ATIME and UTIME in VMShfSetAttr()
  *
  */
 
@@ -551,6 +552,16 @@ PUBLIC int VMShfSetAttr(
 			*status = VMSHF_EACCESS;
 			return VMTOOL_SUCCESS;
 		}
+	}
+
+	if ( fileattr->mask & VMSHF_VALID_ATTR_ATIME )
+	{
+		Request->data.hints |= VMSHF_ATTR_HINT_SET_ATIME;
+	}
+
+	if ( fileattr->mask & VMSHF_VALID_ATTR_UTIME )
+	{
+		Request->data.hints |= VMSHF_ATTR_HINT_SET_UTIME;
 	}
 
 	Request->data.reserved		= 0;
