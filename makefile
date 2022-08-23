@@ -27,6 +27,7 @@
 # 2011-11-01  Eduardo           Add LFN (new object and segment order)
 # 2022-08-23  Eduardo           Make integer functions inlines (remove vmint.asm)
 # 2022-08-23  Eduardo           Port to OW 2.0
+# 2022-08-23  Eduardo           Port to wmake syntax
 #
 
 CC = wcc
@@ -34,69 +35,69 @@ LD = wlink
 UPX = upx
 RM = rm -f
 CFLAGS  = -bt=dos -ms -q -s -oh -os -DREVERSE_HASH
-LDFLAGS =	SYSTEM dos \
-			ORDER \
-				clname FAR_DATA \
-				clname RES_CODE \
-				clname CODE segment BEGTEXT segment _TEXT \
-				clname BEGDATA \
-				clname DATA \
-				clname BSS \
-				OPTION QUIET \
-				OPTION STATICS \
+LDFLAGS =	SYSTEM dos &
+			ORDER &
+				clname FAR_DATA &
+				clname RES_CODE &
+				clname CODE segment BEGTEXT segment _TEXT &
+				clname BEGDATA &
+				clname DATA &
+				clname BSS &
+				OPTION QUIET &
+				OPTION STATICS &
 				OPTION MAP=vmsmount.map
 UPXFLAGS = -9
 
 TARGET = vmsmount.exe
 
-OBJ =	kitten.obj vmaux.obj main.obj miniclib.obj unicode.obj vmdos.obj \
-		vmcall.obj vmtool.obj vmshf.obj redir.obj lfn.obj \
+OBJ =	kitten.obj vmaux.obj main.obj miniclib.obj unicode.obj vmdos.obj &
+		vmcall.obj vmtool.obj vmshf.obj redir.obj lfn.obj &
 		endtext.obj
 
 
-all: $(TARGET)
+all : $(TARGET)
 
-clean:
-	$(RM) $(OBJ) $(TARGET)
+clean : .SYMBOLIC
+	$(RM) $(OBJ) $(TARGET) *.map *.err
 
-$(TARGET): $(OBJ)
+$(TARGET) : $(OBJ)
 	$(LD) $(LDFLAGS) NAME $(TARGET) FILE {$(OBJ)} $(LIBPATH) $(LIBRARY)
 	$(UPX) $(UPXFLAGS) $(TARGET)
 
 # main.obj and kitten.obj must be compiled with 8086 instructions only to gracefully
 #  execute the processor check in real, older machines
 #
-main.obj: main.c
+main.obj : main.c .AUTODEPEND
 	$(CC) -0 $(CFLAGS) -fo=$@ $<
 
-kitten.obj: kitten.c
+kitten.obj : kitten.c .AUTODEPEND
 	$(CC) -0 $(CFLAGS) -fo=$@ $<
 
-vmaux.obj: vmaux.c
+vmaux.obj : vmaux.c .AUTODEPEND
 	$(CC) -3 $(CFLAGS) -fo=$@ $<
 
-endtext.obj: endtext.c
+endtext.obj : endtext.c .AUTODEPEND
 	$(CC) -3 $(CFLAGS) -nt=_TEXT_END -fo=$@ $<
 
-kitten.obj: kitten.h
+kitten.obj: .AUTODEPEND
 
-main.obj: globals.h kitten.h messages.h vmaux.h vmshf.h vmtool.h dosdefs.h redir.h unicode.h endtext.h
+main.obj : .AUTODEPEND
 
-vmcall.obj: vmcall.h 
+vmcall.obj : .AUTODEPEND 
 
-vmaux.obj: vmcall.h vmtool.h globals.h messages.h vmshf.h kitten.h
+vmaux.obj : .AUTODEPEND
 
-redir.obj: globals.h redir.h dosdefs.h vmshf.h vmtool.h vmcall.h vmdos.h vmint.h miniclib.h
+redir.obj : .AUTODEPEND
 
-vmtool.obj: vmtool.h vmcall.h
+vmtool.obj : .AUTODEPEND
 
-vmshf.obj: vmtool.h vmshf.h vmcall.h vmint.h vmdos.h redir.h miniclib.h globals.h
+vmshf.obj : .AUTODEPEND
 
-vmdos.obj: vmint.h dosdefs.h vmdos.h vmint.h vmshf.h vmtool.h vmcall.h miniclib.h unicode.h redir.h globals.h
+vmdos.obj : .AUTODEPEND
 
-lfn.obj: lfn.h globals.h miniclib.h vmdos.h
+lfn.obj : .AUTODEPEND
 
-%.obj : %.c
+.c.obj :
 	$(CC) -3 $(CFLAGS) -g=RES_GROUP -nt=RES_TEXT -nc=RES_CODE -nd=RES -fo=$@ $<
 
 	
