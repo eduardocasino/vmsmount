@@ -29,6 +29,7 @@
  * 2011-11-02  Eduardo           * Add partial Long File Name support
  * 2022-08-23  Eduardo           * Port to OW 2.0
  * 2022-08-23  Eduardo           * Debugging support
+ * 2022-08-23  Eduardo           * Implement CloseAll()
  * 
  */
 
@@ -62,6 +63,7 @@ extern CDS 			far *fpCDS;
 extern SDA			far *fpSDA;
 extern SDB			far *fpSDB;
 extern FDB			far *fpFDB;
+extern SFTT			far *fpFileTable;
 extern char			far *fpFcbName1;
 extern char			far *fpFcbName2;
 extern char			far *fpFileName1;

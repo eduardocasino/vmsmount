@@ -45,6 +45,7 @@
  * 2011-11-02  Eduardo           * Partial long file names support (with mangling)
  * 2011-11-06  Eduardo           * New /QQ option
  * 2022-08-23  Eduardo           * Debugging support
+ * 2022-08-23  Eduardo           * Implement CloseAll()
  *
  */ 
 #include <process.h>
@@ -88,6 +89,7 @@ static CDS 		far * far * fpfpCDS;
 static SDA		far * far * fpfpSDA;
 static SDB		far * far * fpfpSDB;
 static FDB		far * far * fpfpFDB;
+static SFTT		far * far * fpfpFileTable;
 static char		far * far * fpfpFcbName1;
 static char		far * far * fpfpFcbName2;
 static char		far * far * fpfpFileName1;
@@ -171,46 +173,47 @@ static void GetFarPointersToResidentData( void )
 	// From redir.c
 	fpNewInt2fHandler		= tsr_cs:>Int2fRedirector;
 	fpfpPrevInt2fHandler	= tsr_cs:>&fpPrevInt2fHandler;
-	fpLfn = tsr_cs:>&lfn;
-	fpDriveNum = tsr_cs:>&driveNum;
-	fpfpSDA = tsr_cs:>&fpSDA;
-	fpfpCDS = tsr_cs:>&fpCDS;
-	fpfpSDB = tsr_cs:>&fpSDB;
-	fpfpFDB = tsr_cs:>&fpFDB;
-	fpfpFcbName1	= tsr_cs:>&fpFcbName1;
-	fpfpFcbName2	= tsr_cs:>&fpFcbName2;
-	fpfpFileName1	= tsr_cs:>&fpFileName1;
-	fpfpFileName2	= tsr_cs:>&fpFileName2;
-	fpfpCurrentPath	= tsr_cs:>&fpCurrentPath;
+	fpLfn 					= tsr_cs:>&lfn;
+	fpDriveNum 				= tsr_cs:>&driveNum;
+	fpfpSDA 				= tsr_cs:>&fpSDA;
+	fpfpCDS 				= tsr_cs:>&fpCDS;
+	fpfpSDB 				= tsr_cs:>&fpSDB;
+	fpfpFDB 				= tsr_cs:>&fpFDB;
+	fpfpFileTable 			= tsr_cs:>&fpFileTable;
+	fpfpFcbName1			= tsr_cs:>&fpFcbName1;
+	fpfpFcbName2			= tsr_cs:>&fpFcbName2;
+	fpfpFileName1			= tsr_cs:>&fpFileName1;
+	fpfpFileName2			= tsr_cs:>&fpFileName2;
+	fpfpCurrentPath			= tsr_cs:>&fpCurrentPath;
 	
 	// from lfn.c
-	fpfpLongFileName1	= tsr_cs:>&fpLongFileName1;
-	fpfpLongFileName2	= tsr_cs:>&fpLongFileName2;
-	*fpfpLongFileName1	= tsr_cs:>&longFileName1;
-	*fpfpLongFileName2	= tsr_cs:>&longFileName2;
+	fpfpLongFileName1		= tsr_cs:>&fpLongFileName1;
+	fpfpLongFileName2		= tsr_cs:>&fpLongFileName2;
+	*fpfpLongFileName1		= tsr_cs:>&longFileName1;
+	*fpfpLongFileName2		= tsr_cs:>&longFileName2;
 	
 	// From unicode.c
-	fpUnicodeTbl = tsr_cs:>&unicodeTbl;
+	fpUnicodeTbl			= tsr_cs:>&unicodeTbl;
 	
 	// From vmdos.c
-	fpfpFUcase = tsr_cs:>&fpFUcase;
-	fpfpFChar = tsr_cs:>&fpFChar;
-	fpGmtOffset = tsr_cs:>&gmtOffset;
-	fpCaseSensitive = tsr_cs:>&caseSensitive;
+	fpfpFUcase				= tsr_cs:>&fpFUcase;
+	fpfpFChar				= tsr_cs:>&fpFChar;
+	fpGmtOffset				= tsr_cs:>&gmtOffset;
+	fpCaseSensitive			= tsr_cs:>&caseSensitive;
 		
 	// From lfnc.
-	fpManglingChars = tsr_cs:>&manglingChars;
-	fpHashLen = tsr_cs:>&hashLen;
+	fpManglingChars			= tsr_cs:>&manglingChars;
+	fpHashLen				= tsr_cs:>&hashLen;
 
 	// From vmshf.c
-	fpRpci = tsr_cs:>&rpc;
-	fpBufferSize = tsr_cs:>&bufferSize;
-	fpMaxDataSize = tsr_cs:>&maxDataSize;
-	fpBuffer = tsr_cs:>&buffer;
+	fpRpci					= tsr_cs:>&rpc;
+	fpBufferSize			= tsr_cs:>&bufferSize;
+	fpMaxDataSize			= tsr_cs:>&maxDataSize;
+	fpBuffer				= tsr_cs:>&buffer;
 	
 	// From debug.c
 #ifdef DEBUG
-	fpRpcd 					= tsr_cs:>&rpcd;
+	fpRpcd					= tsr_cs:>&rpcd;
 	fpStack					= tsr_cs:>&newStack;
 #endif	
 
@@ -497,6 +500,7 @@ static int GetSysVars(void)
 		return 1;
 
 	fpSysVars = (SysVars far *) MK_FP( s.es, r.x.bx - SYSVARS_DECR );
+	*fpfpFileTable = fpSysVars->fileTable;
 	
 	return 0;
 

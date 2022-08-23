@@ -33,6 +33,7 @@
  * 2022-08-23  Eduardo           * Fix: Set correct file size in WriteFile()
  * 2022-08-23  Eduardo           * Port to OW 2.0
  * 2022-08-23  Eduardo           * Debugging support
+ * 2022-08-23  Eduardo           * Implement CloseAll()
  *
  */
 
@@ -95,6 +96,8 @@ CDS 		far *fpCDS;				// CDS for this drive
 SDA			far *fpSDA;
 SDB			far *fpSDB;
 FDB			far *fpFDB;
+SFTT		far	*fpFileTable;
+
 char		far *fpFcbName1;
 char		far *fpFcbName2;
 char		far *fpFileName1;
@@ -296,15 +299,11 @@ static void ChDir( void )
 	return;
 }
 
-static void CloseFile( void )
+static void _CloseFile( SFT far *fpSFT )
 {
 	uint32_t status;
 	static VMShfAttr newAttr = {0};
 	
-	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
-
-	DPUTS("CloseFile()");
-
 	// Check if date/time is to be set from clock at CLOSE.
 	if (!(fpSFT->flags & SFT_FCLEAN))
 	{
@@ -338,6 +337,16 @@ static void CloseFile( void )
 	(void) VMShfCloseFile( fpSFT->handle, &status );
 
 	return;
+}
+
+static void CloseFile( void )
+{
+	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
+
+	DPUTS("CloseFile()");
+
+	_CloseFile( fpSFT );
+
 }
 
 static void CommitFile( void )
@@ -875,6 +884,80 @@ static void FindFirst( void )
 	DPUTS("FindFirst()");
 
 	_FindFirst();
+}
+
+// Index to SFT functions. Copied from FreeDOS kernel, lazy me
+//
+static inline int idx_to_sft_(int sftIndex, SFT far **fpCurSFT)
+{
+	SFTT far *sp;
+
+	*fpCurSFT = (SFT far *) - 1;
+	if (sftIndex < 0)
+	{
+		return -1;
+	}
+
+	/* Get the SFT block that contains the SFT      */
+	for (sp = fpFileTable; sp != (SFTT far *) - 1; sp = sp->nextSFTT)
+	{
+		if (sftIndex < sp->sfttCount)
+		{
+			/* finally, point to the right entry            */
+			*fpCurSFT = (SFT far *) &(sp->entries[sftIndex]);
+			return sftIndex;
+		}
+		sftIndex -= sp->sfttCount;
+	}
+
+	/* If not found, return an error                */
+	return -1;
+}
+
+SFT far *idx_to_sft(int sftIndex)
+{
+	SFT far *fpCurSFT;
+
+	/* called internally only */
+	sftIndex = idx_to_sft_(sftIndex, &fpCurSFT);
+
+	/* if not opened, the SFT is useless            */
+	if (sftIndex == -1 || fpCurSFT->handleCount == 0)
+	{
+		return (SFT far *) - 1;
+	}
+	return fpCurSFT;
+}
+
+static void CloseAll( void )
+{
+	PSP far *fpPSP = (PSP far *) MK_FP( fpSDA->currentPSP, 0 );
+	int i;
+
+	DPUTS("CloseAll()");
+
+	if ( fpPSP == NULL )
+	{
+		return;
+	}
+
+	for ( i= 5; i < fpPSP->jftSize; ++i )
+	{
+		uint8_t idx = fpPSP->fpExtendedJFT[i];
+		if ( idx != 0xFF )
+		{
+			SFT far *fpSFT = idx_to_sft( idx );
+			if ( fpSFT != ( SFT far *) -1 )
+			{
+				_CloseFile( fpSFT );
+			}
+		}
+	}
+}
+
+static void ProcessEnd( void )
+{
+	DPUTS("ProcessEnd()");
 }
 
 static void MakeFullPath( char far *fullPath, char far *dirName, char far *fcbName )

@@ -3,7 +3,7 @@
 #pragma once
 /*
  * VMSMOUNT
- *  A network redirector for mounting VMware's Shared Folders in DOS 
+ *  A network redirector for mounting VMware's Shared Folders in DOS
  *  Copyright (C) 2011  Eduardo Casino
  *
  * dosdefs.h: various DOS structures and constants
@@ -24,43 +24,44 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-04  Eduardo           * Add field to SDB to flag a root dir search
- * 2011-10-17  Eduardo           * redirIFSRecordPtr is a far pointer 
+ * 2011-10-17  Eduardo           * redirIFSRecordPtr is a far pointer
  * 2011-11-01  Eduardo           * Add PSP and DOS 3.3 structures
  * 2020-08-18  Eduardo           * Change name of SFT member devInfoWord to flags
+ * 2022-08-23  Eduardo           * Implement CloseAll() - System File Tables
  */
 
 #include <stdint.h>
 
-#define DOS_SUCCESS		 0		// Function was successful
-#define DOS_INVLDFUNC	 1		// Invalid function number
-#define DOS_FILENOTFND	 2		// File not found
-#define DOS_PATHNOTFND	 3		// Path not found
-#define DOS_TOOMANY		 4		// Too many open files
-#define DOS_ACCESS		 5		// Access denied
-#define DOS_INVLDHNDL	 6		// Invalid handle
-#define DOS_MCBDESTRY	 7		// Memory control blocks shot
-#define DOS_NOMEM		 8		// Insufficient memory
-#define DOS_INVLDMCB	 9		// Invalid memory control block
-#define DOS_INVLDENV	10		// Invalid enviornment
-#define DOS_INVLDFMT	11		// Invalid format
-#define DOS_INVLDACC	12		// Invalid access
-#define DOS_INVLDDATA	13		// Invalid data
-#define DOS_INVLDDRV	15		// Invalid drive
-#define DOS_RMVCUDIR	16		// Attempt remove current dir
-#define DOS_DEVICE		17		// Not same device
-#define DOS_NFILES		18		// No more files
-#define DOS_WRTPRTCT	19		// Write protected
-#define DOS_UNKUNIT		20		// Unknown unit     (FreeDOS defines this as DE_BLKINVLD "Invalid block")
-#define DOS_NOTREADY	21		// Drive not ready
-#define DOS_UNKCMD		22		// Unknown command
-#define DOS_CRCERR		23		// Data error (CRC)
-#define DOS_INVLDBUF	24		// invalid buffer size, ext fnc
-#define DOS_SEEK		25		// error on file seek
-#define DOS_GENERAL		31		// General failure
-#define DOS_SHARE		32		// Sharing violation
-#define DOS_ENOSPACE	39		// Disk full (In FreeDOS it's 28)
-#define DOS_FILEEXISTS	80		
-#define DOS_INVLDPARM  	87		// Invalid parameter
+#define DOS_SUCCESS			 0		// Function was successful
+#define DOS_INVLDFUNC		 1		// Invalid function number
+#define DOS_FILENOTFND		 2		// File not found
+#define DOS_PATHNOTFND		 3		// Path not found
+#define DOS_TOOMANY			 4		// Too many open files
+#define DOS_ACCESS			 5		// Access denied
+#define DOS_INVLDHNDL		 6		// Invalid handle
+#define DOS_MCBDESTRY		 7		// Memory control blocks shot
+#define DOS_NOMEM			 8		// Insufficient memory
+#define DOS_INVLDMCB		 9		// Invalid memory control block
+#define DOS_INVLDENV		10		// Invalid enviornment
+#define DOS_INVLDFMT		11		// Invalid format
+#define DOS_INVLDACC		12		// Invalid access
+#define DOS_INVLDDATA		13		// Invalid data
+#define DOS_INVLDDRV		15		// Invalid drive
+#define DOS_RMVCUDIR		16		// Attempt remove current dir
+#define DOS_DEVICE			17		// Not same device
+#define DOS_NFILES			18		// No more files
+#define DOS_WRTPRTCT		19		// Write protected
+#define DOS_UNKUNIT			20		// Unknown unit     (FreeDOS defines this as DE_BLKINVLD "Invalid block")
+#define DOS_NOTREADY		21		// Drive not ready
+#define DOS_UNKCMD			22		// Unknown command
+#define DOS_CRCERR			23		// Data error (CRC)
+#define DOS_INVLDBUF		24		// invalid buffer size, ext fnc
+#define DOS_SEEK			25		// error on file seek
+#define DOS_GENERAL			31		// General failure
+#define DOS_SHARE			32		// Sharing violation
+#define DOS_ENOSPACE		39		// Disk full (In FreeDOS it's 28)
+#define DOS_FILEEXISTS		80
+#define DOS_INVLDPARM 		87		// Invalid parameter
 
 
 // Extended Open actions
@@ -81,7 +82,7 @@ typedef struct {
 // FCHAR Table Structure
 //
 #pragma pack(1)
- 
+
 typedef struct {
 	uint16_t	size;		// table size (not counting this word)
 	uint8_t		unk1;		// ??? (01h for MS-DOS 3.30-6.00)
@@ -144,7 +145,40 @@ typedef struct {
 	uint8_t far	*cdsIfs;
 	uint16_t	cdsNetFlags2;
 } CDS;
-  
+
+// Custom DOS System File Table entry
+// Some of the fields are not used by DOS and are specific to this redirector
+//
+#pragma pack(1)
+
+#define SFT_FDATE       0x4000  // File date set
+#define SFT_FCLEAN      0x0040  // File has not been written to
+typedef struct {
+	uint16_t		handleCount;
+	uint16_t		openMode;
+	uint8_t			fileAttr;
+	uint16_t		flags;
+	uint8_t far *	devDrvrPtr;
+	uint16_t		unused1;
+	uint32_t		fileTime;
+	uint32_t		fileSize;
+	uint32_t		filePos;
+	uint32_t		handle;			// File handle
+	uint16_t		unused2;
+	uint8_t			unused3;
+	char			file_name[11];
+} SFT;
+
+// DOS System File Table List
+//
+#pragma pack(1)
+
+typedef struct SFTT {
+  struct SFTT far *	nextSFTT;
+  uint16_t 			sfttCount;
+  SFT 				entries[];
+} SFTT;
+
 // MS-DOS List-Of-Lists
 //
 #pragma pack(1)
@@ -152,13 +186,13 @@ typedef struct {
 #define SYSVARS_DECR	12
 
 typedef struct {
-  	uint16_t	shareRetryCount;
+	uint16_t	shareRetryCount;
 	uint16_t	shareRetryDelay;
 	void far	*currDiskBuff;
 	uint16_t	unreadCon;
 	uint16_t	MCB;
 	void far	*DPB;
-	void far	*fileTable;
+	SFTT far	*fileTable;
 	void far	*clock;
 	void far	*con;
 	uint16_t	maxBytes;
@@ -199,30 +233,6 @@ typedef struct {
 	uint16_t	unused;
 	uint32_t	fileSize;
 } FDB;
-
-// Custom DOS System File Table entry
-// Some of the fields are not used by DOS and are specific to this redirector
-//
-#pragma pack(1)
-
-#define SFT_FDATE       0x4000  // File date set
-#define SFT_FCLEAN      0x0040  // File has not been written to
-typedef struct {
-	uint16_t		handleCount;
-	uint16_t		openMode;
-	uint8_t			fileAttr;
-	uint16_t		flags;
-	uint8_t far *	devDrvrPtr;
-	uint16_t		unused1;
-	uint32_t		fileTime;
-	uint32_t		fileSize;
-	uint32_t		filePos;
-	uint32_t		handle;			// File handle
-	uint16_t		unused2;
-	uint8_t			unused3;
-	char			file_name[11];
-} SFT;
-
 
 // MS-DOS Swappable DOS Area (V3)
 //
@@ -312,7 +322,7 @@ typedef struct {
 	uint8_t			diskStack[384];
 	uint8_t			ioStack[384];
 	uint8_t			drvrLookAheadFlag;
-	uint8_t			volChangeFlag;	
+	uint8_t			volChangeFlag;
 	uint16_t		unknown17;
 } SDA_V3;
 
@@ -438,9 +448,13 @@ typedef struct {
 	void far *	fpInt22hTerminate;
 	void far *	fpInt23hCtrlC;
 	void far *	fpInt24hCriticalError;
-	uint8_t		reservedAt16h[22];
+	uint16_t	parentPSP;
+	uint8_t		jft[20];
 	uint16_t	wEnvironmentSegment;				// Can be freed
-	uint8_t		reservedAt2Eh[34];
+	void far *	stackOnEntry;
+	uint16_t	jftSize;
+	uint8_t far *	fpExtendedJFT;
+	uint8_t		reservedAt2Eh[24];
 	uint8_t		int21hAndRetfInstructions[3];
 	uint8_t		reservedAt53h[9];
 	uint8_t		FCB1[16];
