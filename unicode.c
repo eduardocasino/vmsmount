@@ -31,9 +31,6 @@
 
 #include "globals.h"
 
-#pragma data_seg("BEGTEXT", "CODE");
-#pragma code_seg("BEGTEXT", "CODE");
-
 // Initialised to cp437
 //
 PUBLIC uint16_t unicodeTbl[128] = {

@@ -24,9 +24,6 @@
 
 #include "globals.h"
 
-#pragma data_seg("ENDTEXT", "CODE");
-#pragma code_seg("ENDTEXT", "CODE");
-
 PUBLIC void EndOfTransientBlock( void )
 {
 	return;

@@ -33,9 +33,6 @@
 #include "vmshf.h"
 #include "redir.h"		// For myDS
 
-#pragma data_seg("BEGTEXT", "CODE");
-#pragma code_seg("BEGTEXT", "CODE");
-
 PUBLIC uint8_t manglingChars = DEF_MANGLING_CHARS;
 PUBLIC uint8_t hashLen = DEF_MANGLING_CHARS << 2;
 

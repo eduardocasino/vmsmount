@@ -54,10 +54,6 @@
 #include "miniclib.h"
 #include "lfn.h"
 
-
-#pragma data_seg("BEGTEXT", "CODE");
-#pragma code_seg("BEGTEXT", "CODE");
-
 #define SECTOR_SIZE	32768
 
 typedef void (*redirFunction)(void);

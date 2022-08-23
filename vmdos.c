@@ -37,9 +37,6 @@
 #include "redir.h"			// For myDS
 #include "lfn.h"
 
-#pragma data_seg("BEGTEXT", "CODE");
-#pragma code_seg("BEGTEXT", "CODE");
-
 PUBLIC uint8_t far *fpFUcase;
 PUBLIC FChar far *fpFChar;
 PUBLIC int32_t gmtOffset = 0;

@@ -27,9 +27,6 @@
 
 #include <stddef.h>
 
-#pragma data_seg("BEGTEXT", "CODE");
-#pragma code_seg("BEGTEXT", "CODE");
-
 char *strrchr_local( const char *str, char c )
  {
 	int i;

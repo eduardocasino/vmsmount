@@ -33,9 +33,6 @@
 #include "vmtool.h"
 #include "globals.h"
 
-#pragma data_seg("BEGTEXT", "CODE");
-#pragma code_seg("BEGTEXT", "CODE");
-
 static CREGS r;
 
 /*

@@ -24,9 +24,6 @@
 
 #include "vmcall.h"
 
-#pragma data_seg("BEGTEXT", "CODE");
-#pragma code_seg("BEGTEXT", "CODE");
-
 void VmwCommand( CREGS *r )
 {
 	_VmwCommand( r );

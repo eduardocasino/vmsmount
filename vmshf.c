@@ -48,9 +48,6 @@
 #include "vmdos.h"
 #include "redir.h"
 
-#pragma data_seg("BEGTEXT", "CODE");
-#pragma code_seg("BEGTEXT", "CODE");
-
 PUBLIC uint16_t bufferSize = VMSHF_DEF_BLOCK_SIZE;
 PUBLIC uint16_t maxDataSize = VMSHF_MAX_DATA_SIZE(VMSHF_DEF_BLOCK_SIZE);
 
