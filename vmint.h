@@ -28,11 +28,109 @@
 
 #include <stdint.h>
 
-void __cdecl u64mul32( uint64_t *result, uint64_t multiplicand, uint32_t multiplier );
-void __cdecl u32mul32( uint32_t *result, uint32_t multiplicand, uint32_t multiplier );
-uint32_t __cdecl u64div32( uint64_t *quotient, uint64_t dividend, uint32_t divisor );
-uint32_t __cdecl u32div32( uint32_t *quotient, uint32_t dividend, uint32_t divisor );
-void __cdecl u64add32( uint64_t *result, uint64_t value1, uint32_t value2 );
-void __cdecl u64sub32( uint64_t *result, uint64_t value1, uint32_t value2 );
+void u64mul32( uint64_t *result, uint64_t multiplicand, uint32_t multiplier );
+#pragma aux u64mul32 =              \
+    "push eax"                       \
+    "push ebx"                       \
+    "push ecx"                       \
+    "push edx"                       \
+    "mov bx, word ptr [esp+0x0a]"    \
+    "mov eax, dword ptr [esp+0x0c]"  \
+    "mov ecx, dword ptr [esp+0x14]"  \
+    "mul ecx"                        \
+    "mov dword ptr [bx], eax"        \
+    "mov dword ptr [bx+4], edx"      \   
+    "mov eax, dword ptr [esp+0x10]"  \
+    "mov ecx, dword ptr [esp+0x14]"  \
+    "mul ecx"                        \
+    "add dword ptr [bx+4], eax"      \   
+    "pop edx"                        \
+    "pop ecx"                        \
+    "pop ebx"                        \
+    "pop eax"                        \
+    parm caller[];
+
+void u32mul32( uint32_t *result, uint32_t multiplicand, uint32_t multiplier );
+#pragma aux u32mul32 =              \
+    "push eax"                       \
+    "push ebx"                       \
+    "push ecx"                       \
+    "mov bx, word ptr [esp+0x0a]"    \
+    "mov eax, dword ptr [esp+0x0c]"  \
+    "mov ecx, dword ptr [esp+0x10]"  \
+    "mul ecx"                        \
+    "mov dword ptr [bx], eax"        \
+    "pop ecx"                        \
+    "pop ebx"                        \
+    "pop eax"                        \
+    parm caller[];
+
+uint32_t u64div32( uint64_t *quotient, uint64_t dividend, uint32_t divisor );
+#pragma aux u64div32 =              \
+    "push ebx"                       \
+    "push ecx"                       \
+    "mov bx, word ptr [esp+0x0a]"    \
+    "mov eax, dword ptr [esp+0x10]"  \
+	"xor edx, edx"                   \
+    "mov ecx, dword ptr [esp+0x14]"  \
+    "div ecx"                        \
+    "mov dword ptr [bx+4], eax"      \ 
+    "mov eax, dword ptr [esp+0x0c]"  \
+    "div ecx"                        \
+    "mov dword ptr [bx], eax"        \
+	"mov ax, dx"                     \
+	"ror edx, 16"                    \
+    "pop ecx"                        \
+    "pop ebx"                        \
+    parm caller[]           \
+    value [dx ax];
+
+uint32_t u32div32( uint32_t *quotient, uint32_t dividend, uint32_t divisor );
+#pragma aux u32div32 =              \
+    "push ebx"                       \
+    "push ecx"                       \
+    "mov bx, word ptr [esp+0x0a]"    \
+    "mov eax, dword ptr [esp+0x0c]"  \
+	"xor edx, edx"                   \
+    "mov ecx, dword ptr [esp+0x10]"  \
+    "div ecx"                        \
+    "mov dword ptr [bx], eax"        \
+	"mov ax, dx"                     \
+	"ror edx, 16"                    \
+    "pop ecx"                        \
+    "pop ebx"                        \
+    parm caller[]           \
+    value [dx ax];
+
+void u64add32( uint64_t *result, uint64_t value1, uint32_t value2 );
+#pragma aux u64add32 =              \
+    "push eax"                       \
+    "push ebx"                       \
+    "mov bx, word ptr [esp+0x06]"    \
+    "mov eax, dword ptr [esp+0x08]"  \
+    "add eax, dword ptr [esp+0x10]"  \
+    "mov dword ptr [bx], eax"        \
+    "mov eax, dword ptr [esp+0x0c]"  \
+	"adc eax, 0"                     \
+    "mov dword ptr [bx+4], eax"      \   
+    "pop ebx"                        \
+    "pop eax"                        \
+    parm caller[];
+
+void u64sub32( uint64_t *result, uint64_t value1, uint32_t value2 );
+#pragma aux u64sub32 =              \
+    "push eax"                       \
+    "push ebx"                       \
+    "mov bx, word ptr [esp+0x06]"    \
+    "mov eax, dword ptr [esp+0x08]"  \
+    "sub eax, dword ptr [esp+0x10]"  \
+    "mov dword ptr [bx], eax"        \
+    "mov eax, dword ptr [esp+0x0c]"  \
+    "sbb eax, 0"                     \
+    "mov dword ptr [bx+4], eax"      \  
+    "pop ebx"                        \
+    "pop eax"                        \
+    parm caller[];
+
 
 #endif /* VMINT_H_ */

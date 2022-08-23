@@ -46,8 +46,8 @@ UPXFLAGS = -9
 
 TARGET = vmsmount.exe
 
-OBJ =	kitten.obj vmaux.obj main.obj miniclib.obj vmint.obj unicode.obj \
-		vmdos.obj vmcall.obj vmtool.obj vmshf.obj redir.obj lfn.obj \
+OBJ =	kitten.obj vmaux.obj main.obj miniclib.obj unicode.obj vmdos.obj \
+		vmcall.obj vmtool.obj vmshf.obj redir.obj lfn.obj \
 		endtext.obj
 
 

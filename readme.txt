@@ -130,7 +130,7 @@ ACKNOWLEDGEMENTS
 
 BUILD
 
-  VMSMOUNT was built with OpenWatcom 1.9, NASM 2.09.10 and GNU Make 3.81
+  VMSMOUNT was built with OpenWatcom 2.0 and GNU Make 3.81
   
 BUGS
 
