@@ -29,6 +29,7 @@
 # 2022-08-23  Eduardo           Port to OW 2.0
 # 2022-08-23  Eduardo           Port to wmake syntax
 # 2022-08-23  Eduardo           Debug support
+# 2022-08-23  Eduardo           Remove vmcall.ooj (use inlines)
 #
 
 CC = wcc
@@ -57,8 +58,7 @@ DBGOBJ=printf.obj debug.obj
 !endif
 
 OBJ =	kitten.obj vmaux.obj main.obj $(DBGOBJ) miniclib.obj unicode.obj &
-		vmdos.obj vmcall.obj vmtool.obj vmshf.obj redir.obj lfn.obj &
-		endtext.obj
+		vmdos.obj vmtool.obj vmshf.obj redir.obj lfn.obj endtext.obj
 
 
 all : $(TARGET)
@@ -88,8 +88,6 @@ endtext.obj : endtext.c .AUTODEPEND
 kitten.obj: .AUTODEPEND
 
 main.obj : .AUTODEPEND
-
-vmcall.obj : .AUTODEPEND 
 
 vmaux.obj : .AUTODEPEND
 

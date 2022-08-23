@@ -31,6 +31,7 @@
  *                                  VMAuxBeginSession() and VMAuxEndSession()
  *  2011-11-06  Eduardo           * New message printing macros
  *  2022-08-23  Eduardo           * Debugging support
+ *  2022-08-23  Eduardo           * Use inlines for virtual machine communication
  */
  
 /*
@@ -71,21 +72,6 @@ static struct {
 		9, 5, "Workstation"
 };
 
-static void VMAuxVmwCommand( CREGS *r )
-{
-	_VmwCommand( r );
-}
-
-static void VMAuxVmwRpcOuts( CREGS *r )
-{
-	_VmwRpcOuts( r );
-}
-
-static void VMAuxVmwRpcIns( CREGS *r )
-{
-	_VmwRpcIns( r );
-}
-
 /*
 	open RPC channel
 */
@@ -99,7 +85,7 @@ static int VMAuxRpcOpen( rpc_t *rpc, uint32_t type )
 	r.edx.word = VMWARE_CMD_PORT;
 	r.ebp.word = r.edi.word = r.esi.word = 0;
 	
-	VMAuxVmwCommand( &r );
+	_VmwCommand( &r );
 
 	if ( r.eax.word || r.ecx.word != 0x00010000L || r.edx.halfs.low )
 		return -1;
@@ -128,7 +114,7 @@ static int VMAuxRpcSend( rpc_t *rpc, const uint8_t *command, uint32_t length )
 	r.esi.word = rpc->cookie1;
 	r.edi.word = rpc->cookie2;
 
-	VMAuxVmwCommand( &r );
+	_VmwCommand( &r );
 
 	if ( r.eax.word || r.ecx.halfs.high == 0 )
 		return -1;
@@ -150,7 +136,7 @@ static int VMAuxRpcSend( rpc_t *rpc, const uint8_t *command, uint32_t length )
 		r.edi.word = rpc->cookie2;
 		r.ebp.word = rpc->cookie1;
 
-		VMAuxVmwRpcOuts( &r );
+		_VmwRpcOuts( &r );
 
 		if ( r.ebx.word != VMRPC_ENH_DATA)
 			return -1;
@@ -169,7 +155,7 @@ static int VMAuxRpcSend( rpc_t *rpc, const uint8_t *command, uint32_t length )
 			r.edx.word = rpc->channel | VMWARE_CMD_PORT;
 			r.ebp.word = r.edi.word = r.esi.word = 0;
 
-			VMAuxVmwCommand( &r );
+			_VmwCommand( &r );
 
 			if ( r.eax.word || r.ecx.halfs.high == 0 )
 				return -1;
@@ -199,7 +185,7 @@ static int VMAuxRpcRecvLen(rpc_t *rpc, uint32_t *length, uint16_t *dataid )
 	r.esi.word = rpc->cookie1;
 	r.edi.word = rpc->cookie2;
 
-	VMAuxVmwCommand( &r );
+	_VmwCommand( &r );
 
 	if ( r.eax.word || r.ecx.halfs.high == 0 )
 		return -1;
@@ -226,7 +212,7 @@ static int VMAuxRpcRecvDat( rpc_t *rpc, unsigned char *data, uint32_t length, ui
 		r.edi.word = (uint32_t)(data);
 		r.ebp.word = rpc->cookie2;
 
-		VMAuxVmwRpcIns( &r );
+		_VmwRpcIns( &r );
 
 		if ( r.ebx.word != VMRPC_ENH_DATA )
 			return -1;
@@ -243,7 +229,7 @@ static int VMAuxRpcRecvDat( rpc_t *rpc, unsigned char *data, uint32_t length, ui
 			r.edx.word = rpc->channel | VMWARE_CMD_PORT;
 			r.ebp.word = r.edi.word = r.esi.word = 0;
 			
-			VMAuxVmwCommand( &r );
+			_VmwCommand( &r );
 
 			if ( r.eax.word || r.ecx.halfs.high == 0 )
 				return -1;
@@ -265,7 +251,7 @@ static int VMAuxRpcRecvDat( rpc_t *rpc, unsigned char *data, uint32_t length, ui
 	r.esi.word = rpc->cookie1;
 	r.edi.word = rpc->cookie2;
 
-	VMAuxVmwCommand( &r );
+	_VmwCommand( &r );
 
 	if (r.eax.word || r.ecx.halfs.high == 0)
 		return -1;
@@ -289,7 +275,7 @@ static int VMAuxRpcClose(rpc_t *rpc)
 	r.esi.word = rpc->cookie1;
 	r.edi.word = rpc->cookie2;
 
-	VMAuxVmwCommand( &r );
+	_VmwCommand( &r );
 
 	if ( r.eax.word || r.ecx.halfs.high == 0 )
 		return -1;
@@ -308,7 +294,7 @@ static int VMAuxGetVersion(uint32_t *version, uint32_t *product)
 	r.edx.word = VMWARE_CMD_PORT;
 	r.ebp.word = r.edi.word = r.esi.word = 0;
 	
-	VMAuxVmwCommand( &r );
+	_VmwCommand( &r );
 
 	if ( r.eax.word == 0xFFFFFFFF || r.ebx.word != VMWARE_MAGIC )
 		return -1;

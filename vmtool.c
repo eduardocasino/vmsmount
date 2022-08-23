@@ -25,6 +25,7 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-11  Eduardo           * Remove unused VMRpcClose()
+ * 2022-08-23  Eduardo           * Use inlines for virtual machine communication
  *
  */
  
@@ -50,7 +51,7 @@ PUBLIC int VMRpcSend(const rpc_t *rpc, const unsigned char *command, uint32_t le
 	r.esi.word = rpc->cookie1;
 	r.edi.word = rpc->cookie2;
 
-	VmwCommand( &r );
+	_VmwCommand( &r );
 
 	if ( r.eax.word || r.ecx.halfs.high == 0 )
 		return -1;
@@ -72,7 +73,7 @@ PUBLIC int VMRpcSend(const rpc_t *rpc, const unsigned char *command, uint32_t le
 		r.edi.word = rpc->cookie2;
 		r.ebp.word = rpc->cookie1;
 
-		VmwRpcOuts( &r );
+		_VmwRpcOuts( &r );
 
 		if ( r.ebx.word != VMRPC_ENH_DATA)
 			return -1;
@@ -90,7 +91,7 @@ PUBLIC int VMRpcSend(const rpc_t *rpc, const unsigned char *command, uint32_t le
 			r.edx.word = rpc->channel | VMWARE_CMD_PORT;
 			r.ebp.word = r.edi.word = r.esi.word = 0;
 
-			VmwCommand( &r );
+			_VmwCommand( &r );
 
 			if ( r.eax.word || r.ecx.halfs.high == 0 )
 				return -1;
@@ -119,7 +120,7 @@ PUBLIC int VMRpcRecvLen(const rpc_t *rpc, uint32_t *length, uint16_t *dataid)
 	r.esi.word = rpc->cookie1;
 	r.edi.word = rpc->cookie2;
 
-	VmwCommand( &r );
+	_VmwCommand( &r );
 
 	if ( r.eax.word || r.ecx.halfs.high == 0 )
 		return -1;
@@ -144,7 +145,7 @@ PUBLIC int VMRpcRecvDat(const rpc_t *rpc, unsigned char *data, uint32_t length, 
 		r.edi.word = (uint32_t)data;
 		r.ebp.word = rpc->cookie2;
 
-		VmwRpcIns( &r );
+		_VmwRpcIns( &r );
 
 		if ( r.ebx.word != VMRPC_ENH_DATA )
 			return -1;
@@ -160,7 +161,7 @@ PUBLIC int VMRpcRecvDat(const rpc_t *rpc, unsigned char *data, uint32_t length, 
 			r.edx.word = rpc->channel | VMWARE_CMD_PORT;
 			r.ebp.word = r.edi.word = r.esi.word = 0;
 			
-			VmwCommand( &r );
+			_VmwCommand( &r );
 
 			if ( r.eax.word || r.ecx.halfs.high == 0 )
 				return -1;
@@ -182,7 +183,7 @@ PUBLIC int VMRpcRecvDat(const rpc_t *rpc, unsigned char *data, uint32_t length, 
 	r.esi.word = rpc->cookie1;
 	r.edi.word = rpc->cookie2;
 
-	VmwCommand( &r );
+	_VmwCommand( &r );
 
 	if (r.eax.word || r.ecx.halfs.high == 0)
 		return -1;

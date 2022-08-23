@@ -27,6 +27,7 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-11  Eduardo           * Inline assembly for RPC backdoor
+ * 2022-08-23  Eduardo           * Remove function prototypes
  *
  */
  
@@ -148,11 +149,6 @@ static void _VmwRpcIns( CREGS *r );
 	STORE_REGS \
 	parm [ax]	\
 	modify [ax];
-	
-
-extern void VmwCommand(CREGS *);
-extern void VmwRpcIns(CREGS *);
-extern void VmwRpcOuts(CREGS *);
 
 #endif	/* VMCALL_H_ */
 
