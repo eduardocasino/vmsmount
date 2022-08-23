@@ -30,6 +30,7 @@
  * 2022-08-23  Eduardo           * Port to OW 2.0
  * 2022-08-23  Eduardo           * Debugging support
  * 2022-08-23  Eduardo           * Implement CloseAll()
+ * 2022-08-23  Eduardo           * Make proper use of packing pragmas
  * 
  */
 
@@ -40,7 +41,8 @@
 
 #define VMSMOUNT_MAGIC 'SF'
 
-#pragma pack(1)
+#pragma pack( push, 1 )
+
 typedef struct {
 	char		signature[9];			// "VMSMOUNT"
 	uint16_t	psp;					// Our PSP
@@ -52,6 +54,8 @@ typedef struct {
 	uint8_t far	*ourStack;				// Pointer to internal stack
 #endif
 } Signature;
+
+#pragma pack( pop )
 
 extern void (__interrupt __far *fpPrevInt2fHandler)();
 

@@ -28,12 +28,14 @@
  *
  * 2011-10-11  Eduardo           * Inline assembly for RPC backdoor
  * 2022-08-23  Eduardo           * Remove function prototypes
+ * 2022-08-23  Eduardo           * Make proper use of packing pragmas
  *
  */
  
 #include <stdint.h>
 
-#pragma pack(1)
+#pragma pack( push, 1)
+
 typedef struct Regs {
 	union {
 		uint8_t byte[4];
@@ -92,6 +94,8 @@ typedef struct Regs {
 		uint32_t word;
 	} esi;
 } CREGS;
+
+#pragma pack( pop )
 
 #define LOAD_REGS \
 	"movzx eax,ax" \

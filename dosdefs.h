@@ -28,6 +28,7 @@
  * 2011-11-01  Eduardo           * Add PSP and DOS 3.3 structures
  * 2020-08-18  Eduardo           * Change name of SFT member devInfoWord to flags
  * 2022-08-23  Eduardo           * Implement CloseAll() - System File Tables
+ * 2022-08-23  Eduardo           * Make proper use of packing pragmas
  */
 
 #include <stdint.h>
@@ -72,7 +73,7 @@
 
 // NLS Table Structure (for use with int21 0x65nn functions)
 //
-#pragma pack(1)
+#pragma pack( push, 1 )
 
 typedef struct {
 	uint8_t tableId;
@@ -81,7 +82,6 @@ typedef struct {
 
 // FCHAR Table Structure
 //
-#pragma pack(1)
 
 typedef struct {
 	uint16_t	size;		// table size (not counting this word)
@@ -98,7 +98,6 @@ typedef struct {
 
 // Current Directory Structure
 //
-#pragma pack(1)
 
 #define MAX_CDSPATH 67
 
@@ -149,7 +148,6 @@ typedef struct {
 // Custom DOS System File Table entry
 // Some of the fields are not used by DOS and are specific to this redirector
 //
-#pragma pack(1)
 
 #define SFT_FDATE       0x4000  // File date set
 #define SFT_FCLEAN      0x0040  // File has not been written to
@@ -171,7 +169,6 @@ typedef struct {
 
 // DOS System File Table List
 //
-#pragma pack(1)
 
 typedef struct SFTT {
   struct SFTT far *	nextSFTT;
@@ -181,7 +178,6 @@ typedef struct SFTT {
 
 // MS-DOS List-Of-Lists
 //
-#pragma pack(1)
 
 #define SYSVARS_DECR	12
 
@@ -209,7 +205,6 @@ typedef struct {
 // Custom FindFirst/FindNext data block
 // Some of the fields are not used by DOS and are specific to this redirector
 //
-#pragma pack(1)
 
 typedef struct {
 	uint8_t		driveNumber;
@@ -223,7 +218,6 @@ typedef struct {
 
 // Directory entry for found file
 //
-#pragma pack(1)
 
 typedef struct {
 	char		fileName[11];
@@ -236,7 +230,7 @@ typedef struct {
 
 // MS-DOS Swappable DOS Area (V3)
 //
-#pragma pack(1)
+
 typedef struct {
 	uint8_t			criticalErrorFlag;
 	uint8_t			inDOSFlag;
@@ -328,7 +322,7 @@ typedef struct {
 
 // MS-DOS Swappable DOS Area (V4)
 //
-#pragma pack(1)
+
 typedef struct {
 	uint8_t			criticalErrorFlag;
 	uint8_t			inDOSFlag;
@@ -439,7 +433,7 @@ typedef struct {
 
 // PSP
 //
-#pragma pack(1)
+
 typedef struct {
 	uint16_t	int20hInstruction;
 	uint16_t	wSizeOfMemoryInParagraphs;
@@ -462,5 +456,7 @@ typedef struct {
 	uint8_t		bCommandLineLength;					// Can be used for storage
 	uint8_t		szCommandLine[127];
 } PSP;
+
+#pragma pack( pop )
 
 #endif /* DOSDEFS_H_ */
