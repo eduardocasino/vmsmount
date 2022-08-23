@@ -30,6 +30,7 @@
  * 2011-10-17  Eduardo           * Simplify installation check
  * 2011-11-02  Eduardo           * Add partial Long File Name support
  * 2020-08-18  Eduardo           * Fix: Update file modification time in CloseFile()
+ * 2022-08-23  Eduardo           * Fix: Set correct file size in WriteFile()
  *
  */
 
@@ -440,17 +441,9 @@ static void WriteFile( void )
 	//
 	if ( ! r->w.cx )
 	{
-		ret = VMShfGetAttr( NULL, 0, fpSFT->handle, &status, &oldAttr );
-		
-		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
-		{
-			Failure( DOS_ACCESS );
-			return;
-		}
-
-		memcpy_local( &newAttr, oldAttr, sizeof( VMShfAttr ) );
 		newAttr.fsize = (uint64_t) fpSFT->filePos;
-		
+		newAttr.mask = VMSHF_VALID_ATTR_FSIZE;
+
 		ret = VMShfSetAttr ( &newAttr, NULL, 0, fpSFT->handle, &status );
 		
 		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
