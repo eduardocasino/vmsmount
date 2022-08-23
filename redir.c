@@ -31,6 +31,7 @@
  * 2011-11-02  Eduardo           * Add partial Long File Name support
  * 2020-08-18  Eduardo           * Fix: Update file modification time in CloseFile()
  * 2022-08-23  Eduardo           * Fix: Set correct file size in WriteFile()
+ * 2022-08-23  Eduardo           * Port to OW 2.0
  *
  */
 
@@ -38,6 +39,7 @@
 #include <fcntl.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "globals.h"
 #include "dosdefs.h"
@@ -71,8 +73,9 @@ static uint8_t newStack[STACK_SIZE] = {0};
 static uint16_t far *fpStackParam;	// Far pointer to top os stack at entry
 static uint16_t dosSS;
 static uint16_t dosSP;
-static uint16_t curSP;
+static uint16_t dosBP;
 
+static uint16_t curSP;
 
 void (__interrupt __far *fpPrevInt2fHandler)();
 static union INTPACK far *r;
@@ -95,36 +98,6 @@ char		far *fpLongFileName1;
 char		far *fpLongFileName2;
 
 static char fcbName[12];
-
- // While executing the resident code, we no longer have access to the
- // C library functions. This pragma replicates _chain_intr()
- // ( basically copied from clib )
- //
-void _chain_intr_local( void (__interrupt __far *)() );
-#pragma aux _chain_intr_local = \
-	"mov	cx, ax"		/* get offset and segment of previous int */	\
-	"mov	ax, dx"														\
-	"mov	sp, bp"														\
-	"xchg	cx, 20[bp]"	/* restore cx, & put in offset */				\
-	"xchg	ax, 22[bp]"	/* restore ax, & put in segment */				\
-	"mov	bx, 28[bp]"	/* restore flags... */							\
-	"and	bx, 0xfcff"	/* ...but not Interrupt and Trace Flags */		\
-	"push	bx"															\
-	"popf"																\
-	"pop	gs"			/* restore segment registers */					\
-	"pop	fs"															\
-	"pop	es"															\
-	"pop	ds"															\
-	"pop	di"															\
-	"pop	si"															\
-	"pop	bp"															\
-	"pop	bx"			/* skip SP */									\
-	"pop	bx"			/* restore general purpose registers */			\
-	"pop	dx"															\
-	"retf"				/* return to previous interrupt handler */		\
-	parm [dx ax]														\
-	modify [];
-
 
 static void SetSftOwner( void );
 #pragma aux SetSftOwner = \
@@ -1111,20 +1084,12 @@ static redirFunction dispatchTable[] = {
 
 #define MAX_FUNCTION	0x2E
 
-void __interrupt Int2fRedirector( union INTPACK regset )
+static bool Int2fHandler(union INTPACK regset)
+#pragma aux Int2fHandler "*" parm caller [] value [al] modify [ax bx cx dx si di es gs fs]
 {
-	static uint16_t dosBP;
-
-	_asm
-	{
-		sti
-		push cs
-		pop ds
-	}
-	
 	if ( regset.h.ah != 0x11 || regset.h.al > MAX_FUNCTION )
 	{
-		goto chain;
+		return false;
 	}
 
 	r = &regset;
@@ -1133,7 +1098,7 @@ void __interrupt Int2fRedirector( union INTPACK regset )
 
 	if ( NULL == currFunction || !IsCallForUs( regset.h.al ) )
 	{
-		goto chain;
+		return false;
 	}
 	
 	
@@ -1152,13 +1117,13 @@ void __interrupt Int2fRedirector( union INTPACK regset )
 		mov ax, ds
 		mov myDS, ax
 		mov ss, ax
-		mov sp, (offset newStack) + STACK_SIZE - 2
+		mov sp, (offset newStack) + STACK_SIZE
 	};
-		
+
 	fpStackParam = (uint16_t far *)MK_FP( dosSS, dosBP + sizeof( union INTPACK ) ); 
 
 	Success();
-	
+
 	currFunction();
 
 	_asm
@@ -1167,11 +1132,49 @@ void __interrupt Int2fRedirector( union INTPACK regset )
 		mov sp, dosSP
 	};
 
-	return;
+	return true;
 
-chain:	
-	_chain_intr_local( fpPrevInt2fHandler );
 }
+
+void __declspec(naked) __far Int2fRedirector(void)
+{
+	__asm {
+
+		pusha
+		push ds
+		push es
+		push fs
+		push gs
+
+		mov bp, sp
+		push cs
+		pop ds
+
+		call Int2fHandler
+
+		test al, al
+		jnz handled
+
+		pop gs
+		pop fs
+		pop es
+		pop ds
+		popa
+
+		; Jump to the next handler in the chain
+		jmp dword ptr cs:fpPrevInt2fHandler
+
+	handled:
+		pop gs
+		pop fs
+		pop es
+		pop ds
+		popa
+		
+		iret
+	}
+}
+
 
 /**
  * This function must the the last one in the BEGTEXT segment!

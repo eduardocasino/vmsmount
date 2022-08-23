@@ -25,23 +25,26 @@
 #                               execution of processor test.
 #                               Reorder segments to mark end of transient part
 # 2011-11-01  Eduardo           Add LFN (new object and segment order)
+# 2022-08-23  Eduardo           Make integer functions inlines (remove vmint.asm)
+# 2022-08-23  Eduardo           Port to OW 2.0
 #
 
 CC = wcc
-AS = nasm
 LD = wlink
 UPX = upx
 RM = rm -f
 CFLAGS  = -bt=dos -ms -q -s -oh -os -DREVERSE_HASH
-ASFLAGS = -f obj -Worphan-labels -O9
 LDFLAGS =	SYSTEM dos \
 			ORDER \
-				clname CODE segment BEGTEXT segment _TEXT segment ENDTEXT \
-				clname FAR_DATA clname BEGDATA clname DATA clname BSS \
-				clname STACK \
-			OPTION QUIET \
-			OPTION MAP=vmsmount.map
-LDFLAGS2 = SYSTEM dos OPTION QUIET OPTION MAP=vmsmount.map
+				clname FAR_DATA \
+				clname RES_CODE \
+				clname CODE segment BEGTEXT segment _TEXT \
+				clname BEGDATA \
+				clname DATA \
+				clname BSS \
+				OPTION QUIET \
+				OPTION STATICS \
+				OPTION MAP=vmsmount.map
 UPXFLAGS = -9
 
 TARGET = vmsmount.exe
@@ -69,6 +72,12 @@ main.obj: main.c
 kitten.obj: kitten.c
 	$(CC) -0 $(CFLAGS) -fo=$@ $<
 
+vmaux.obj: vmaux.c
+	$(CC) -3 $(CFLAGS) -fo=$@ $<
+
+endtext.obj: endtext.c
+	$(CC) -3 $(CFLAGS) -nt=_TEXT_END -fo=$@ $<
+
 kitten.obj: kitten.h
 
 main.obj: globals.h kitten.h messages.h vmaux.h vmshf.h vmtool.h dosdefs.h redir.h unicode.h endtext.h
@@ -88,8 +97,6 @@ vmdos.obj: vmint.h dosdefs.h vmdos.h vmint.h vmshf.h vmtool.h vmcall.h miniclib.
 lfn.obj: lfn.h globals.h miniclib.h vmdos.h
 
 %.obj : %.c
-	$(CC) -3 $(CFLAGS) -fo=$@ $<
+	$(CC) -3 $(CFLAGS) -g=RES_GROUP -nt=RES_TEXT -nc=RES_CODE -nd=RES -fo=$@ $<
 
-%.obj : %.asm
-	$(AS) $(ASFLAGS) -o $@ $<
 	

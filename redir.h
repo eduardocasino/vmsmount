@@ -27,7 +27,8 @@
  *                                 the transient code space
  * 2011-10-17  Eduardo           * Signature struct for uninstallation
  * 2011-11-02  Eduardo           * Add partial Long File Name support
- *
+ * 2022-08-23  Eduardo           * Port to OW 2.0
+ * 
  */
 
 #include <dos.h>
@@ -64,7 +65,7 @@ extern char			far *fpLongFileName2;
 
 extern __segment myDS;
 
-extern void __interrupt far Int2fRedirector( union INTPACK );
+extern void __declspec(naked) far Int2fRedirector( void );
 extern uint16_t BeginOfTransientBlockNoLfn( void );
 	
 #endif /* REDIR_H_ */
