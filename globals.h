@@ -33,6 +33,7 @@
  * 2011-10-18  Eduardo           * bump version number to 0.5
  * 2011-11-06  Eduardo           * New message printing macros
  * 2011-11-06  Eduardo           * bump version number to 0.6
+ * 2022-08-23  Eduardo           * Debugging support
  *
  */
 
@@ -61,6 +62,7 @@
 #define ERR_BADDRV	254
 #define ERR_SYSTEM	255
 
+#define MY_NAME "VMSMOUNT"
 
 #define VERB_FPRINTF(L, F, ...) if ( verbosity >= L ) fprintf( F, __VA_ARGS__ )
 #define VERB_FPUTS(L, S, F) if ( verbosity >= L ) fputs( S, F )

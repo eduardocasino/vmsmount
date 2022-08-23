@@ -30,6 +30,7 @@
  *  2011-10-17  Eduardo           * Pass session info as parameter to
  *                                  VMAuxBeginSession() and VMAuxEndSession()
  *  2011-11-06  Eduardo           * New message printing macros
+ *  2022-08-23  Eduardo           * Debugging support
  */
  
 /*
@@ -347,7 +348,11 @@ int VMAuxCheckVirtual(void)
 /*
 	open an RPC channel for shared folder functions
 */
-int VMAuxBeginSession( rpc_t far *fpRpc )
+int VMAuxBeginSession( rpc_t far *fpRpci
+#ifdef DEBUG
+	, rpc_t far *fpRpcd
+#endif
+)
 {
 	int ret;
 	uint32_t length;
@@ -387,10 +392,22 @@ int VMAuxBeginSession( rpc_t far *fpRpc )
 		goto error_exit;
 	}
 
-	fpRpc->channel = rpc.channel;
-	fpRpc->cookie1 = rpc.cookie1;
-	fpRpc->cookie2 = rpc.cookie2;
+	fpRpci->channel = rpc.channel;
+	fpRpci->cookie1 = rpc.cookie1;
+	fpRpci->cookie2 = rpc.cookie2;
 	
+#ifdef DEBUG
+	/* open a rpci channel for debugging*/
+	ret = VMAuxRpcOpen( &rpc, VMRPC_OPEN_RPCI );
+
+	if ( ret )
+		goto error_exit;
+
+	fpRpcid->channel = rpc.channel;
+	fpRpcid->cookie1 = rpc.cookie1;
+	fpRpcid->cookie2 = rpc.cookie2;
+#endif
+
 	/* success */
 	return 0;
 	
@@ -404,13 +421,25 @@ error_exit:
 /*
 	release shared folder context
 */
-void VMAuxEndSession( rpc_t far *fpRpc )
+void VMAuxEndSession( rpc_t far *fpRpci
+#ifdef DEBUG
+	, rpc_t far *fpRpcd
+#endif
+)
 {
 	rpc_t rpc;
 	
-	rpc.channel = fpRpc->channel;
-	rpc.cookie1 = fpRpc->cookie1;
-	rpc.cookie2 = fpRpc->cookie2;
+	rpc.channel = fpRpci->channel;
+	rpc.cookie1 = fpRpci->cookie1;
+	rpc.cookie2 = fpRpci->cookie2;
 		
 	VMAuxRpcClose( &rpc );
+
+#ifdef DEBUG
+	rpc.channel = fpRpcd->channel;
+	rpc.cookie1 = fpRpcd->cookie1;
+	rpc.cookie2 = fpRpcd->cookie2;
+		
+	VMAuxRpcClose( &rpc );
+#endif
 }

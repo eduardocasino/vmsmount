@@ -44,6 +44,7 @@
  *                               * Uninstallation
  * 2011-11-02  Eduardo           * Partial long file names support (with mangling)
  * 2011-11-06  Eduardo           * New /QQ option
+ * 2022-08-23  Eduardo           * Debugging support
  *
  */ 
 #include <process.h>
@@ -69,12 +70,14 @@
 #include "vmdos.h"
 #include "vmshf.h"
 #include "lfn.h"
+#include "debug.h"
 
 PUBLIC nl_catd cat;
 PUBLIC Verbosity verbosity = NORMAL;
 static int uninstall = 0;
-
-static struct SREGS segRegs;
+#ifdef DEBUG
+static int dump = 0;
+#endif
 
 // Far pointers to resident data
 // These are set by GetFarPointersToResidentData()
@@ -104,7 +107,11 @@ static uint8_t	far	*fpCaseSensitive;
 static uint8_t	far *fpHashLen;
 static uint8_t	far *fpManglingChars;
 
-PUBLIC rpc_t	far *fpRpc;
+static rpc_t	far *fpRpci;
+#ifdef DEBUG
+static rpc_t	far *fpRpcd;
+static uint8_t	far *fpStack;
+#endif
 static uint16_t	far *fpBufferSize;
 static uint16_t	far *fpMaxDataSize;
 static uint8_t	* far *fpBuffer;
@@ -114,7 +121,7 @@ static CDS far *currDir;
 static char far *rootPath = " :\\";
 
 static Signature signature;
-static char *myName = "VMSMOUNT";
+static char *myName = MY_NAME;
 
 // CPU identification routine
 // (Info from http://www.ukcpu.net/Programming/Hardware/x86/CPUID/x86-ID.asp)
@@ -159,48 +166,55 @@ static uint8_t InstallationCheck( void );
 
 static void GetFarPointersToResidentData( void )
 {
+	__segment tsr_cs = get_tsr_cs();
+
 	// From redir.c
-	fpNewInt2fHandler		= segRegs.cs:>Int2fRedirector;
-	fpfpPrevInt2fHandler	= segRegs.cs:>&fpPrevInt2fHandler;
-	fpLfn = segRegs.cs:>&lfn;
-	fpDriveNum = segRegs.cs:>&driveNum;
-	fpfpSDA = segRegs.cs:>&fpSDA;
-	fpfpCDS = segRegs.cs:>&fpCDS;
-	fpfpSDB = segRegs.cs:>&fpSDB;
-	fpfpFDB = segRegs.cs:>&fpFDB;
-	fpfpFcbName1	= segRegs.cs:>&fpFcbName1;
-	fpfpFcbName2	= segRegs.cs:>&fpFcbName2;
-	fpfpFileName1	= segRegs.cs:>&fpFileName1;
-	fpfpFileName2	= segRegs.cs:>&fpFileName2;
-	fpfpCurrentPath	= segRegs.cs:>&fpCurrentPath;
+	fpNewInt2fHandler		= tsr_cs:>Int2fRedirector;
+	fpfpPrevInt2fHandler	= tsr_cs:>&fpPrevInt2fHandler;
+	fpLfn = tsr_cs:>&lfn;
+	fpDriveNum = tsr_cs:>&driveNum;
+	fpfpSDA = tsr_cs:>&fpSDA;
+	fpfpCDS = tsr_cs:>&fpCDS;
+	fpfpSDB = tsr_cs:>&fpSDB;
+	fpfpFDB = tsr_cs:>&fpFDB;
+	fpfpFcbName1	= tsr_cs:>&fpFcbName1;
+	fpfpFcbName2	= tsr_cs:>&fpFcbName2;
+	fpfpFileName1	= tsr_cs:>&fpFileName1;
+	fpfpFileName2	= tsr_cs:>&fpFileName2;
+	fpfpCurrentPath	= tsr_cs:>&fpCurrentPath;
 	
 	// from lfn.c
-	fpfpLongFileName1	= segRegs.cs:>&fpLongFileName1;
-	fpfpLongFileName2	= segRegs.cs:>&fpLongFileName2;
-	*fpfpLongFileName1	= segRegs.cs:>&longFileName1;
-	*fpfpLongFileName2	= segRegs.cs:>&longFileName2;
+	fpfpLongFileName1	= tsr_cs:>&fpLongFileName1;
+	fpfpLongFileName2	= tsr_cs:>&fpLongFileName2;
+	*fpfpLongFileName1	= tsr_cs:>&longFileName1;
+	*fpfpLongFileName2	= tsr_cs:>&longFileName2;
 	
 	// From unicode.c
-	fpUnicodeTbl = segRegs.cs:>&unicodeTbl;
+	fpUnicodeTbl = tsr_cs:>&unicodeTbl;
 	
 	// From vmdos.c
-	fpfpFUcase = segRegs.cs:>&fpFUcase;
-	fpfpFChar = segRegs.cs:>&fpFChar;
-	fpGmtOffset = segRegs.cs:>&gmtOffset;
-	fpCaseSensitive = segRegs.cs:>&caseSensitive;
+	fpfpFUcase = tsr_cs:>&fpFUcase;
+	fpfpFChar = tsr_cs:>&fpFChar;
+	fpGmtOffset = tsr_cs:>&gmtOffset;
+	fpCaseSensitive = tsr_cs:>&caseSensitive;
 		
 	// From lfnc.
-	fpManglingChars = segRegs.cs:>&manglingChars;
-	fpHashLen = segRegs.cs:>&hashLen;
+	fpManglingChars = tsr_cs:>&manglingChars;
+	fpHashLen = tsr_cs:>&hashLen;
 
 	// From vmshf.c
-	fpRpc = segRegs.cs:>&rpc;
-	fpBufferSize = segRegs.cs:>&bufferSize;
-	fpMaxDataSize = segRegs.cs:>&maxDataSize;
-	fpBuffer = segRegs.cs:>&buffer;
+	fpRpci = tsr_cs:>&rpc;
+	fpBufferSize = tsr_cs:>&bufferSize;
+	fpMaxDataSize = tsr_cs:>&maxDataSize;
+	fpBuffer = tsr_cs:>&buffer;
 	
-	return;
-	
+	// From debug.c
+#ifdef DEBUG
+	fpRpcd 					= tsr_cs:>&rpcd;
+	fpStack					= tsr_cs:>&newStack;
+#endif	
+
+	return;	
 }
 
 static void PrintUsageAndExit(int err)
@@ -389,6 +403,11 @@ static int GetOptions(char *argString)
 								return 2;
 						}
 						break;
+#ifdef DEBUG
+					case 'D':
+						++dump;
+						break;
+#endif
 					default:
 						return 2; // Invalid option
 				}
@@ -503,7 +522,7 @@ static int AlreadyInstalled( void )
 		if ( (uint32_t) currDir->u.Net.redirIFSRecordPtr != 0ui32
 				&& (uint32_t) currDir->u.Net.redirIFSRecordPtr != 0xffffffffui32 )
 		{
-			if ( ! _fstrncmp( ((Signature far *) currDir->u.Net.redirIFSRecordPtr)->signature, segRegs.ds:>myName, 9 ) )
+			if ( ! _fstrncmp( ((Signature far *) currDir->u.Net.redirIFSRecordPtr)->signature, myName, 9 ) )
 			{
 				return 1;
 			}
@@ -578,7 +597,11 @@ static void UninstallDriver( void )
 	currDir->u.Net.parameter = 0x00;
 	currDir->u.Net.redirIFSRecordPtr = (void far *)0xffffffffui32;
 
-	VMAuxEndSession( sig->fpRpc );									// Close HGFS session
+	VMAuxEndSession( sig->fpRpci
+	#ifdef DEBUG
+	, sig->fpRpcd
+	#endif
+	);									// Close HGFS session
 	
 	VERB_FPUTS( QUIET, catgets( cat, 2, 1, MSG_INFO_UNINSTALL ), stderr );
 
@@ -775,7 +798,7 @@ static void LoadUnicodeConversionTable(void)
 		goto close;
 	}
 	
-	_fmemcpy( fpUnicodeTbl, segRegs.ds:>buffer, 256 );
+	_fmemcpy( fpUnicodeTbl, buffer, 256 );
 	
 	return;
 
@@ -854,11 +877,38 @@ static void SetSignature( void )
 	signature.psp = _psp;
 	signature.ourHandler = fpNewInt2fHandler;
 	signature.previousHandler = *fpfpPrevInt2fHandler;
-	signature.fpRpc = fpRpc;
-	_fmemcpy( MK_FP( _psp, 0x81 ), segRegs.ds:>&signature, sizeof( signature ) );
+	signature.fpRpci = fpRpci;
+#ifdef DEBUG
+	signature.fpRpcd = fpRpcd;
+	signature.ourStack = fpStack;
+#endif
+	_fmemcpy( MK_FP( _psp, 0x81 ), &signature, sizeof( signature ) );
 	
 	return;
 }
+
+#ifdef DEBUG
+// This call is made after AlreadyInstalled(), so currDir points to the
+// installed driver's CDS
+//
+static void DumpStack( void )
+{
+	Signature far *sig = (Signature far *) currDir->u.Net.redirIFSRecordPtr;
+	uint8_t far *c = &sig->ourStack[0];
+	int size = STACK_SIZE;
+
+	while (size)
+	{
+		int i;
+		printf("%4.4X:%4.4X ", FP_SEG(c), FP_OFF(c));
+		for (i = 0; i < 16 && size > 0; ++i, ++c, --size)
+		{
+			printf(" %2.2x", *c);
+		}
+		puts("");
+	}
+}
+#endif
 
 int main(int argc, char **argv)
 {
@@ -867,8 +917,6 @@ int main(int argc, char **argv)
 	int			tblSize;
 	uint16_t	ret;
 	uint16_t	paragraphs;
-	
-	segread( &segRegs );
 	
 	cat = catopen( myName, 0 );
 		
@@ -947,6 +995,14 @@ int main(int argc, char **argv)
 			VERB_FPUTS( QUIET, catgets( cat, 1, 12, MSG_ERROR_UNINSTALL ), stderr );
 			return( ERR_UNINST );
 		}
+	#ifdef DEBUG
+		else if ( dump )
+		{
+			DumpStack();
+
+			return( ERR_SUCCESS );
+		}
+	#endif
 		else
 		{
 			VERB_FPUTS( QUIET, catgets( cat, 1, 7, MSG_ERROR_INSTALLED ), stderr );
@@ -992,7 +1048,11 @@ int main(int argc, char **argv)
 		return( ERR_BADDRV );
 	}
 	
-	if ( VMAuxBeginSession( fpRpc ) )
+	if ( VMAuxBeginSession( fpRpci
+	#ifdef DEBUG
+		, fpRpcd
+	#endif
+	) )
 	{
 		VERB_FPUTS( QUIET, catgets( cat, 1, 8, MSG_ERROR_NOSHF ), stderr );
 		return( ERR_NOSHF );
@@ -1018,6 +1078,10 @@ int main(int argc, char **argv)
 	_dos_keep( *fpDriveNum + 1, paragraphs );
 
 err_close:
-	VMAuxEndSession( fpRpc );
+	VMAuxEndSession( fpRpci
+#ifdef DEBUG
+	, fpRpcd
+#endif
+);
 	return ret;
 }

@@ -28,6 +28,7 @@
 # 2022-08-23  Eduardo           Make integer functions inlines (remove vmint.asm)
 # 2022-08-23  Eduardo           Port to OW 2.0
 # 2022-08-23  Eduardo           Port to wmake syntax
+# 2022-08-23  Eduardo           Debug support
 #
 
 CC = wcc
@@ -50,8 +51,13 @@ UPXFLAGS = -9
 
 TARGET = vmsmount.exe
 
-OBJ =	kitten.obj vmaux.obj main.obj miniclib.obj unicode.obj vmdos.obj &
-		vmcall.obj vmtool.obj vmshf.obj redir.obj lfn.obj &
+!ifdef DEBUG
+DBGFLAGS=-DDEBUG
+DBGOBJ=printf.obj debug.obj
+!endif
+
+OBJ =	kitten.obj vmaux.obj main.obj $(DBGOBJ) miniclib.obj unicode.obj &
+		vmdos.obj vmcall.obj vmtool.obj vmshf.obj redir.obj lfn.obj &
 		endtext.obj
 
 
@@ -96,6 +102,14 @@ vmshf.obj : .AUTODEPEND
 vmdos.obj : .AUTODEPEND
 
 lfn.obj : .AUTODEPEND
+
+!ifdef DEBUG
+
+debug.obj: .AUTODEPEND
+
+printf.obj: .AUTODEPEND
+
+!endif
 
 .c.obj :
 	$(CC) -3 $(CFLAGS) -g=RES_GROUP -nt=RES_TEXT -nc=RES_CODE -nd=RES -fo=$@ $<

@@ -25,6 +25,7 @@
  *
  *  2011-10-17  Eduardo           * Pass session info as parameter to
  *                                  VMAuxBeginSession() and VMAuxEndSession()
+ *  2022-08-23  Eduardo           * Debugging support
  */
 
 #include <stdint.h> 
@@ -32,7 +33,15 @@
 #include "vmshf.h"
  
 int VMAuxCheckVirtual( void );
-int VMAuxBeginSession( rpc_t far * );
-void VMAuxEndSession( rpc_t far * );
+int VMAuxBeginSession( rpc_t far *
+#ifdef DEBUG
+, rpc_t far *
+#endif
+);
+void VMAuxEndSession( rpc_t far *
+#ifdef DEBUG
+, rpc_t far *
+#endif
+);
 
 #endif /* _VMAUX_H_ */

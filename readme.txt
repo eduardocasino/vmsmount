@@ -125,6 +125,11 @@ ACKNOWLEDGEMENTS
  
  * Alan Kamrowski II for extensive bug report, testing and code review
 
+ * Marco Paland (info@paland.com) for his tiny printf implementation
+
+ * Javier de San Pedro (https://git.javispedro.com/vbados.git) for ideas
+   for the porting to OW 2.0
+
  * And, of course, Pat Villani for the FreeDOS kernel.
    
 

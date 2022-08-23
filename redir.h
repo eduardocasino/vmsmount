@@ -28,6 +28,7 @@
  * 2011-10-17  Eduardo           * Signature struct for uninstallation
  * 2011-11-02  Eduardo           * Add partial Long File Name support
  * 2022-08-23  Eduardo           * Port to OW 2.0
+ * 2022-08-23  Eduardo           * Debugging support
  * 
  */
 
@@ -44,7 +45,11 @@ typedef struct {
 	uint16_t	psp;					// Our PSP
 	void far	*ourHandler;			// Our handler (points to Int2fRedirector() )
 	void far	*previousHandler;		// Handler we chain to and must be restored when uninstalled
-	rpc_t far	*fpRpc;					// Pointer to HGFS session data
+	rpc_t far	*fpRpci;					// Pointer to HGFS session data
+#ifdef DEBUG
+	rpc_t far	*fpRpcd;				// Pointer to RPCI channel for debugging
+	uint8_t far	*ourStack;				// Pointer to internal stack
+#endif
 } Signature;
 
 extern void (__interrupt __far *fpPrevInt2fHandler)();
@@ -67,5 +72,7 @@ extern __segment myDS;
 
 extern void __declspec(naked) far Int2fRedirector( void );
 extern uint16_t BeginOfTransientBlockNoLfn( void );
-	
+
+extern __segment __far get_tsr_cs(void);
+
 #endif /* REDIR_H_ */
