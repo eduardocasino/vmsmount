@@ -54,6 +54,8 @@ typedef struct {
 
 extern void (__interrupt __far *fpPrevInt2fHandler)();
 
+#define STACK_SIZE 300
+extern uint8_t		newStack[STACK_SIZE];
 extern uint8_t		lfn;
 extern uint8_t		driveNum;
 extern CDS 			far *fpCDS;

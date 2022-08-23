@@ -35,7 +35,7 @@ CC = wcc
 LD = wlink
 UPX = upx
 RM = rm -f
-CFLAGS  = -bt=dos -ms -q -s -oh -os -DREVERSE_HASH
+CFLAGS  = -bt=dos -ms -q -s -oh -os -DREVERSE_HASH $(DBGFLAGS)
 LDFLAGS =	SYSTEM dos &
 			ORDER &
 				clname FAR_DATA &

@@ -44,6 +44,9 @@ USAGE
 	                     "Example.txt" will be translated into "EXAM~4F0.TXT"
 	/U                 - Uninstall
 
+	/D                 - Dump contents of internal stack (if compiled with
+	                     debug support)
+
 ENVIRONMENT
 
 	TZ      - Valid POSIX timezone. If omitted, file times will be in UTC
@@ -135,7 +138,8 @@ ACKNOWLEDGEMENTS
 
 BUILD
 
-  VMSMOUNT was built with OpenWatcom 2.0 toolkit. Compile with 'wmake'
+  VMSMOUNT was built with OpenWatcom 2.0 toolkit. Compile with 'wmake' or
+  'wmake DEBUG=y' to add debugging support.
   
 BUGS
 

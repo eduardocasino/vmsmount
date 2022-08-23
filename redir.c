@@ -53,6 +53,7 @@
 #include "vmdos.h"
 #include "miniclib.h"
 #include "lfn.h"
+#include "debug.h"
 
 #define SECTOR_SIZE	32768
 
@@ -65,8 +66,7 @@ static char volLabel[12] = "SharedFldrs";
 
 // Stack management
 //
-#define STACK_SIZE 300
-static uint8_t newStack[STACK_SIZE] = {0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC,
+uint8_t newStack[STACK_SIZE] = {0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC,
 								0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC,
 								0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC,
 								0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC, 0xEC,
@@ -197,6 +197,8 @@ inline void FillFcbName( char far *fcbName, char far *fileName )
 
 static void InstallationCheck( void )
 {
+	DPUTS("InstallationCheck()");
+
 	r->w.ax = (uint16_t) 0x00FF;		// Installed
 	
 	return;
@@ -206,7 +208,9 @@ static void RmDir( void )
 {
 	int ret;
 	uint32_t status;
-	
+
+	DPUTS("RmDir()");
+
 	ret = VMShfDeleteDir(
 					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
 					lfn, &status );
@@ -228,6 +232,8 @@ static void MkDir( void )
 {
 	int ret;
 	uint32_t status;
+
+	DPUTS("MkDir()");
 
 	ret = VMShfCreateDir(
 					VMSHF_FILEMODE_ALL,
@@ -253,6 +259,8 @@ static void ChDir( void )
 	VMShfAttr *fAttr;
 	uint8_t fatAttr;
 	int ret;
+
+	DPUTS("ChDir()");
 
 	if ( *(uint16_t far *)fpFileName1 != '\0\\' )
 	{
@@ -295,6 +303,8 @@ static void CloseFile( void )
 	
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
 
+	DPUTS("CloseFile()");
+
 	// Check if date/time is to be set from clock at CLOSE.
 	if (!(fpSFT->flags & SFT_FCLEAN))
 	{
@@ -332,11 +342,12 @@ static void CloseFile( void )
 
 static void CommitFile( void )
 {
+	DPUTS("CommitFile()");
+
 	// Just succeed
 
 	return;
 }
-
 
 static void ReadFile( void )
 {
@@ -347,6 +358,8 @@ static void ReadFile( void )
 	char far *buffer; 
 
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
+
+	DPUTS("ReadFile()");
 
 	if ( fpSFT->openMode & O_WRONLY )
 	{
@@ -407,6 +420,8 @@ static void WriteFile( void )
 	static VMShfAttr newAttr;
 	
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
+
+	DPRINTF("WriteFile(), r->w.cx = %d", r->w.cx);
 
 	if ( !(fpSFT->openMode & (O_WRONLY|O_RDWR)) )
 	{
@@ -475,11 +490,15 @@ static void WriteFile( void )
 
 static void LockFile( void )
 {
+	DPUTS("LockFile()");
+
 	return;
 }
 
 static void UnlockFile( void )
 {
+	DPUTS("UnlockFile()");
+
 	return;
 }
 
@@ -490,7 +509,9 @@ static void GetDiskSpace( void )
 	uint64_t avail;
 	uint64_t total;
 	uint32_t sectSize = SECTOR_SIZE;
-	
+
+	DPUTS("GetDiskSpace()");
+
 	if ( MK_FP( r->w.es, r->w.di ) == fpSDA->currentCDS )
 	{
 		// Called on current drive
@@ -519,7 +540,7 @@ static void GetDiskSpace( void )
 	return;
 }
 
-static void GetFileAttrib( void )
+static void _GetFileAttrib( void )
 {
 	int ret;
 	uint32_t status;
@@ -541,12 +562,21 @@ static void GetFileAttrib( void )
 	return;
 }
 
+static void GetFileAttrib( void )
+{
+	DPUTS("GetFileAttrib()");
+
+	_GetFileAttrib();
+}
+
 static void SetFileAttrib( void )
 {
 	int ret;
 	uint32_t status;
 
-	GetFileAttrib();
+	DPUTS("SetFileAttrib()");
+
+	_GetFileAttrib();
 	
 	if ( r->w.flags & INTR_CF )
 	{
@@ -582,7 +612,7 @@ static void OpenOrCreateFile( uint16_t accessMode, uint32_t action, VMShfAttr *o
 	VMShfAttr *fAttr;
 	uint8_t fatAttr;
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
-	
+
 	ret = VMShfOpenFile(
 					(uint32_t) accessMode, action, openAttr->fmode, openAttr->attr,
 					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
@@ -648,6 +678,8 @@ static void OpenOrCreateFile( uint16_t accessMode, uint32_t action, VMShfAttr *o
 
 static void OpenFile( void )
 {
+	DPUTS("OpenFile()");
+
 	OpenOrCreateFile( fpSDA->openMode & 3, VMSHF_ACTION_O_EXIST,
 			FatAttrToFMode( _A_NORMAL | _A_ARCH | _A_RDONLY | _A_HIDDEN | _A_SYSTEM ) );
 
@@ -656,6 +688,8 @@ static void OpenFile( void )
 
 static void CreateFile( void )
 {
+	DPUTS("CreateFile()");
+
 	OpenOrCreateFile( VMSHF_ACCESS_READWRITE, VMSHF_ACTION_C_ALWAYS,
 							FatAttrToFMode( (uint8_t)*fpStackParam ) );
 
@@ -701,7 +735,7 @@ inline int FcbNameHasWildCards( char far *fcbName )
 	return 0;
 }
 
-static void FindNext( void )
+static void _FindNext( void )
 {
 	int ret;
 	uint32_t status = VMSHF_SUCCESS;
@@ -760,7 +794,15 @@ static void FindNext( void )
 	return;
 }
 
-static void FindFirst( void )
+static void FindNext( void )
+{
+	DPUTS("FindNext()");
+
+	_FindNext();
+
+}
+
+static void _FindFirst( void )
 {
 	uint32_t status = VMSHF_SUCCESS;
 	char far *p;
@@ -817,7 +859,7 @@ static void FindFirst( void )
 		fpSDB->dirEntryNum	= -1;
 		fpSDB->dirHandle	= handle;
 		
-		FindNext();
+		_FindNext();
 		
 		if ( DOS_NFILES == r->w.ax )
 		{
@@ -826,6 +868,13 @@ static void FindFirst( void )
 	}
 	
 	return;
+}
+
+static void FindFirst( void )
+{
+	DPUTS("FindFirst()");
+
+	_FindFirst();
 }
 
 static void MakeFullPath( char far *fullPath, char far *dirName, char far *fcbName )
@@ -860,9 +909,11 @@ static void DeleteFile( void )
 	uint32_t status;
 	char far *p;
 
+	DPUTS("DeleteFile()");
+
 	fpSDA->attrMask = _A_NORMAL | _A_RDONLY | _A_ARCH;
 
-	FindFirst();
+	_FindFirst();
 	
 	while ( ! r->w.ax )
 	{
@@ -889,7 +940,7 @@ static void DeleteFile( void )
 			}
 		}
 		
-		FindNext();
+		_FindNext();
 	}
 	
 	if ( r->w.ax != DOS_NFILES )
@@ -916,6 +967,8 @@ static void RenameFile( void )
 	uint32_t status;
 	char far *p;
 
+	DPUTS("RenameFile()");
+
 	if ( *(uint16_t far *)(fpFileName1-2) != *(uint16_t far *)(fpFileName2-2) )
 	{
 		Failure( DOS_DEVICE );
@@ -926,7 +979,7 @@ static void RenameFile( void )
 	
 	fpSDA->attrMask = _A_NORMAL | _A_RDONLY | _A_ARCH | _A_SUBDIR;
 
-	FindFirst();
+	_FindFirst();
 	
 	if ( r->w.ax )
 	{
@@ -963,7 +1016,7 @@ static void RenameFile( void )
 			return;
 		}
 		
-		FindNext();
+		_FindNext();
 	
 	}
 	
@@ -986,6 +1039,8 @@ static void RenameFile( void )
 
 static void SpecialOpen( void )
 {
+	DPUTS("SpecialOpen()");
+
 	OpenOrCreateFile( fpSDA->extMode & 0x7f,
 									DosExtActionToOpenAction( fpSDA->extAction ),
 									FatAttrToFMode( fpSDA->extAttr ) );

@@ -89,12 +89,12 @@ static void VMAuxVmwRpcIns( CREGS *r )
 /*
 	open RPC channel
 */
-static int VMAuxRpcOpen( rpc_t *rpc )
+static int VMAuxRpcOpen( rpc_t *rpc, uint32_t type )
 {
 	CREGS r;
 
 	r.eax.word = VMWARE_MAGIC;
-	r.ebx.word = VMRPC_OPEN_RPCI | VMRPC_ENHANCED;
+	r.ebx.word = type | VMRPC_ENHANCED;
 	r.ecx.word = VMCMD_INVOKE_RPC | VMRPC_OPEN;
 	r.edx.word = VMWARE_CMD_PORT;
 	r.ebp.word = r.edi.word = r.esi.word = 0;
@@ -363,7 +363,7 @@ int VMAuxBeginSession( rpc_t far *fpRpci
 	rpc_t rpc;
 	
 	/* open an rpc channel */
-	ret = VMAuxRpcOpen( &rpc );
+	ret = VMAuxRpcOpen( &rpc, VMRPC_OPEN_RPCI );
 
 	if ( ret )
 		return ret;
@@ -403,9 +403,9 @@ int VMAuxBeginSession( rpc_t far *fpRpci
 	if ( ret )
 		goto error_exit;
 
-	fpRpcid->channel = rpc.channel;
-	fpRpcid->cookie1 = rpc.cookie1;
-	fpRpcid->cookie2 = rpc.cookie2;
+	fpRpcd->channel = rpc.channel;
+	fpRpcd->cookie1 = rpc.cookie1;
+	fpRpcd->cookie2 = rpc.cookie2;
 #endif
 
 	/* success */
