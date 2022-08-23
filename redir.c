@@ -425,7 +425,6 @@ static void WriteFile( void )
 	uint32_t status;
 	uint32_t length, towrite;
 	char far *buffer; 
-	VMShfAttr *oldAttr;
 	static VMShfAttr newAttr;
 	
 	SFT far *fpSFT = (SFT far *)MK_FP( r->w.es, r->w.di );
@@ -1206,12 +1205,12 @@ static redirFunction dispatchTable[] = {
 	NULL,				/* 0x1A */
 	FindFirst,			/* 0x1B */
 	FindNext,			/* 0x1C */
-	NULL,				/* 0x1D */
+	CloseAll,			/* 0x1D */
 	NULL,				/* 0x1E */
 	NULL,				/* 0x1F */
 	NULL,				/* 0x20 */
 	NULL,				/* 0x21		SeekFromdEnd() Unsupported */
-	NULL,				/* 0x22 */
+	ProcessEnd,			/* 0x22 	Process Termination Hook */
 	NULL,				/* 0x23 */
 	NULL,				/* 0x24 */
 	NULL,				/* 0x25 */
