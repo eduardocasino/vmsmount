@@ -1298,6 +1298,10 @@ void __declspec(naked) __far Int2fRedirector(void)
 		test al, al
 		jnz handled
 
+        mov  bx, word ptr [bp+28]     ; restore flags
+        and  bx, 0fcffh               ; except for IF and TF
+        push bx
+		popf
 		pop gs
 		pop fs
 		pop es
@@ -1305,7 +1309,7 @@ void __declspec(naked) __far Int2fRedirector(void)
 		popa
 
 		; Jump to the next handler in the chain
-		jmp dword ptr cs:fpPrevInt2fHandler
+		jmp dword ptr [cs:fpPrevInt2fHandler]
 
 	handled:
 		pop gs
