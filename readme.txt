@@ -1,5 +1,5 @@
 VMSMOUNT - A DOS redirector for mounting VMware's Shared Folders
-(C) 2011 Eduardo Casino <mail@eduardocasino.es>
+(C) 2011-2022 Eduardo Casino <mail@eduardocasino.es>
 
 WARNING AND DISCLAIMER
 

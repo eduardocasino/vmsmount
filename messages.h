@@ -28,8 +28,8 @@
  *
  */
 
-#define MSG_MY_NAME				"VMSMOUNT %d.%d -"
-#define MSG_COPYRIGHT			" (C) 2011 Eduardo Casino - GNU GPL Ver. 2.0\n"
+#define MSG_MY_NAME				"%s %d.%d -"
+#define MSG_COPYRIGHT			" (C) 2011-2022 Eduardo Casino - GNU GPL Ver. 2.0\n"
 #define MSG_HELP_1				"\nUsage:\n"
 #define MSG_HELP_2				"   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CS|/CI]]\n"
 #define MSG_HELP_3				"   VMSMOUNT [/V|/Q/QQ] /U\n"

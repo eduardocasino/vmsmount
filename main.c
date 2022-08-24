@@ -222,7 +222,7 @@ static void GetFarPointersToResidentData( void )
 
 static void PrintUsageAndExit(int err)
 {
-	VERB_FPRINTF( NORMAL, stderr, MSG_MY_NAME, VERSION_MAJOR, VERSION_MINOR );
+	VERB_FPRINTF( NORMAL, stderr, MSG_MY_NAME, myName, VERSION_MAJOR, VERSION_MINOR );
 	VERB_FPRINTF( NORMAL, stderr, MSG_COPYRIGHT );
 	VERB_FPUTS( QUIET, catgets( cat, 0, 1, MSG_HELP_1 ), stderr );
 	VERB_FPUTS( QUIET, catgets( cat, 0, 2, MSG_HELP_2 ), stderr );
@@ -938,7 +938,7 @@ int main(int argc, char **argv)
 		PrintUsageAndExit( ERR_BADOPTS );
 	}
 
-	VERB_FPRINTF( QUIET, stderr, MSG_MY_NAME, VERSION_MAJOR, VERSION_MINOR );
+	VERB_FPRINTF( QUIET, stderr, MSG_MY_NAME, myName, VERSION_MAJOR, VERSION_MINOR );
 
 	VERB_FPRINTF( NORMAL, stdout, MSG_COPYRIGHT );
 	
