@@ -24,6 +24,11 @@
 
 #include "globals.h"
 
+__segment __far get_endtext_cs(void)
+{
+	return get_cs();
+}
+
 PUBLIC void EndOfTransientBlock( void )
 {
 	return;

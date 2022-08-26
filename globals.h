@@ -69,6 +69,9 @@
 
 typedef enum { SILENT, QUIET, NORMAL, VERBOSE } Verbosity;
 
+extern inline __segment get_cs(void);
+#pragma aux get_cs = "mov ax, cs" modify exact [];
+
 extern nl_catd cat;
 extern Verbosity verbosity;
 

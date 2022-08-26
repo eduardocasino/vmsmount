@@ -24,6 +24,8 @@
  * MA  02110-1301, USA.
  */
 
+extern __segment __far get_endtext_cs(void);
+
 // Marks end of transient block
 //
 extern void EndOfTransientBlock( void );

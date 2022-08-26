@@ -46,6 +46,7 @@
  * 2011-11-06  Eduardo           * New /QQ option
  * 2022-08-23  Eduardo           * Debugging support
  * 2022-08-23  Eduardo           * Implement CloseAll()
+ * 2022-08-26  Eduardo           * Fix buffer size calculation
  *
  */ 
 #include <process.h>
@@ -841,20 +842,25 @@ static void GetTimezoneOffset(void)
 	return;
 }
 
+#define FLATTEN(SEG,ADDR) ( (SEG << 4) + (uint32_t) ADDR )
 static uint16_t SetBufferAndActualBufferSize( void )
 {
-	uint16_t transientSize;
+	uint32_t transientSize;
+	uint32_t rebasedEndOfTransientBlock          = FLATTEN( get_endtext_cs(), EndOfTransientBlock );
+	uint32_t rebasedBeginOfTransientBlockWithLfn = FLATTEN( get_tsr_cs(), BeginOfTransientBlockWithLfn );
+	uint32_t rebasedBeginOfTransientBlockNoLfn   = FLATTEN( get_tsr_cs(), BeginOfTransientBlockNoLfn );
 
-	*fpBuffer = ( *fpLfn ) ? (uint8_t *) BeginOfTransientBlockWithLfn
-							: (uint8_t *)  (uint8_t *) BeginOfTransientBlockNoLfn;
+	// The buffer is in the same segment of BeginOfTransientBlockWithLfn and BeginOfTransientBlockNoLfn,
+	//
+	*fpBuffer = *fpLfn ? (uint8_t *) BeginOfTransientBlockWithLfn : (uint8_t *) BeginOfTransientBlockNoLfn;
 	
-	transientSize = (uint16_t) EndOfTransientBlock
-		- ( ( *fpLfn ) ? (uint16_t) BeginOfTransientBlockWithLfn : (uint16_t) BeginOfTransientBlockNoLfn );
+	transientSize = rebasedEndOfTransientBlock
+		- ( *fpLfn ? rebasedBeginOfTransientBlockWithLfn : rebasedBeginOfTransientBlockNoLfn );
 	
-	if (*fpBufferSize > transientSize || *fpBufferSize > VMSHF_MAX_BLOCK_SIZE
+	if (*fpBufferSize > (uint16_t) transientSize || *fpBufferSize > VMSHF_MAX_BLOCK_SIZE
 													|| *fpBufferSize < VMSHF_MIN_BLOCK_SIZE )
 	{
-		return ( ( transientSize > VMSHF_MAX_BLOCK_SIZE ) ? VMSHF_MAX_BLOCK_SIZE : transientSize );
+		return ( ( (uint16_t) transientSize > VMSHF_MAX_BLOCK_SIZE ) ? VMSHF_MAX_BLOCK_SIZE : (uint16_t) transientSize );
 	}
 
 	*fpMaxDataSize = VMSHF_MAX_DATA_SIZE( *fpBufferSize );

@@ -1322,9 +1322,6 @@ void __declspec(naked) __far Int2fRedirector(void)
 	}
 }
 
-static inline __segment get_cs(void);
-#pragma aux get_cs = "mov ax, cs" modify exact [];
-
 __segment __far get_tsr_cs(void)
 {
 	return get_cs();
