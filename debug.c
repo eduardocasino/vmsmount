@@ -65,6 +65,11 @@ static void dlog(void)
 	int ret;
 	uint16_t id;
 
+	if ( rpcd.channel == VMRPC_INVALID_CHANNEL)
+	{
+		return;
+
+	}
 	len = strnlen_local(msg_buf, sizeof(msg_buf));
 	ret = VMRpcSend( &rpcd, msg_buf, len );
 
