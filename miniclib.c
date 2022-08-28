@@ -22,6 +22,7 @@
  *
  * 2011-10-05  Tom Ehlert     * Fast _fmemcpy_local() implementation
  * 2011-11-01  Eduardo        * Add strrchr_local() and _fstrchr_local()
+ * 2022-08-25  Eduardo        * Add strncmp_local()
  *
  */
 
@@ -131,5 +132,20 @@ void *memcpy_local( void *dst, const void *src, size_t num )
 	}
 	
 	return dst;
+}
+
+int strncmp_local( const char *s1, const char *s2, size_t num )
+{
+    while ( *s1 && num )
+    {
+        if (*s1 != *s2)
+		{
+            break;
+        }
+
+        s1++, s2++, num--;
+    }
+
+    return ( num == 0 ? num : *(const unsigned char*)s1 - *(const unsigned char*)s2 );
 }
 

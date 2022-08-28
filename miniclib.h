@@ -24,6 +24,7 @@
  * MA  02110-1301, USA.
  *
  * 2011-11-01  Eduardo        * Add strrchr_local() and _fstrchr_local()
+ * 2022-08-25  Eduardo        * Add strncmp_local()
  *
  */
  
@@ -36,5 +37,6 @@
  void _fmemcpy_local( void far *dst, const void far *src, size_t num );
  char far *_fstrcpy_local( char far *dst, const char far *src );
  void *memcpy_local( void *dst, const void *src, size_t num );
- 
+ int strncmp_local( const char *s1, const char *s2, size_t num );
+
 #endif /* MINICLIB_H_ */

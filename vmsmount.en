@@ -33,7 +33,7 @@
 1.5: ERROR: Can't get the List-Of-Lists!\n
 1.6: ERROR: Redirectors are not allowed.\n
 1.7: ERROR: Already installed. Use /U to uninstall.\n
-1.8: ERROR: No Shared Folders found.\n
+1.8: ERROR: Can't open communication channel with VM.\n
 1.9: ERROR: Can't get the SDA!\n
 1.10: ERROR: Can't get the NLS tables.\n
 1.11: ERROR: Buffer size must be between %u and %u bytes\n
@@ -46,6 +46,7 @@
 1.18: WARNING: Invalid file format: %s
 1.19: WARNING: Active code page not found
 1.20:. Defaulting to cp437\n
+1.21: WARNING: Shared Folders disabled for this guest.\n
 2.0: Mounting Shared Folders in %c:\n
 2.1: Successfully uninstalled and removed from memory.\n
 9.0: INFO: Running on VMware %s Version %lu\n

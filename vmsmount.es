@@ -33,7 +33,7 @@
 1.5: ERROR: No se puede obtener la LoL\n
 1.6: ERROR: No se permiten redirectores.\n
 1.7: ERROR: Ya est  instalado. Use /U para desinstalar.\n
-1.8: ERROR: No se han encontrado Carpetas Compartidas.\n
+1.8: ERROR: No se pudo abrir canal de comunicaci¢n con la m quina virtual.\n
 1.9: ERROR: No se puede obtener la SDA\n
 1.10: ERROR: No se pueden obtener las tablas NLS.\n
 1.11: ERROR: Tama¤o del buffer debe estar entre %u y %u bytes\n
@@ -46,6 +46,7 @@
 1.18: ADVERTENCIA: Formato de archivo incorrecto: %s
 1.19: ADVERTENCIA: P gina de c¢digos activa no encontrada
 1.20:. Se usar  cp437.\n
+1.21: ADVERTENCIA: Carpetas Compartidas deshabilitadas.\n
 2.0: Montando carpetas compartidas en %c:\n
 2.1: Desinstalado y eliminado correctamente de la memoria.\n
 9.0: INFO: Funcionando en VMware %s Versi¢n %lu\n

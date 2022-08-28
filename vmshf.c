@@ -39,6 +39,8 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "globals.h"
 #include "miniclib.h"
@@ -47,18 +49,21 @@
 #include "vmshf.h"
 #include "vmdos.h"
 #include "redir.h"
+#include "debug.h"
 
 PUBLIC uint16_t bufferSize = VMSHF_DEF_BLOCK_SIZE;
 PUBLIC uint16_t maxDataSize = VMSHF_MAX_DATA_SIZE(VMSHF_DEF_BLOCK_SIZE);
 
 PUBLIC uint8_t *buffer = NULL;
 
-PUBLIC rpc_t rpc =
+PUBLIC rpc_t rpci =
 {
 	0,				// channel
 	0,				// cookie1
 	0				// cookie2
 };
+
+PUBLIC bool SFEnabled = false;
 
 /*
 	execute a backdoor RPC command
@@ -68,14 +73,14 @@ static int ExecuteRpc( uint32_t *length )
 	int ret;
 	uint16_t id;
 
-	ret = VMRpcSend( &rpc, buffer, *length );
+	ret = VMRpcSend( &rpci, buffer, *length );
 
 	if ( ret != VMTOOL_SUCCESS )
 	{
 		return ret;
 	}
 
-	ret = VMRpcRecvLen( &rpc, length, &id );
+	ret = VMRpcRecvLen( &rpci, length, &id );
 
 	if ( ret != VMTOOL_SUCCESS )
 	{
@@ -87,7 +92,7 @@ static int ExecuteRpc( uint32_t *length )
 		return VMTOOL_RPC_ERROR;
 	}
 
-	ret = VMRpcRecvDat( &rpc, buffer, *length, id );
+	ret = VMRpcRecvDat( &rpci, buffer, *length, id );
 
 	if ( ret != VMTOOL_SUCCESS )
 	{

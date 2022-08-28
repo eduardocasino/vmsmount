@@ -32,6 +32,7 @@
  *  2011-11-06  Eduardo           * New message printing macros
  *  2022-08-23  Eduardo           * Debugging support
  *  2022-08-23  Eduardo           * Use inlines for virtual machine communication
+ *  2022-08-25  Eduardo           * Separate channel initialization and VMSH session
  */
  
 /*
@@ -330,84 +331,60 @@ int VMAuxCheckVirtual(void)
 	return 0;
 }
 
-
 /*
-	open an RPC channel for shared folder functions
+	open an RPC channel for communicating with the VM
 */
-int VMAuxBeginSession( rpc_t far *fpRpci
+int VMAuxBeginSession( rpc_t far *fpRpci, rpc_t far *fpTclo
 #ifdef DEBUG
 	, rpc_t far *fpRpcd
 #endif
 )
 {
-	int ret;
-	uint32_t length;
-	uint16_t id;
-	const uint8_t shfH[] =
-	{ 'f', ' ', 0, 0, 0, 0 };
-	unsigned char buffer[32]= { 0 };
 	rpc_t rpc;
-	
+
 	/* open an rpc channel */
-	ret = VMAuxRpcOpen( &rpc, VMRPC_OPEN_RPCI );
-
-	if ( ret )
-		return ret;
-
-	/* send &rpc command "f " */
-	ret = VMAuxRpcSend( &rpc, shfH, 2 );
-
-	if ( ret )
-		goto error_exit;
-
-	/* get reply length */
-	ret = VMAuxRpcRecvLen( &rpc, &length, &id );
-
-	if ( ret )
-		goto error_exit;
-
-	/* get reply data */
-	ret = VMAuxRpcRecvDat( &rpc, buffer, length, id );
-
-	if (ret != 0)
-		goto error_exit;
-
-	/* check reply status */
-	if ( buffer[0] != '1' || buffer[1] != ' ' ) {
-		ret = -1;
-		goto error_exit;
+	if ( VMAuxRpcOpen( &rpc, VMRPC_OPEN_RPCI ) )
+	{
+		return -1;
 	}
 
 	fpRpci->channel = rpc.channel;
 	fpRpci->cookie1 = rpc.cookie1;
 	fpRpci->cookie2 = rpc.cookie2;
-	
+
+	/* open a tclo channel */
+	if ( VMAuxRpcOpen( &rpc, VMRPC_OPEN_TCLO ) )
+	{
+		return -1;
+	}
+
+	fpTclo->channel = rpc.channel;
+	fpTclo->cookie1 = rpc.cookie1;
+	fpTclo->cookie2 = rpc.cookie2;
+
 #ifdef DEBUG
 	/* open a rpci channel for debugging*/
-	ret = VMAuxRpcOpen( &rpc, VMRPC_OPEN_RPCI );
-
-	if ( ret )
-		goto error_exit;
-
-	fpRpcd->channel = rpc.channel;
-	fpRpcd->cookie1 = rpc.cookie1;
-	fpRpcd->cookie2 = rpc.cookie2;
+	if ( VMAuxRpcOpen( &rpc, VMRPC_OPEN_RPCI ) )
+	{
+		rpc.channel = VMRPC_INVALID_CHANNEL;
+	}
+	else
+	{
+		fpRpcd->channel = rpc.channel;
+		fpRpcd->cookie1 = rpc.cookie1;
+		fpRpcd->cookie2 = rpc.cookie2;
+	}
 #endif
 
 	/* success */
 	return 0;
 	
-error_exit:
-	/* failure */
-	VMAuxRpcClose( &rpc );
-
-	return ret;
 }
 
 /*
 	release shared folder context
 */
-void VMAuxEndSession( rpc_t far *fpRpci
+void VMAuxEndSession( rpc_t far *fpRpci, rpc_t far *fpTclo
 #ifdef DEBUG
 	, rpc_t far *fpRpcd
 #endif
@@ -421,6 +398,12 @@ void VMAuxEndSession( rpc_t far *fpRpci
 		
 	VMAuxRpcClose( &rpc );
 
+	rpc.channel = fpTclo->channel;
+	rpc.cookie1 = fpTclo->cookie1;
+	rpc.cookie2 = fpTclo->cookie2;
+
+	VMAuxRpcClose( &rpc );
+
 #ifdef DEBUG
 	rpc.channel = fpRpcd->channel;
 	rpc.cookie1 = fpRpcd->cookie1;
@@ -428,4 +411,42 @@ void VMAuxEndSession( rpc_t far *fpRpci
 		
 	VMAuxRpcClose( &rpc );
 #endif
+}
+
+/*
+	Check for shared folders
+*/
+int VMAuxSharedFolders( rpc_t far *fpRpci )
+{
+	uint32_t length;
+	uint16_t id;
+	const uint8_t shfH[] =
+	{ 'f', ' ', 0, 0, 0, 0 };
+	unsigned char buffer[32]= { 0 };
+	rpc_t rpc;
+
+	rpc.channel = fpRpci->channel;
+	rpc.cookie1 = fpRpci->cookie1;
+	rpc.cookie2 = fpRpci->cookie2;
+
+	/* send &rpc command "f " */
+	if ( !VMAuxRpcSend( &rpc, shfH, 2 ) )
+	{
+		/* get reply length */
+		if ( !VMAuxRpcRecvLen( &rpc, &length, &id ) )
+		{
+			/* get reply data */
+			if ( !VMAuxRpcRecvDat( &rpc, buffer, length, id ) )
+			{
+				/* check reply status */
+				if ( buffer[0] == '1' && buffer[1] == ' ' )
+				{
+					return 0;
+				}
+			}
+		}
+	}
+
+	return -1;
+
 }

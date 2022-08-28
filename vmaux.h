@@ -26,6 +26,7 @@
  *  2011-10-17  Eduardo           * Pass session info as parameter to
  *                                  VMAuxBeginSession() and VMAuxEndSession()
  *  2022-08-23  Eduardo           * Debugging support
+ *  2022-08-25  Eduardo           * Separate channel initialization and VMSH session
  */
 
 #include <stdint.h> 
@@ -33,15 +34,17 @@
 #include "vmshf.h"
  
 int VMAuxCheckVirtual( void );
-int VMAuxBeginSession( rpc_t far *
+int VMAuxBeginSession( rpc_t far *, rpc_t far *
 #ifdef DEBUG
 , rpc_t far *
 #endif
 );
-void VMAuxEndSession( rpc_t far *
+void VMAuxEndSession( rpc_t far *, rpc_t far *
 #ifdef DEBUG
 , rpc_t far *
 #endif
 );
+
+int VMAuxSharedFolders( rpc_t far * );
 
 #endif /* _VMAUX_H_ */

@@ -30,13 +30,14 @@
 # 2022-08-23  Eduardo           Port to wmake syntax
 # 2022-08-23  Eduardo           Debug support
 # 2022-08-23  Eduardo           Remove vmcall.ooj (use inlines)
+# 2022-08-25  Eduardo           New toolsd daemon
 #
 
 CC = wcc
 LD = wlink
 UPX = upx
 RM = rm -f
-CFLAGS  = -bt=dos -ms -q -s -oh -os -DREVERSE_HASH $(DBGFLAGS)
+CFLAGS  = -bt=dos -ms -q -s -oh -os -DREVERSE_HASH
 LDFLAGS =	SYSTEM dos &
 			ORDER &
 				clname FAR_DATA &
@@ -45,20 +46,19 @@ LDFLAGS =	SYSTEM dos &
 				clname BEGDATA &
 				clname DATA &
 				clname BSS &
-				OPTION QUIET &
-				OPTION STATICS &
-				OPTION MAP=vmsmount.map
+				OPTION QUIET, STATICS, MAP=vmsmount.map
 UPXFLAGS = -9
 
 TARGET = vmsmount.exe
 
 !ifdef DEBUG
-DBGFLAGS=-DDEBUG
-DBGOBJ=printf.obj debug.obj
+CFLAGS += -DDEBUG
+DBGOBJ = printf.obj debug.obj
 !endif
 
 OBJ =	kitten.obj vmaux.obj main.obj $(DBGOBJ) miniclib.obj unicode.obj &
-		vmdos.obj vmtool.obj vmshf.obj redir.obj lfn.obj endtext.obj
+		vmdos.obj vmtool.obj vmshf.obj toolsd.obj redir.obj lfn.obj &
+		endtext.obj
 
 
 all : $(TARGET)
@@ -92,6 +92,8 @@ main.obj : .AUTODEPEND
 vmaux.obj : .AUTODEPEND
 
 redir.obj : .AUTODEPEND
+
+toolsd.obj: .AUTODEPEND
 
 vmtool.obj : .AUTODEPEND
 

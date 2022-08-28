@@ -25,6 +25,7 @@
  * 2011-10-16  Eduardo           * Messages for uninstallation
  * 2011-11-02  Eduardo           * Messages for LFN support
  * 2011-11-06  Eduardo           * New /QQ option
+ * 2022-08-25  Eduardo           * Shared folders not enabled is now a warning
  *
  */
 
@@ -58,7 +59,7 @@
 #define MSG_ERROR_SDA			" ERROR: Can't get the SDA!\n"
 #define MSG_ERROR_NLSINFO		" ERROR: Can't get the NLS tables.\n"
 #define MSG_ERROR_NOVIRT		" ERROR: Not running on top of VMWARE.\n"
-#define MSG_ERROR_NOSHF			" ERROR: No Shared Folders found.\n"
+#define MSG_ERROR_NOSHF			" ERROR: Can't open communication channel with VM.\n"
 #define MSG_ERROR_INSTALLED		" ERROR: Already installed. Use /U to uninstall.\n"
 #define MSG_ERROR_REDIR_NOT_ALLOWED " ERROR: Redirectors are not allowed.\n"
 #define MSG_ERROR_UNINSTALL		" ERROR: Unable to uninstall.\n"
@@ -76,5 +77,6 @@
 #define MSG_WARN_NOTBL			" WARNING: Can't find Unicode table: %s"
 #define MSG_WARN_437			". Defaulting to cp437\n"
 #define MSG_WARN_TIMEZONE		" WARNING: TZ invalid or not defined, times will be shown in UTC.\n"
+#define MSG_WARN_SF_DISABLED    " WARNING: Shared Folders disabled for this guest.\n"
 
 #endif /* _MESSAGES_H */

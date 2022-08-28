@@ -34,7 +34,7 @@
  * 2022-08-23  Eduardo           * Port to OW 2.0
  * 2022-08-23  Eduardo           * Debugging support
  * 2022-08-23  Eduardo           * Implement CloseAll()
- *
+ * 2022-08-25  Eduardo           * New toolsd daemon
  */
 
 #include <dos.h>
@@ -218,7 +218,11 @@ static void RmDir( void )
 					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
 					lfn, &status );
 	
-	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+	if ( ret != VMTOOL_SUCCESS )
+	{
+		Failure( DOS_NOTREADY );
+	}
+	else if ( status != VMSHF_SUCCESS )
 	{
 		Failure( VmshfStatusToDosError( status ) );
 		
@@ -243,7 +247,11 @@ static void MkDir( void )
 					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
 					lfn, &status );
 	
-	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+	if ( ret != VMTOOL_SUCCESS )
+	{
+		Failure( DOS_NOTREADY );
+	}
+	else if ( status != VMSHF_SUCCESS )
 	{
 		Failure( VmshfStatusToDosError( status ) );
 		
@@ -273,7 +281,11 @@ static void ChDir( void )
 						lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
 						lfn, VMSHF_INVALID_HANDLE, &status, &fAttr );
 		
-		if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+		if ( ret != VMTOOL_SUCCESS )
+		{
+			Failure( DOS_NOTREADY );
+		}
+		else if ( status != VMSHF_SUCCESS )
 		{
 			Failure( VmshfStatusToDosError( status ) );
 		
@@ -396,7 +408,11 @@ static void ReadFile( void )
 	
 		ret = VMShfReadFile( fpSFT->handle, (uint64_t)fpSFT->filePos, &length, &data, &status );
 		
-		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+		if ( ret != VMTOOL_SUCCESS )
+		{
+			Failure( DOS_NOTREADY );
+		}
+		else if ( status != VMSHF_SUCCESS )
 		{
 			Failure( VmshfStatusToDosError( status ) );
 			break;
@@ -448,7 +464,11 @@ static void WriteFile( void )
 
 		ret = VMShfSetAttr ( &newAttr, NULL, 0, fpSFT->handle, &status );
 		
-		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+		if ( ret != VMTOOL_SUCCESS )
+		{
+			Failure( DOS_NOTREADY );
+		}
+		else if ( status != VMSHF_SUCCESS )
 		{
 			Failure( DOS_ACCESS );
 			return;
@@ -468,7 +488,11 @@ static void WriteFile( void )
 	
 		ret = VMShfWriteFile( fpSFT->handle, 0, (uint64_t)fpSFT->filePos, &length, buffer, &status );
 		
-		if (ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+		if ( ret != VMTOOL_SUCCESS )
+		{
+			Failure( DOS_NOTREADY );
+		}
+		else if ( status != VMSHF_SUCCESS )
 		{
 			Failure( VmshfStatusToDosError( status ) );
 			break;
@@ -558,7 +582,11 @@ static void _GetFileAttrib( void )
 					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
 					lfn, VMSHF_INVALID_HANDLE, &status, &fAttr );
 		
-	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+	if ( ret != VMTOOL_SUCCESS )
+	{
+		Failure( DOS_NOTREADY );
+	}
+	else if ( status != VMSHF_SUCCESS )
 	{
 		Failure( VmshfStatusToDosError( status ) );
 	}
@@ -604,7 +632,11 @@ static void SetFileAttrib( void )
 					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
 					lfn, VMSHF_INVALID_HANDLE, &status );
 	
-	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+	if ( ret != VMTOOL_SUCCESS )
+	{
+		Failure( DOS_NOTREADY );
+	}
+	else if ( status != VMSHF_SUCCESS )
 	{
 		Failure( VmshfStatusToDosError( status ) );
 	}
@@ -626,7 +658,11 @@ static void OpenOrCreateFile( uint16_t accessMode, uint32_t action, VMShfAttr *o
 					lfn ? LfnGetTrueLongName( fpLongFileName1, fpFileName1 ) : fpFileName1,
 					lfn, &status, &handle );
 		
-	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+	if ( ret != VMTOOL_SUCCESS )
+	{
+		Failure( DOS_NOTREADY );
+	}
+	else if ( status != VMSHF_SUCCESS )
 	{
 		Failure( VmshfStatusToDosError( status ) );
 	}
@@ -641,7 +677,11 @@ static void OpenOrCreateFile( uint16_t accessMode, uint32_t action, VMShfAttr *o
 		//
 		ret = VMShfGetAttr( NULL, 0, handle, &status, &fAttr );
 		
-		if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+		if ( ret != VMTOOL_SUCCESS )
+		{
+			Failure( DOS_NOTREADY );
+		}
+		else if ( status != VMSHF_SUCCESS )
 		{
 			Failure( VmshfStatusToDosError( status ) );
 			(void) VMShfCloseFile( handle, &status ); 
@@ -764,7 +804,11 @@ static void _FindNext( void )
 	{
 		ret = VMShfReadDir( fpSDB->dirHandle, ++i, &status, &fAttr, &fName, &fNameLen );
 		
-		if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS || 0 == fName )
+		if ( ret != VMTOOL_SUCCESS )
+		{
+			Failure( DOS_NOTREADY );
+		}
+		else if ( status != VMSHF_SUCCESS || 0 == fName )
 		{
 			Failure( (0 == fName) ? DOS_NFILES : VmshfStatusToDosError( status ) );
 			(void) VMShfCloseDir( fpSDB->dirHandle, &status );
@@ -848,7 +892,11 @@ static void _FindFirst( void )
 
 	*p = '\\';
 
-	if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+	if ( ret != VMTOOL_SUCCESS )
+	{
+		Failure( DOS_NOTREADY );
+	}
+	else if ( status != VMSHF_SUCCESS )
 	{
 		Failure( VmshfStatusToDosError( status ) );
 		
@@ -1015,7 +1063,11 @@ static void DeleteFile( void )
 							lfn ? LfnGetTrueLongName( fpLongFileName2, fpFileName2 ) : fpFileName2,
 							lfn, &status );
 		
-			if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+			if ( ret != VMTOOL_SUCCESS )
+			{
+				Failure( DOS_NOTREADY );
+			}
+			else if ( status != VMSHF_SUCCESS )
 			{
 				Failure( VmshfStatusToDosError( status ) );
 				return;
@@ -1092,7 +1144,11 @@ static void RenameFile( void )
 						lfn ? LfnGetTrueLongName( fpLongFileName2, fpFileName2 ) : fpFileName2,
 						lfn, &status );
 	
-		if ( ret != VMTOOL_SUCCESS || status != VMSHF_SUCCESS )
+		if ( ret != VMTOOL_SUCCESS )
+		{
+			Failure( DOS_NOTREADY );
+		}
+		else if ( status != VMSHF_SUCCESS )
 		{
 			Failure( VmshfStatusToDosError( status ) );
 			return;
@@ -1254,6 +1310,7 @@ static bool Int2fHandler(union INTPACK regset)
 	//
 	_asm
 	{
+		cli
 		mov dosSS, ss
 		mov dosSP, sp
 		mov dosBP, bp
@@ -1261,7 +1318,8 @@ static bool Int2fHandler(union INTPACK regset)
 		mov myDS, ax
 		mov ss, ax
 		mov sp, (offset newStack) + STACK_SIZE
-	};
+		sti
+	}
 
 	fpStackParam = (uint16_t far *)MK_FP( dosSS, dosBP + sizeof( union INTPACK ) ); 
 
@@ -1271,9 +1329,11 @@ static bool Int2fHandler(union INTPACK regset)
 
 	_asm
 	{
+		cli
 		mov ss, dosSS
 		mov sp, dosSP
-	};
+		sti
+	}
 
 	return true;
 

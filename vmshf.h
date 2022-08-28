@@ -38,6 +38,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "vmtool.h"
 
 /*
@@ -612,10 +613,12 @@ typedef union {
 
 #pragma pack(pop)
 
-extern rpc_t rpc;
+extern rpc_t rpci;
 extern uint16_t bufferSize;
 extern uint16_t maxDataSize;
 extern uint8_t *buffer;
+extern bool SFEnabled;
+
 
 #define VMShfCloseFile( H, ST )				VMShfCloseFileDir( VMSHF_CLOSE_FILE_V3, H, ST )
 #define VMShfCloseDir( H, ST )				VMShfCloseFileDir( VMSHF_CLOSE_DIR_V3, H, ST )

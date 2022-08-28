@@ -31,7 +31,7 @@
  * 2022-08-23  Eduardo           * Debugging support
  * 2022-08-23  Eduardo           * Implement CloseAll()
  * 2022-08-23  Eduardo           * Make proper use of packing pragmas
- * 
+ * 2022-08-25  Eduardo           * New toolsd daemon
  */
 
 #include <dos.h>
@@ -48,7 +48,10 @@ typedef struct {
 	uint16_t	psp;					// Our PSP
 	void far	*ourHandler;			// Our handler (points to Int2fRedirector() )
 	void far	*previousHandler;		// Handler we chain to and must be restored when uninstalled
-	rpc_t far	*fpRpci;					// Pointer to HGFS session data
+	void far	*ourClockHandler;		// Our clock interrupt handler (points to Int1cHandler() )
+	void far	*previousClockHandler;	// Handler we chain to and must be restored when uninstalled
+	rpc_t far	*fpRpci;				// Pointer to HGFS session data
+	rpc_t far	*fpTclo;				// Pointer to TCLO session data
 #ifdef DEBUG
 	rpc_t far	*fpRpcd;				// Pointer to RPCI channel for debugging
 	uint8_t far	*ourStack;				// Pointer to internal stack

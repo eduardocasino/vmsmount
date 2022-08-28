@@ -25,7 +25,7 @@
  * MA  02110-1301, USA.
  *
  * 2011-10-11  Eduardo           * Remove unused VMRpcClose()
- *
+ * 2022-08-25  Eduardo           * Define VMRPC_INVALID_CHANNEL
  */
 
 #ifndef _VMTOOL_H_
@@ -161,6 +161,8 @@ typedef struct _rpc {
 	uint32_t cookie1;						/* cookie#1 for enhanced rpc	*/
 	uint32_t cookie2;						/* cookie#2 for enhanced rpc	*/
 } rpc_t;
+
+#define VMRPC_INVALID_CHANNEL	(uint32_t) -1
 
 /*
 	private return values

@@ -47,8 +47,10 @@
  * 2022-08-23  Eduardo           * Debugging support
  * 2022-08-23  Eduardo           * Implement CloseAll()
  * 2022-08-26  Eduardo           * Fix buffer size calculation
+ * 2022-08-25  Eduardo           * Install toolsd daemon
  *
  */ 
+#include <assert.h>
 #include <process.h>
 #include <dos.h>
 #include <env.h>
@@ -57,10 +59,12 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <libgen.h>
 #include <ctype.h>
 
+#include "toolsd.h"
 #include "globals.h"
 #include "kitten.h"
 #include "messages.h"
@@ -98,6 +102,8 @@ static char		far * far * fpfpFileName2;
 static char		far * far * fpfpCurrentPath;
 static void		(__interrupt __far * far * fpfpPrevInt2fHandler)();
 static void 	(__interrupt __far *fpNewInt2fHandler)();
+static void		(__interrupt __far * far * fpfpPrevInt1cHandler)();
+static void 	(__interrupt __far *fpNewInt1cHandler)();
 static char		far * far * fpfpLongFileName1;
 static char		far * far * fpfpLongFileName2;
 static uint16_t far *fpUnicodeTbl;
@@ -111,10 +117,12 @@ static uint8_t	far *fpHashLen;
 static uint8_t	far *fpManglingChars;
 
 static rpc_t	far *fpRpci;
+static rpc_t	far *fpTclo;
 #ifdef DEBUG
 static rpc_t	far *fpRpcd;
 static uint8_t	far *fpStack;
 #endif
+static bool		far *fpSFEnabled;
 static uint16_t	far *fpBufferSize;
 static uint16_t	far *fpMaxDataSize;
 static uint8_t	* far *fpBuffer;
@@ -187,6 +195,11 @@ static void GetFarPointersToResidentData( void )
 	fpfpFileName2			= tsr_cs:>&fpFileName2;
 	fpfpCurrentPath			= tsr_cs:>&fpCurrentPath;
 	
+	// From toolsd.c
+	fpNewInt1cHandler		= tsr_cs:>Int1cHandler;
+	fpfpPrevInt1cHandler	= tsr_cs:>&fpPrevInt1cHandler;
+	fpTclo 					= tsr_cs:>&tclo;
+
 	// from lfn.c
 	fpfpLongFileName1		= tsr_cs:>&fpLongFileName1;
 	fpfpLongFileName2		= tsr_cs:>&fpLongFileName2;
@@ -207,7 +220,8 @@ static void GetFarPointersToResidentData( void )
 	fpHashLen				= tsr_cs:>&hashLen;
 
 	// From vmshf.c
-	fpRpci					= tsr_cs:>&rpc;
+	fpRpci					= tsr_cs:>&rpci;
+	fpSFEnabled				= tsr_cs:>&SFEnabled;
 	fpBufferSize			= tsr_cs:>&bufferSize;
 	fpMaxDataSize			= tsr_cs:>&maxDataSize;
 	fpBuffer				= tsr_cs:>&buffer;
@@ -591,18 +605,19 @@ static void UninstallDriver( void )
 	Signature far *sig = (Signature far *) currDir->u.Net.redirIFSRecordPtr;
 	uint16_t psp = sig->psp;
 		
-	if ( sig->ourHandler != *fpfpPrevInt2fHandler )
+	if ( sig->ourHandler != *fpfpPrevInt2fHandler || sig->ourClockHandler != *fpfpPrevInt1cHandler )
 	{
 		// Can't uninstall, another handler was installed
 		return;
 	}
 	
+	_dos_setvect( 0x1c, sig->previousClockHandler );
 	_dos_setvect( 0x2f, sig->previousHandler );
 	currDir->flags = currDir->flags & ~(NETWORK|PHYSICAL);			// Invalidate drive
 	currDir->u.Net.parameter = 0x00;
 	currDir->u.Net.redirIFSRecordPtr = (void far *)0xffffffffui32;
 
-	VMAuxEndSession( sig->fpRpci
+	VMAuxEndSession( sig->fpRpci, sig->fpTclo
 	#ifdef DEBUG
 	, sig->fpRpcd
 	#endif
@@ -883,11 +898,16 @@ static uint16_t SizeOfResidentSegmentInParagraphs( void )
 
 static void SetSignature( void )
 {
+	ASSERT( sizeof(signature) < 0x80) ;
+
 	strcpy( signature.signature, myName );
 	signature.psp = _psp;
 	signature.ourHandler = fpNewInt2fHandler;
 	signature.previousHandler = *fpfpPrevInt2fHandler;
+	signature.ourClockHandler = fpNewInt1cHandler;
+	signature.previousClockHandler = *fpfpPrevInt1cHandler;
 	signature.fpRpci = fpRpci;
+	signature.fpTclo = fpTclo;
 #ifdef DEBUG
 	signature.fpRpcd = fpRpcd;
 	signature.ourStack = fpStack;
@@ -993,7 +1013,8 @@ int main(int argc, char **argv)
 	// Needed by UninstallDriver()
 	//
 	*fpfpPrevInt2fHandler = _dos_getvect( 0x2F );
-	
+	*fpfpPrevInt1cHandler = _dos_getvect( 0x1C );
+
 	if ( AlreadyInstalled() )
 	{
 		if ( uninstall )
@@ -1058,7 +1079,7 @@ int main(int argc, char **argv)
 		return( ERR_BADDRV );
 	}
 	
-	if ( VMAuxBeginSession( fpRpci
+	if ( VMAuxBeginSession( fpRpci, fpTclo
 	#ifdef DEBUG
 		, fpRpcd
 	#endif
@@ -1067,7 +1088,17 @@ int main(int argc, char **argv)
 		VERB_FPUTS( QUIET, catgets( cat, 1, 8, MSG_ERROR_NOSHF ), stderr );
 		return( ERR_NOSHF );
 	}
-		
+
+	if ( VMAuxSharedFolders( fpRpci ) )
+	{
+		*fpSFEnabled = false;
+		VERB_FPUTS( QUIET, catgets( cat, 1, 21, MSG_WARN_SF_DISABLED ), stderr );
+	}
+	else
+	{
+		*fpSFEnabled = true;
+	}
+
 	if ( SetCDS() )
 	{
 		ret = ERR_SYSTEM;
@@ -1076,7 +1107,8 @@ int main(int argc, char **argv)
 
 	SetSignature();
 	
-	_dos_setvect( 0x2f, fpNewInt2fHandler );	
+	_dos_setvect( 0x2f, fpNewInt2fHandler );
+	_dos_setvect( 0x1c, fpNewInt1cHandler );
 
 	paragraphs = SizeOfResidentSegmentInParagraphs();
 	VERB_FPRINTF( VERBOSE, stdout, catgets( cat, 9, 3, MSG_INFO_LOAD ), paragraphs << 4 );
@@ -1088,7 +1120,7 @@ int main(int argc, char **argv)
 	_dos_keep( *fpDriveNum + 1, paragraphs );
 
 err_close:
-	VMAuxEndSession( fpRpci
+	VMAuxEndSession( fpRpci, fpTclo
 #ifdef DEBUG
 	, fpRpcd
 #endif
