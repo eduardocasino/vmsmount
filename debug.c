@@ -25,7 +25,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "globals.h"
 #include "printf.h"
 #include "vmtool.h"
 
