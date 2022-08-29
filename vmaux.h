@@ -3,8 +3,8 @@
 #pragma once
 /*
  * VMSMOUNT
- *  A network redirector for mounting VMware's Shared Folders in DOS 
- *  Copyright (C) 2011  Eduardo Casino
+ *  A network redirector for mounting VMware's Shared Folders in DOS
+ *  Copyright (C) 2011-2022  Eduardo Casino
  *
  * vmaux.h: VM functions to be called BEFORE going resident
  *
@@ -22,29 +22,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
- *
- *  2011-10-17  Eduardo           * Pass session info as parameter to
- *                                  VMAuxBeginSession() and VMAuxEndSession()
- *  2022-08-23  Eduardo           * Debugging support
- *  2022-08-25  Eduardo           * Separate channel initialization and VMSH session
  */
 
-#include <stdint.h> 
-#include "redir.h"
 #include "vmshf.h"
- 
-int VMAuxCheckVirtual( void );
-int VMAuxBeginSession( rpc_t far *, rpc_t far *
+
+#include <stdint.h>
+
+int VMAuxCheckVirtual(void);
+int VMAuxBeginSession(rpc_t __far *, rpc_t __far *
 #ifdef DEBUG
-, rpc_t far *
+                      ,
+                      rpc_t __far *
 #endif
 );
-void VMAuxEndSession( rpc_t far *, rpc_t far *
+void VMAuxEndSession(rpc_t __far *, rpc_t __far *
 #ifdef DEBUG
-, rpc_t far *
+                     ,
+                     rpc_t __far *
 #endif
 );
 
-int VMAuxSharedFolders( rpc_t far * );
+int VMAuxSharedFolders(rpc_t __far *);
 
 #endif /* _VMAUX_H_ */

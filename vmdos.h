@@ -1,10 +1,10 @@
-#ifndef VMDOS_H_
-#define VMDOS_H_
+#ifndef _VMDOS_H_
+#define _VMDOS_H_
 #pragma once
 /*
  * VMSMOUNT
- *  A network redirector for mounting VMware's Shared Folders in DOS 
- *  Copyright (C) 2011  Eduardo Casino
+ *  A network redirector for mounting VMware's Shared Folders in DOS
+ *  Copyright (C) 2011-2022  Eduardo Casino
  *
  * vmdos.h: Conversions from/to vmware and DOS
  *
@@ -22,32 +22,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
- *
- * 2011-10-04  Eduardo           * New parameter for FNameToFcbName()
- *                                 (Omit '.' and '..' if root dir)
- * 2011-11-01  Eduardo           * Add LFN support
- * 2020-08-18  Eduardo           * New support function FatTimeToFTime()
- *
  */
- 
+
 #include <stdint.h>
+
 #include "dosdefs.h"
 #include "vmshf.h"
 
 extern int32_t gmtOffset;
-extern uint8_t far *fpFUcase;
-extern FChar far *fpFChar;
+extern uint8_t __far *fpFUcase;
+extern FChar __far *fpFChar;
 extern uint8_t caseSensitive;
 
-extern unsigned char toupper_local ( unsigned char c );
-extern int IllegalChar( unsigned char c );
-extern uint32_t FTimeToFatTime( uint64_t );
-extern uint64_t FatTimeToFTime( uint32_t );
-extern uint8_t FModeToFatAttr( VMShfAttr * );
-extern VMShfAttr *FatAttrToFMode( uint8_t );
-extern uint32_t DosExtActionToOpenAction( uint16_t );
-extern int FNameToFcbName( char *fcbName, char *fName, uint16_t fNameLen, uint8_t isRoot, uint8_t lfn );
-extern int DosPathToPortable(uint8_t *dst, uint8_t far *src, uint8_t utf );
-extern uint16_t VmshfStatusToDosError( uint32_t );
+extern unsigned char toupper_local(unsigned char c);
+extern int IllegalChar(unsigned char c);
+extern uint32_t FTimeToFatTime(uint64_t);
+extern uint64_t FatTimeToFTime(uint32_t);
+extern uint8_t FModeToFatAttr(VMShfAttr *);
+extern VMShfAttr *FatAttrToFMode(uint8_t);
+extern uint32_t DosExtActionToOpenAction(uint16_t);
+extern int FNameToFcbName(char *fcbName, char *fName, uint16_t fNameLen, uint8_t isRoot, uint8_t lfn);
+extern int DosPathToPortable(uint8_t *dst, uint8_t __far *src, uint8_t utf);
+extern uint16_t VmshfStatusToDosError(uint32_t);
 
-#endif /* VMDOS_H_ */
+#endif /* _VMDOS_H_ */

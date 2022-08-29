@@ -1,10 +1,10 @@
-#ifndef _UNICODE_H
-#define _UNICODE_H
+#ifndef _UNICODE_H_
+#define _UNICODE_H_
 #pragma once
 /*
  * VMSMOUNT
- *  A network redirector for mounting VMware's Shared Folders in DOS 
- *  Copyright (C) 2011  Eduardo Casino
+ *  A network redirector for mounting VMware's Shared Folders in DOS
+ *  Copyright (C) 2011-2022  Eduardo Casino
  *
  * unicode.h: Unicode conversion routines
  *
@@ -22,17 +22,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
- *
- * 2011-11-01  Eduardo           * Buffer overflow control for LocalToUtf8
- *
  */
- 
+
 #include <stdint.h>
 
 extern uint16_t unicodeTbl[128];
 
-extern int LocalToUtf8( uint8_t far *dst, uint8_t far *src, int buflen );
-extern int Utf8ToLocal( uint8_t *dst, uint8_t *src );
+extern int LocalToUtf8(uint8_t __far *dst, uint8_t __far *src, int buflen);
+extern int Utf8ToLocal(uint8_t *dst, uint8_t *src);
 
-#endif
-
+#endif /* _UNICODE_H_ */

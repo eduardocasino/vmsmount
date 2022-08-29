@@ -15,81 +15,81 @@ USAGE
 
  VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]
  VMSMOUNT [/V|/Q|/QQ] /U
-	/H                 - Prints help and exits
-	/V                 - Verbose: Prints information on system resources
-	/Q                 - Quiet: Omits copyright message
-	/QQ                - Silent: Does not print any messages at all
-	/L:<drive letter>  - Drive letter to assign
-	                     (if omitted, use the first available)
-	/B:<size[K]>       - Size of read/write buffer
-	                     (4K default, higher values increase performance)
-	/LFN               - Long File Name support. "Mangles" long file names
-	                     (or those with illegal or unconvertibe characters)
-	                     to valid 8.3 names, using a hash algorithm. For
-	                     example, "This is a long file.name" will translate
-	                     into "THIS~2BF.NAM"
-	/M:<n>             - Number of mangling chars for short names
-	                     (2 minimum, 6 maximum, 3 default) For example, the
-	                     same "This is a long file.name" will translate into
-	                     "THISI~02.NAM" if /M:2 or "TH~0BAC0.NAM" if /M:5.
-	                     The default suits most use cases. Increase if the
-	                     host file system has many files with similar long
-	                     names.
-	/CI                - Host file system is case insensitive, so
-	                     "example.txt" and "ExaMPLe.Txt" are the same. This is
-	                     the default behaviour. 
-	/CS                - Host file system is case sensitive (non-Windows
-	                     hosts) Mangles file names whith lower case chars. For
-	                     example, "EXAMPLE.TXT" will be left unchanged, but
-	                     "Example.txt" will be translated into "EXAM~4F0.TXT"
-	/U                 - Uninstall
+        /H                 - Prints help and exits
+        /V                 - Verbose: Prints information on system resources
+        /Q                 - Quiet: Omits copyright message
+        /QQ                - Silent: Does not print any messages at all
+        /L:<drive letter>  - Drive letter to assign
+                             (if omitted, use the first available)
+        /B:<size[K]>       - Size of read/write buffer
+                             (4K default, higher values increase performance)
+        /LFN               - Long File Name support. "Mangles" long file names
+                             (or those with illegal or unconvertibe characters)
+                             to valid 8.3 names, using a hash algorithm. For
+                             example, "This is a long file.name" will translate
+                             into "THIS~2BF.NAM"
+        /M:<n>             - Number of mangling chars for short names
+                             (2 minimum, 6 maximum, 3 default) For example, the
+                             same "This is a long file.name" will translate into
+                             "THISI~02.NAM" if /M:2 or "TH~0BAC0.NAM" if /M:5.
+                             The default suits most use cases. Increase if the
+                             host file system has many files with similar long
+                             names.
+        /CI                - Host file system is case insensitive, so
+                             "example.txt" and "ExaMPLe.Txt" are the same. This is
+                             the default behaviour. 
+        /CS                - Host file system is case sensitive (non-Windows
+                             hosts) Mangles file names whith lower case chars. For
+                             example, "EXAMPLE.TXT" will be left unchanged, but
+                             "Example.txt" will be translated into "EXAM~4F0.TXT"
+        /U                 - Uninstall
 
-	/D                 - Dump contents of internal stack (if compiled with
-	                     debug support)
+        /D                 - Dump contents of internal stack (if compiled with
+                             debug support)
 
 ENVIRONMENT
 
-	TZ      - Valid POSIX timezone. If omitted, file times will be in UTC
-	          (see http://www.gnu.org/s/hello/manual/libc/TZ-Variable.html)
-	          Example: TZ=CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00
-	LANG    - Used by the Kitten library to show messages in the correct
-	          language. Currently only available in English, Spanish and
-	          Dutch.
-	NLSPATH - Used by the Kitten library to find the message catalogs
-	          (VMSMOUNT.EN, VMSMOUNT.ES, VMSMOUNT.NL, ...)
-	PATH    - VMSMOUNT searchs in the PATH for the unicode conversion
-	          tables.
-	
-	VMSMOUNT gets the current NLS settings from the kernel and translates
-	VMware's UTF encoding to the correct code page, provided that the
-	necessary conversion table is found.  It uses the same table format
-	as Volkov Commander and DOSLFN. Please refer to TBL.TXT in the DOSLFN
-	source package for details(http://adoxa.altervista.org/doslfn/index.html)
-	For convenience, I'm distributing with this package the translation
-	tables, which can be generated from the ASCII code tables provided at
-	www.unicode.org using the MK_TABLE program from DOSLFN
+        TZ      - Valid POSIX timezone. If omitted, file times will be in UTC
+                  (see http://www.gnu.org/s/hello/manual/libc/TZ-Variable.html)
+                  Example: TZ=CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00
+        LANG    - Used by the Kitten library to show messages in the correct
+                  language. Currently only available in English, Spanish and
+                  Dutch.
+        NLSPATH - Used by the Kitten library to find the message catalogs
+                  (VMSMOUNT.EN, VMSMOUNT.ES, VMSMOUNT.NL, ...)
+        PATH    - VMSMOUNT searchs in the PATH for the unicode conversion
+                  tables.
+        
+        VMSMOUNT gets the current NLS settings from the kernel and translates
+        VMware's UTF encoding to the correct code page, provided that the
+        necessary conversion table is found.  It uses the same table format
+        as Volkov Commander and DOSLFN. Please refer to TBL.TXT in the DOSLFN
+        source package for details(http://adoxa.altervista.org/doslfn/index.html)
+        For convenience, I'm distributing with this package the translation
+        tables, which can be generated from the ASCII code tables provided at
+        www.unicode.org using the MK_TABLE program from DOSLFN
 
 RETURN CODES (ERRORLEVELS)
 
-	If loaded successfully, VMSMOUNT returns the number of the assigned drive
-	letter starting with 1 ( A == 1, B == 2, C == 3, ... )
-	
-	If not loaded, errorlevel is set according to the following table:
-	
-	ERRORLEVEL  Meaning
-	~~~~~~~~~~  ~~~~~~~
-	    0       Not loaded (help screen requested) or successfully uninstalled
-	  245       Unable to uninstall
-	  246       Driver not installed and tried to uninstall
-	  247       Invalid buffer size
-	  248       Invalid command line option(s)
-	  249       Unsupported DOS version
-	  250       Not running in a virtual machine
-	  251       Shared folders not enabled
-	  252       Redirector not allowed to install
-	  253       Already installed
-	  254       Invalid drive letter
-	  255       Other system error
+        If loaded successfully, VMSMOUNT returns the number of the assigned drive
+        letter starting with 1 ( A == 1, B == 2, C == 3, ... )
+        
+        If not loaded, errorlevel is set according to the following table:
+        
+        ERRORLEVEL  Meaning
+        ~~~~~~~~~~  ~~~~~~~
+            0       Not loaded (help screen requested) or successfully uninstalled
+          245       Unable to uninstall
+          246       Driver not installed and tried to uninstall
+          247       Invalid buffer size
+          248       Invalid command line option(s)
+          249       Unsupported DOS version
+          250       Not running in a virtual machine
+          251       Shared folders not enabled
+          252       Redirector not allowed to install
+          253       Already installed
+          254       Invalid drive letter
+          255       Other system error
  
 LIMITATIONS
 

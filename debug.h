@@ -1,9 +1,9 @@
-#ifndef DEBUG_H_
-#define DEBUG_H_
+#ifndef _DEBUG_H_
+#define _DEBUG_H_
 #pragma once
 /*
  * VMSMOUNT
- *  A network redirector for mounting VMware's Shared Folders in DOS 
+ *  A network redirector for mounting VMware's Shared Folders in DOS
  *  Copyright (C) 2011-2022  Eduardo Casino
  *
  * debug.h: Enable debug to VMware logs
@@ -25,8 +25,9 @@
  */
 
 #ifdef DEBUG
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
+
 #include "vmtool.h"
 
 extern rpc_t rpcd;
@@ -35,16 +36,16 @@ extern rpc_t rpcd;
 #define DPRINTF(FORMAT, ...) dprintf(MY_NAME, __FILE__, __LINE__, FORMAT, __VA_ARGS__)
 #define DPUTS(STRING) dprintf(MY_NAME, __FILE__, __LINE__, STRING)
 #define DDUMP(PRFX, ADDR, SIZE) ddump(MY_NAME, __FILE__, __LINE__, PRFX, ADDR, SIZE)
-void dprintf(const char *name, const char *file, int line, const char* format, ...);
-void ddump(const char *name, const char *file, int line, const char *prfx, void __far *addr, uint16_t size);
+extern void dprintf(const char *name, const char *file, int line, const char *format, ...);
+extern void ddump(const char *name, const char *file, int line, const char *prfx, void __far *addr, uint16_t size);
 
 #else
 
 #define ASSERT(EXPRESSION)      {}
 #define DPRINTF(FORMAT, ...)    {}
-#define DPUTS(STRING)           {} 
-#define DDUMP(PRFX, ADDR, SIZE)       {} 
+#define DPUTS(STRING)           {}
+#define DDUMP(PRFX, ADDR, SIZE) {}
 
 #endif /* DEBUG */
 
-#endif /* DEBUG_H_ */
+#endif /* _DEBUG_H_ */

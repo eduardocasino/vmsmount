@@ -1,7 +1,7 @@
 /*
  * VMSMOUNT
- *  A network redirector for mounting VMware's Shared Folders in DOS 
- *  Copyright (C) 2011  Eduardo Casino
+ *  A network redirector for mounting VMware's Shared Folders in DOS
+ *  Copyright (C) 2011-2022  Eduardo Casino
  *
  * minilibc.c: some libc replacement functions
  *
@@ -19,133 +19,133 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
- *
- * 2011-10-05  Tom Ehlert     * Fast _fmemcpy_local() implementation
- * 2011-11-01  Eduardo        * Add strrchr_local() and _fstrchr_local()
- * 2022-08-25  Eduardo        * Add strncmp_local()
- *
  */
 
 #include <stddef.h>
 
-char *strrchr_local( const char *str, char c )
- {
-	int i;
-	
-	for ( i = 0 ; str[i] != '\0' ; ++i );
-	for ( ; i && str[i] != c ; --i );
-	
-	return (char *)&str[i];
-}
-
-char *strchr_local( const char *str, char c )
- {
-	int i;
-	
-	for ( i = 0 ; str[i] != '\0' && str[i] != c ; ++i );
-	
-	return (char *)&str[i];
-}
-
-char far *_fstrrchr_local( const char far *str, char c )
- {
-	int i;
-	
-	for ( i = 0 ; str[i] != '\0' ; ++i );
-	for ( ; i && str[i] != c ; --i );
-	
-	return (char far *)&str[i];
-}
-
-char far *_fstrchr_local( const char far *str, char c )
- {
-	int i;
-	
-	for ( i = 0 ; str[i] != '\0' && str[i] != c ; ++i );
-	
-	return (char far *)&str[i];
-}
-
-void _fmemcpy_local( void far *dst, const void far *src, size_t num )
+char *strrchr_local(const char *str, char c)
 {
-	void far 		*d = dst;
-	const void far	*s = src;
+    int i;
 
-	// fastest implementation so far
-	// using rep movsD
-	
-	__asm
-	{
-		push es;
-		push ds;
-		push si;
-		push di;
+    for (i = 0; str[i] != '\0'; ++i)
+        ;
+    for (; i && str[i] != c; --i)
+        ;
 
-		mov cx, num;
-		les di, d;
-		lds si, s;
-
-		// push/pop strictly not necessary
-		// but doing the byte moves at last
-		// favors aligned buffers
-
-		shr cx,1;
-		pushf
-		shr cx,1;
-		rep movsd;
-
-		adc cx,cx;
-		rep movsw;
-
-		popf
-		adc cx,cx;
-		rep movsb;
-
-		pop di;
-		pop si;
-		pop ds;
-		pop es;
-	}
-
-	return;
+    return (char *)&str[i];
 }
 
-char far *_fstrcpy_local( char far *dst, const char far *src )
+char *strchr_local(const char *str, char c)
 {
-	while ( *src )
-	{
-		*dst++ = *src++;
-	}
-	*dst = '\0';
+    int i;
 
-	return dst;
+    for (i = 0; str[i] != '\0' && str[i] != c; ++i)
+        ;
+
+    return (char *)&str[i];
 }
 
-void *memcpy_local( void *dst, const void *src, size_t num )
+char __far *_fstrrchr_local(const char __far *str, char c)
 {
-	char *d = (char *)dst;
-	char *s = (char *)src;
-	
-	while ( num-- )
-	{
-		*d++ = *s++;
-	}
-	
-	return dst;
+    int i;
+
+    for (i = 0; str[i] != '\0'; ++i)
+        ;
+    for (; i && str[i] != c; --i)
+        ;
+
+    return (char __far *)&str[i];
 }
 
-int strncmp_local( const char *s1, const char *s2, size_t num )
+char __far *_fstrchr_local(const char __far *str, char c)
 {
-    while ( *s1 && num )
+    int i;
+
+    for (i = 0; str[i] != '\0' && str[i] != c; ++i)
+        ;
+
+    return (char __far *)&str[i];
+}
+
+void _fmemcpy_local(void __far *dst, const void __far *src, size_t num)
+{
+    void __far *d = dst;
+    const void __far *s = src;
+
+    // fastest implementation so far
+    // using rep movsD
+
+    __asm
+    {
+        push  es;
+        push  ds;
+        push  si;
+        push  di;
+
+        mov   cx, num;
+        les   di, d;
+        lds   si, s;
+
+        // push/pop strictly not necessary
+        // but doing the byte moves at last
+        // favors aligned buffers
+
+        shr   cx,1;
+        pushf
+        shr   cx,1;
+        rep   movsd;
+
+        adc   cx,cx;
+        rep   movsw;
+
+        popf
+        adc   cx,cx;
+        rep   movsb;
+
+        pop   di;
+        pop   si;
+        pop   ds;
+        pop   es;
+    }
+
+    return;
+}
+
+char __far *_fstrcpy_local(char __far *dst, const char __far *src)
+{
+    while (*src)
+    {
+        *dst++ = *src++;
+    }
+    *dst = '\0';
+
+    return dst;
+}
+
+void *memcpy_local(void *dst, const void *src, size_t num)
+{
+    char *d = (char *)dst;
+    char *s = (char *)src;
+
+    while (num--)
+    {
+        *d++ = *s++;
+    }
+
+    return dst;
+}
+
+int strncmp_local(const char *s1, const char *s2, size_t num)
+{
+    while (*s1 && num)
     {
         if (*s1 != *s2)
-		{
+        {
             break;
         }
 
         s1++, s2++, num--;
     }
 
-    return ( num == 0 ? num : *(const unsigned char*)s1 - *(const unsigned char*)s2 );
+    return (num == 0 ? num : *(const unsigned char *)s1 - *(const unsigned char *)s2);
 }
-

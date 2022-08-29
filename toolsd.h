@@ -1,12 +1,12 @@
-#ifndef TOOLSD_H_
-#define TOOLSD_H_
+#ifndef _TOOLSD_H_
+#define _TOOLSD_H_
 #pragma once
 /*
  * VMSMOUNT
  *  A network redirector for mounting VMware's Shared Folders in DOS 
- *  Copyright (C) 2011-2022  Eduardo Casino
+ *  Copyright (C) 2022  Eduardo Casino
  *
- * toolsd.h: VMWare Toolsd Daemmon
+ * toolsd.h: Minimal VMWare Toolsd Daemmon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
- *
  */
 
 #include <stdint.h>
@@ -35,6 +34,4 @@ extern void (__interrupt __far *fpPrevInt1cHandler)();
 
 extern void __declspec(naked) __far Int1cHandler(void);
 
-
-	
-#endif /* TOOLSD_H_ */
+#endif /* _TOOLSD_H_ */

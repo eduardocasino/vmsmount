@@ -1,12 +1,12 @@
-#ifndef ENDTEXT_H_
-#define ENDTEXT_H_
+#ifndef _ENDTEXT_H_
+#define _ENDTEXT_H_
 #pragma once
 /*
  * VMSMOUNT
- *  A network redirector for mounting VMware's Shared Folders in DOS 
- *  Copyright (C) 2011  Eduardo Casino
+ *  A network redirector for mounting VMware's Shared Folders in DOS
+ *  Copyright (C) 2011-2022  Eduardo Casino
  *
- * endtext.h: Marks end of CODE segment
+ * endtext.h: Marks end of transient code
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,6 +28,6 @@ extern __segment __far get_endtext_cs(void);
 
 // Marks end of transient block
 //
-extern void EndOfTransientBlock( void );
-	
-#endif /* ENDTEXT_H_ */
+extern void EndOfTransientBlock(void);
+
+#endif /* _ENDTEXT_H_ */

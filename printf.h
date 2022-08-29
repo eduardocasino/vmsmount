@@ -37,9 +37,9 @@
 
 // internal secure strlen
 // \return The length of the string (excluding the terminating 0) limited by 'maxsize'
-static inline unsigned int _strnlen_s(const char far* str, size_t maxsize)
+static inline unsigned int _strnlen_s(const char __far* str, size_t maxsize)
 {
-  const char far * s;
+  const char __far * s;
   for (s = str; *s && maxsize--; ++s);
   return (unsigned int)(s - str);
 }
@@ -56,7 +56,7 @@ static inline unsigned int _strnlen_s(const char far* str, size_t maxsize)
  */
 #define snprintf  snprintf_
 #define vsnprintf vsnprintf_
-int  snprintf_(char* buffer, size_t count, const char* format, ...);
-int vsnprintf_(char* buffer, size_t count, const char* format, va_list va);
+extern int  snprintf_(char* buffer, size_t count, const char* format, ...);
+extern int vsnprintf_(char* buffer, size_t count, const char* format, va_list va);
 
 #endif  // _PRINTF_H_

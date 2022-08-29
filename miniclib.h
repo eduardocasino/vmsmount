@@ -1,10 +1,10 @@
-#ifndef MINICLIB_H_
-#define MINICLIB_H_
+#ifndef _MINICLIB_H_
+#define _MINICLIB_H_
 #pragma once
 /*
  * VMSMOUNT
- *  A network redirector for mounting VMware's Shared Folders in DOS 
- *  Copyright (C) 2011  Eduardo Casino
+ *  A network redirector for mounting VMware's Shared Folders in DOS
+ *  Copyright (C) 2011-2022  Eduardo Casino
  *
  * minilibc.h: some libc replacement functions
  *
@@ -22,21 +22,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
- *
- * 2011-11-01  Eduardo        * Add strrchr_local() and _fstrchr_local()
- * 2022-08-25  Eduardo        * Add strncmp_local()
- *
  */
- 
-#include <stddef.h>
- 
- char *strchr_local( const char *str, char c );
- char *strrchr_local( const char *str, char c );
- char far *_fstrchr_local( const char far *str, char c );
- char far *_fstrrchr_local( const char far *str, char c );
- void _fmemcpy_local( void far *dst, const void far *src, size_t num );
- char far *_fstrcpy_local( char far *dst, const char far *src );
- void *memcpy_local( void *dst, const void *src, size_t num );
- int strncmp_local( const char *s1, const char *s2, size_t num );
 
-#endif /* MINICLIB_H_ */
+#include <stddef.h>
+
+extern char *strchr_local(const char *str, char c);
+extern char *strrchr_local(const char *str, char c);
+extern char __far *_fstrchr_local(const char __far *str, char c);
+extern char __far *_fstrrchr_local(const char __far *str, char c);
+extern void _fmemcpy_local(void __far *dst, const void __far *src, size_t num);
+extern char __far *_fstrcpy_local(char __far *dst, const char __far *src);
+extern void *memcpy_local(void *dst, const void *src, size_t num);
+extern int strncmp_local(const char *s1, const char *s2, size_t num);
+
+#endif /* _MINICLIB_H_ */
