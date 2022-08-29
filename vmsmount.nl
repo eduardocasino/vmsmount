@@ -33,7 +33,7 @@
 1.5: FOUT: Kan de List-Of-Lists niet achterhalen!\n
 1.6: FOUT: Redirectors zijn not toegestaan.\n
 1.7: FOUT: Al geinstalleerd. Gebruik /U om programma te stoppen.\n
-1.8: FOUT: Geen Shared Folders gevonden.\n
+1.8: FOUT: Kan geen communicatiekanaal openen met VMware\n
 1.9: FOUT: Kan de SDA niet achterhalen!\n
 1.10: FOUT: Kan de NLS tabellen niet achterhalen.\n
 1.11: FOUT: Buffergrootte dient tussen %u en %u bytes te zijn\n
@@ -46,6 +46,7 @@
 1.18: WAARSCHUWING: Ongeldig bestandsformaat: %s
 1.19: WAARSCHUWING: Actieve codepagina niet gevonden
 1.20:. Tijd om terug te vallen op cp437\n
+1.21: WAARSCHUWING: Gedeelde mappen uitgeschakeld voor dit gast-besturingssysteem.\n
 2.0: Shared Folders gekoppeld onder %c:\n
 2.1: Succesvol gestopt en verwijderd uit geheugen.\n
 9.0: INFO: Werkend op VMware %s versie %lu\n
