@@ -59,25 +59,17 @@ $(TARGET) : $(OBJ)
 # main.obj and kitten.obj must be compiled with 8086 instructions only to gracefully
 #  execute the processor check in real, older machines
 #
-main.obj : main.c
+main.obj : main.c .AUTODEPEND
 	$(CC) -0 $(CFLAGS) -fo=$@ $<
 
-kitten.obj : kitten.c
+kitten.obj : kitten.c .AUTODEPEND
 	$(CC) -0 $(CFLAGS) -fo=$@ $<
 
-vmaux.obj : vmaux.c
+vmaux.obj : vmaux.c .AUTODEPEND
 	$(CC) -3 $(CFLAGS) -fo=$@ $<
 
-endtext.obj : endtext.c
+endtext.obj : endtext.c .AUTODEPEND
 	$(CC) -3 $(CFLAGS) -nt=_TEXT_END -fo=$@ $<
-
-kitten.obj: .AUTODEPEND
-
-main.obj : .AUTODEPEND
-
-vmaux.obj : .AUTODEPEND
-
-endtext.obj : .AUTODEPEND
 
 redir.obj : .AUTODEPEND
 
