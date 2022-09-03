@@ -53,3 +53,4 @@
 9.1: INFO: Diferencia con UTC en segundos: %ld\n
 9.2: INFO: La p gina activa es cp%d. Cargando tabla Unicode %s\n
 9.3: INFO: Driver cargado en memoria ocupando %u bytes.\n
+9.4: INFO: Soporte CHCP habilitado a trav‚s de VMCHCPD.SYS\n

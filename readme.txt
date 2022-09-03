@@ -91,6 +91,38 @@ RETURN CODES (ERRORLEVELS)
           254       Invalid drive letter
           255       Other system error
  
+SUPPORT FOR SWITCHING CODE PAGES WITH CHCP AND NLSFUNC
+
+  Since version 0.6, VMSMOUNT supports code page changes with CHCP if the
+  optional VMCHCPD.SYS driver and NLSFUNC are installed.
+
+  Configuration example for a Greek environment in which it may be
+  necessary to switch between different (737, 869 and 850) code pages:
+
+  CONFIG.SYS:
+    COUNTRY=30,,C:\FDOS\COUNTRY.SYS
+    DEVICEHIGH=C:\FDOS\NETWORK\VMSMOUNT\VMCHCPD.SYS
+
+  AUTOEXEC.BAT:
+    DISPLAY CON=(EGA,,3)
+    MODE CON CP PREP=((850) C:\FDOS\CPI\EGA.CPI)
+    MODE CON CP PREP=((,737,869) C:\FDOS\CPI\EGA5.CPI)
+    LH NLSFUNC /Y
+    CHCP 737
+    KEYB GK,,KEYBRD2.SYS
+
+  C:\> VMSMOUNT /V /LFN
+  VMSMOUNT 0.6 - (C) 2011-2022 Eduardo Casino - GNU GPL Ver. 2.0
+   INFO: Running on VMware Workstation Version 6
+   INFO: Active page is cp737. Loading unicode table cp737uni.tbl
+   INFO: CHCP support enabled via VMCHCPD.SYS
+   INFO: UTC Offset is -18000 seconds
+   INFO: Driver loaded into memory with 22960 bytes used.
+   Mounting Shared Folders in E:
+
+
+  Now you can switch between code pages using the CHCP command
+
 LIMITATIONS
 
  * Does not work with DOS < 5 (Tested with latest FreeDOS kernel,
@@ -98,7 +130,6 @@ LIMITATIONS
  * Does not support old versions of VMWare Workstation (Tested with
    VMWare Player 3 and 4) 
  * Shared folder names MUST be uppercase if /LFN is not set
- * Does not detect code page changes
 
 ACKNOWLEDGEMENTS
 
@@ -150,7 +181,6 @@ BUGS
 
 TODO
  
- * Code Page change detection (maybe)
  * Full Long file names support
  
 LICENSE

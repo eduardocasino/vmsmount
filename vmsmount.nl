@@ -52,5 +52,5 @@
 9.0: INFO: Werkend op VMware %s versie %lu\n
 9.1: INFO: UTC Offset is %ld seconds\n
 9.2: INFO: Actieve pagina is cp%d. Bezig met laden van unicode tabel %s\n
-9.3: INFO: Stuurprogramma in geheugen geladen met %u bytes gebruikt.\n 
-
+9.3: INFO: Stuurprogramma in geheugen geladen met %u bytes gebruikt.\n
+9.4: INFO: CHCP-ondersteuning ingeschakeld via VMCHCPD.SYS\n

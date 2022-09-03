@@ -64,6 +64,7 @@
 #define MSG_INFO_TZ                 " INFO: UTC Offset is %ld seconds\n"
 #define MSG_INFO_TBL                " INFO: Active page is cp%d. Loading unicode table %s\n"
 #define MSG_INFO_LOAD               " INFO: Driver loaded into memory with %u bytes used.\n"
+#define MSG_INFO_CHCP               " INFO: CHCP support enabled via VMCHCPD.SYS\n"
 #define MSG_WARN_CP                 " WARNING: Active code page not found"
 #define MSG_WARN_UNICODE            " WARNING: Can't load Unicode table: %s"
 #define MSG_WARN_TBLFORMAT          " WARNING: Invalid file format: %s"

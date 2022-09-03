@@ -41,6 +41,7 @@
 #include "kitten.h"
 #include "lfn.h"
 #include "messages.h"
+#include "nlscmds.h"
 #include "redir.h"
 #include "toolsd.h"
 #include "unicode.h"
@@ -695,6 +696,28 @@ static int SetCDS(void)
     return 0;
 }
 
+static uint16_t ioctl_write(int handle, uint16_t size, void *data)
+{
+    union REGS r;
+    struct SREGS s;
+
+    segread(&s);
+
+    r.w.ax = 0x4403;
+    r.w.bx = handle;
+    r.w.cx = size;
+    r.w.dx = (uint16_t)data;
+
+    intdosx(&r, &r, &s);
+
+    if (r.w.cflag)
+    {
+        r.w.ax = 0;
+    }
+
+    return r.w.ax;
+}
+
 static void LoadUnicodeConversionTable(void)
 {
     union REGS r;
@@ -794,7 +817,49 @@ static void LoadUnicodeConversionTable(void)
     }
 
     _fmemcpy(fpUnicodeTbl, buffer, 256);
+
     fclose(f);
+
+    // Check if VMCHCPD$ is installed and send pointer to the Unicode table
+    // and the directory of the Unicode conversion tables. Ignore if it fails
+    //
+    if (0 == _dos_open("VMCHCPD$", O_WRONLY, &handle))
+    {
+        CHCPCMD *command;
+        uint16_t cmd_size;
+        char *bs;
+
+        // Get the directory where the unicode conversion tables are
+        //  bs stands for "back slash", BTW :P
+        //
+        bs = strrchr(fullpath, '\\');
+        *bs = '\0';
+
+        // Allocate memory for command
+        //
+        cmd_size = sizeof(CHCPCMD) + strlen(fullpath);
+        command = (CHCPCMD *)malloc(cmd_size);
+
+        if (NULL != command)
+        {
+            // Populate command
+            //
+            command->num = DEV_CTRL_SET_NLS;
+            command->cmd.set_nls.ptr_size = 4;
+            command->cmd.set_nls.unicode_table = fpUnicodeTbl;
+            command->cmd.set_nls.path_size = strlen(fullpath) + 1;
+            strcpy(command->cmd.set_nls.table_path, fullpath);
+
+            if (cmd_size == ioctl_write(handle, cmd_size, command))
+            {
+                VERB_FPUTS(VERBOSE, catgets(cat, 9, 4, MSG_INFO_CHCP), stdout);
+            }
+
+            free(command);
+        }
+        _dos_close(handle);
+    }
+
     return;
 
 close:

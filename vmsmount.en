@@ -53,3 +53,4 @@
 9.1: INFO: UTC Offset is %ld seconds\n
 9.2: INFO: Active page is cp%d. Loading unicode table %s\n
 9.3: INFO: Driver loaded into memory with %u bytes used.\n
+9.4: INFO: CHCP support enabled via VMCHCPD.SYS\n
