@@ -24,6 +24,7 @@ CC = wcc
 LD = wlink
 UPX = upx
 RM = rm -f
+MAKE = wmake
 CFLAGS  = -Ivmchcpd -bt=dos -ms -q -s -oh -os -DREVERSE_HASH
 LDFLAGS =	SYSTEM dos &
 			ORDER &
@@ -36,9 +37,8 @@ LDFLAGS =	SYSTEM dos &
 			OPTION QUIET, STATICS, MAP=vmsmount.map
 UPXFLAGS = -9
 
-VMCHCPDIR = vmchcpd
-TARGET1 = vmsmount.exe
-TARGET2 = $(VMCHCPDIR)/vmchcpd.sys
+SUBDIRS = vmchcpd unitbls
+TARGET = vmsmount.exe
 
 !ifdef DEBUG
 CFLAGS += -DDEBUG
@@ -50,18 +50,22 @@ OBJ =	kitten.obj vmaux.obj main.obj $(DBGOBJ) miniclib.obj unicode.obj &
 		vmdos.obj vmtool.obj vmshf.obj toolsd.obj redir.obj lfn.obj &
 		endtext.obj
 
-all : $(TARGET1) $(TARGET2)
+all : $(TARGET) .SYMBOLIC
+	(cd vmchcpd; $(MAKE) $(DBG) $@)
+
+tables: .SYMBOLIC
+	(cd unitbls; $(MAKE) all)
 
 clean : .SYMBOLIC
-	$(RM) $(OBJ) $(TARGET1) *.map *.err
-	(cd $(VMCHCPDIR) ; wmake $(DBG) $@)
+	(for d in $(SUBDIRS); do cd $$d; $(MAKE) $(DBG) $@; cd ..; done)
+	$(RM) $(OBJ) $(TARGET) *.map *.err
 
-$(TARGET1) : $(OBJ)
-	$(LD) $(LDFLAGS) NAME $(TARGET1) FILE {$(OBJ)} $(LIBPATH) $(LIBRARY)
-	$(UPX) $(UPXFLAGS) $(TARGET1)
+distclean : clean .SYMBOLIC
+	(for d in $(SUBDIRS); do cd $$d; $(MAKE) $(DBG) $@; cd ..; done)
 
-$(TARGET2) : .SYMBOLIC
-	(cd $(VMCHCPDIR) ; wmake $(DBG) $^.)
+$(TARGET) : $(OBJ)
+	$(LD) $(LDFLAGS) NAME $(TARGET) FILE {$(OBJ)} $(LIBPATH) $(LIBRARY)
+	$(UPX) $(UPXFLAGS) $(TARGET)
 
 # main.obj and kitten.obj must be compiled with 8086 instructions only to gracefully
 #  execute the processor check in real, older machines

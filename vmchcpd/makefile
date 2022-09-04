@@ -44,6 +44,8 @@ all : $(TARGET)
 clean : .SYMBOLIC
 	$(RM) $(OBJ) $(TARGET) *.map *.err
 
+distclean : clean .SYMBOLIC
+
 $(TARGET) : $(OBJ)
 	$(LD) $(LDFLAGS) NAME $(TARGET) FILE {$(OBJ)}
 

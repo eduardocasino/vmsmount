@@ -1,0 +1,16 @@
+--- mk_table.c.orig	2022-09-04 14:43:12.307313225 +0200
++++ mk_table.c	2022-09-04 14:44:16.647314318 +0200
+@@ -66,11 +66,11 @@ int main(int argc,char**argv) {
+    continue;
+   }
+   c=0xFFFF;		/* if there is an unused entry (e.g. Turkish) */
+-  if (sscanf(line,"%X %X",&j,&c)<1) continue;
++  if (sscanf(line,"%hX %hX",&j,&c)<1) continue;
+   if (j<0x80) {
+    if (c!=j) printf("Code 0x%02X is not ASCII, it's 0x%02X\n",j,c);
+   }else if (j<0x100){
+-   if (sscanf(line,"%*[^#]#DBCS LEAD BYTE%c",&c)) {
++   if (sscanf(line,"%*[^#]#DBCS LEAD BYTE%c",(char *)&c)>0) {
+     c=0;
+     if (!dbcs) {
+      puts("MESSAGE: Input file is DBCS");

@@ -1,0 +1,7 @@
+--- cp1258.txt.orig	2022-09-04 08:16:48.766919133 +0200
++++ cp1258.txt	2022-09-04 08:00:18.406902298 +0200
+@@ -1,3 +1,4 @@
++# _DOSVietNam
+ #
+ #    Name:     cp1258 to Unicode table
+ #    Unicode version: 2.0

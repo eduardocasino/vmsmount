@@ -169,9 +169,12 @@ ACKNOWLEDGEMENTS
 
 BUILD
 
-  VMSMOUNT was built with OpenWatcom 2.0 toolkit. Compile with 'wmake' or
-  'wmake DEBUG=y' to add debugging support.
-  
+  VMSMOUNT was built with OpenWatcom 2.0 toolkit, cross compiling on Linux
+  (or WSL). Compile with 'wmake' or 'wmake DEBUG=y' to add debugging support.
+
+  For building the unicode conversion tables from source, native GCC is
+  needed. Just type 'wmake tables'.
+
 BUGS
 
  * When used with DOSLFN in FreeDOS, "." and ".." appear corrupted
