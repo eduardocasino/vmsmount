@@ -173,6 +173,7 @@ static inline uint16_t loadUnicodeTable(void)
             unicodeTblPath[i++] = 'l';
             unicodeTblPath[i++] = '\0';
 
+            DPRINTF("unicodeTblPath = `%s`", unicodeTblPath);
             handle = _open(unicodeTblPath);
             DPRINTF("handle = %d", handle);
 
@@ -180,17 +181,26 @@ static inline uint16_t loadUnicodeTable(void)
 
             if (handle != 0xffff)
             {
-                static uint8_t c;
+                uint8_t c[2];
 
-                for (i = 0; i < 256 && 1 == _read(handle, 1, &c) && c != 0x01; ++i)
+                // Looking for the '\r\n' table description terminator and 0x01 format
+                // designator (Single byte to 16bit)
+                //
+                for (i = 0; i < 256 && 1 == _read(handle, 1, c) && c[0] !='\r'; ++i)
                     ;
 
-                if (c == 0x01)
+                DPRINTF("c = 0x%x", c[0]);
+                if (c[0] == '\r')
                 {
-                    if (256 == _read(handle, 256, fpUnicodeTbl))
+                    if (2 == _read(handle, 2, c) && c[0] == '\n' && c[1] == 0x01)
                     {
-                        DDUMP("fpUnicodeTbl", fpUnicodeTbl, 256);
-                        retCode = S_DONE;
+                        DPRINTF("c = 0x%x 0x%x", c[0], c[1]);
+
+                        if (256 == _read(handle, 256, fpUnicodeTbl))
+                        {
+                            DDUMP("fpUnicodeTbl", fpUnicodeTbl, 256);
+                            retCode = S_DONE;
+                        }
                     }
                 }
 

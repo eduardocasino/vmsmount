@@ -126,7 +126,7 @@ extern uint16_t _open( const char *fname );
     "jnc    return" \
     "mov    ax, 0xffff" \
   "return:" \
-    "mov word ptr [bp+22], ax" \
+    "mov word ptr [ss:bp+22], ax" \
     pop_segregs \
     pop_all \
     __parm [__dx] \
@@ -161,7 +161,7 @@ extern uint16_t _read(uint16_t handle, uint16_t count, void __far *buffer);
     "jnc    return" \
     "mov    ax, 0xffff" \
   "return:" \
-    "mov word ptr [bp+22], ax" \
+    "mov word ptr [ss:bp+22], ax" \
     pop_segregs \
     pop_all \
     __value [__ax] \
