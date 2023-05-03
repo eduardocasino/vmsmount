@@ -1243,7 +1243,7 @@ static redirFunction dispatchTable[] = {
 
 #define MAX_FUNCTION 0x2E
 
-static bool Int2fHandler(union INTPACK regset)
+static bool __near Int2fHandler(union INTPACK regset)
 #pragma aux Int2fHandler "*" __parm __caller [] __value [__al] __modify [__ax __bx __cx __dx __si __di __es __gs __fs]
 {
     if (regset.h.ah != 0x11 || regset.h.al > MAX_FUNCTION)
@@ -1278,7 +1278,7 @@ static bool Int2fHandler(union INTPACK regset)
         mov   sp, (offset newStack) + STACK_SIZE
     }
 
-    fpStackParam = (uint16_t __far *)MK_FP(dosSS, dosBP + sizeof(union INTPACK));
+    fpStackParam = (uint16_t __far *)MK_FP(dosSS, dosBP + sizeof(union INTPACK) + 4 );
 
     Success();
 
