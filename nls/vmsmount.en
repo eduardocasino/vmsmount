@@ -7,7 +7,7 @@
 # added to the end of the lines.
 #
 0.1:\nUsage:\n
-0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]\n
+0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]] [/NT]\n
 0.3:   VMSMOUNT [/V|/Q|/QQ] /U\n
 0.4:        /H                  - Prints this message and exits\n
 0.5:        /V                  - Verbose: Prints information on system resources\n
@@ -25,6 +25,8 @@
 0.17:        /CS                 - Host file system is case sensitive\n
 0.18:                              (mangles file names whith lower case chars)\n
 0.19:        /U                  - Uninstall\n
+0.20:        /NT                 - No tools daemon (lets the guest's VMware Tools register)\n
+0.21:                              (shared folder changes need a restart)\n
 1.0: ERROR: Drive %c: already in use\n
 1.1: ERROR: No drive letter available (LASTDRIVE is %c)\n
 1.2: ERROR: Usupported DOS version %d.%d. Need 5.0 or higher.\n

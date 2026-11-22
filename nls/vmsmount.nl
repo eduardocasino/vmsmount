@@ -7,7 +7,7 @@
 # added to the end of the lines.
 #
 0.1:\nGebruik:\n
-0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<sch>] [/B:<gr>[K]] [/LFN [/M:<n>] [/CI|/CS]]\n
+0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<sch>] [/B:<gr>[K]] [/LFN [/M:<n>] [/CI|/CS]] [/NT]\n
 0.3:   VMSMOUNT [/V|/Q|/QQ] /U\n
 0.4:      /H                - Geeft dit bericht weer en stopt\n
 0.5:      /V                - Verbaal: Geeft informatie weer over systeembronnen\n
@@ -25,6 +25,8 @@
 0.17:      /CS               - Host bestandssysteem is hoofdlettergevoelig\n
 0.18:                          (vermengt bestandsnamen met lower-case tekens)\n
 0.19:      /U                - Desinstalleren\n
+0.20:      /NT               - Geen tools-daemon (laat de VMware Tools van de gast registreren)\n
+0.21:                          (wijzigingen in gedeelde mappen vereisen een herstart)\n
 1.0: FOUT: Schijfaanduiding %c: is al in gebruik\n
 1.1: FOUT: Geen schijfletter beschikbaar (LASTDRIVE is %c)\n
 1.2: FOUT: Niet ondersteunde DOS versie %d.%d. Versie 5.0 of nieuwer benodigd.\n

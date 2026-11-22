@@ -89,6 +89,7 @@ static uint8_t __far *fpManglingChars;
 
 static rpc_t __far *fpRpci;
 static rpc_t __far *fpTclo;
+static bool noToolsd = false; // /NT: do not run the minimal tools daemon
 #ifdef DEBUG
 static rpc_t __far *fpRpcd;
 static uint8_t __far *fpStack;
@@ -229,6 +230,8 @@ static void PrintUsageAndExit(int err)
     VERB_FPUTS(QUIET, catgets(cat, 0, 17, MSG_HELP_17), stderr);
     VERB_FPUTS(QUIET, catgets(cat, 0, 18, MSG_HELP_18), stderr);
     VERB_FPUTS(QUIET, catgets(cat, 0, 19, MSG_HELP_19), stderr);
+    VERB_FPUTS(QUIET, catgets(cat, 0, 20, MSG_HELP_20), stderr);
+    VERB_FPUTS(QUIET, catgets(cat, 0, 21, MSG_HELP_21), stderr);
     exit(err);
 }
 
@@ -242,6 +245,7 @@ static int GetOptions(char *argString)
     int bset = 0;
     int lset = 0;
     int lfnset = 0;
+    int ntset = 0;
     int mset = 0;
     int cset = 0;
 
@@ -285,6 +289,14 @@ static int GetOptions(char *argString)
                 break;
             case 'U':
                 ++uninstall;
+                break;
+            case 'N':
+                if (ntset++ || toupper(argString[argIndex + 1]) != 'T')
+                {
+                    return 2; // /NT already set or unknown option
+                }
+                noToolsd = true;
+                ++argIndex;
                 break;
             case 'B':
                 if (bset++ || argString[++argIndex] != ':')
@@ -942,10 +954,12 @@ static void SetSignature(void)
     signature.psp = _psp;
     signature.ourHandler = fpNewInt2fHandler;
     signature.previousHandler = *fpfpPrevInt2fHandler;
-    signature.ourClockHandler = fpNewInt1cHandler;
+    // With /NT the clock interrupt is not hooked, so "our" handler is the
+    // previous one; that keeps the uninstall check in UninstallDriver() valid.
+    signature.ourClockHandler = noToolsd ? *fpfpPrevInt1cHandler : fpNewInt1cHandler;
     signature.previousClockHandler = *fpfpPrevInt1cHandler;
     signature.fpRpci = fpRpci;
-    signature.fpTclo = fpTclo;
+    signature.fpTclo = noToolsd ? NULL : fpTclo;
 #ifdef DEBUG
     signature.fpRpcd = fpRpcd;
     signature.ourStack = fpStack;
@@ -1116,7 +1130,7 @@ int main(int argc, char **argv)
         return (ERR_BADDRV);
     }
 
-    if (VMAuxBeginSession(fpRpci, fpTclo
+    if (VMAuxBeginSession(fpRpci, noToolsd ? NULL : fpTclo
 #ifdef DEBUG
                           ,
                           fpRpcd
@@ -1146,7 +1160,10 @@ int main(int argc, char **argv)
     SetSignature();
 
     _dos_setvect(0x2f, fpNewInt2fHandler);
-    _dos_setvect(0x1c, fpNewInt1cHandler);
+    if (!noToolsd)
+    {
+        _dos_setvect(0x1c, fpNewInt1cHandler);
+    }
 
     paragraphs = SizeOfResidentSegmentInParagraphs();
     VERB_FPRINTF(VERBOSE, stdout, catgets(cat, 9, 3, MSG_INFO_LOAD), paragraphs << 4);
@@ -1158,7 +1175,7 @@ int main(int argc, char **argv)
     _dos_keep(*fpDriveNum + 1, paragraphs);
 
 err_close:
-    VMAuxEndSession(fpRpci, fpTclo
+    VMAuxEndSession(fpRpci, noToolsd ? NULL : fpTclo
 #ifdef DEBUG
                     ,
                     fpRpcd

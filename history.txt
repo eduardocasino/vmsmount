@@ -1,3 +1,7 @@
+Unreleased
+  * New /NT option: do not run the minimal tools daemon, so the
+    guest's own VMware Tools can register
+
 Version 0.6 (2022-09-04)
   * Fix: Set correct file size in WriteFile()
   * Implement CloseAll()
