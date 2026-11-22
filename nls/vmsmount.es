@@ -7,7 +7,7 @@
 # added to the end of the lines.
 #
 0.1:\nUso:\n
-0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<uni>] [/B:<tam>[K]] [/LFN [/M:<n>] [/CI|/CS]]\n
+0.2:   VMSMOUNT [/H][/V|/Q|/QQ] [/L:<uni>] [/B:<tam>[K]] [/LFN [/M:<n>] [/CI|/CS]] [/NT]\n
 0.3:   VMSMOUNT [/V|/Q|/QQ] /U\n
 0.4:        /H               - Muestra este mensaje y termina\n
 0.5:        /V               - Muestra informaci¢n extra del sistema\n
@@ -25,6 +25,8 @@
 0.17:        /CS              - Servidor distingue may£sculas y min£sculas\n
 0.18:                           (genera nombres £nicos para archivos con min£sculas)\n
 0.19:        /U               - Desinstalar\n
+0.20:        /NT              - Sin demonio de herramientas (deja registrarse a las VMware Tools)\n
+0.21:                           (los cambios en carpetas compartidas requieren reiniciar)\n
 1.0: ERROR: La unidad %c: ya est  en uso\n
 1.1: ERROR: No hay letras de unidades disponibles (LASTDRIVE es %c)\n
 1.2: ERROR: Versi¢n %d.%d de DOS no soportada. Se necesita 5.0 o superior.\n

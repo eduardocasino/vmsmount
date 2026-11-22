@@ -13,7 +13,7 @@ WARNING AND DISCLAIMER
  
 USAGE
 
- VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]]
+ VMSMOUNT [/H][/V|/Q|/QQ] [/L:<drv>] [/B:<siz[K]>] [/LFN [/M:<n>] [/CI|/CS]] [/NT]
  VMSMOUNT [/V|/Q|/QQ] /U
         /H                 - Prints help and exits
         /V                 - Verbose: Prints information on system resources
@@ -43,6 +43,13 @@ USAGE
                              example, "EXAMPLE.TXT" will be left unchanged, but
                              "Example.txt" will be translated into "EXAM~4F0.TXT"
         /U                 - Uninstall
+        /NT                - Do not run the built-in minimal tools daemon. Use it
+                             when the guest runs VMware Tools of its own (for
+                             example the legacy tools under Windows 9x), which
+                             otherwise report that they are not running because
+                             the "toolbox" channel is already taken. Without the
+                             daemon, shared folder changes made while the VM is
+                             running are only seen after a restart.
 
         /D                 - Dump contents of internal stack (if compiled with
                              debug support)

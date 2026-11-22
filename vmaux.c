@@ -342,15 +342,18 @@ int VMAuxBeginSession(rpc_t __far *fpRpci, rpc_t __far *fpTclo
     fpRpci->cookie1 = rpc.cookie1;
     fpRpci->cookie2 = rpc.cookie2;
 
-    /* open a tclo channel */
-    if (VMAuxRpcOpen(&rpc, VMRPC_OPEN_TCLO))
+    /* open a tclo channel, unless the tools daemon is disabled (/NT) */
+    if (fpTclo != NULL)
     {
-        return -1;
-    }
+        if (VMAuxRpcOpen(&rpc, VMRPC_OPEN_TCLO))
+        {
+            return -1;
+        }
 
-    fpTclo->channel = rpc.channel;
-    fpTclo->cookie1 = rpc.cookie1;
-    fpTclo->cookie2 = rpc.cookie2;
+        fpTclo->channel = rpc.channel;
+        fpTclo->cookie1 = rpc.cookie1;
+        fpTclo->cookie2 = rpc.cookie2;
+    }
 
 #ifdef DEBUG
     /* open a rpci channel for debugging*/
@@ -388,11 +391,14 @@ void VMAuxEndSession(rpc_t __far *fpRpci, rpc_t __far *fpTclo
 
     VMAuxRpcClose(&rpc);
 
-    rpc.channel = fpTclo->channel;
-    rpc.cookie1 = fpTclo->cookie1;
-    rpc.cookie2 = fpTclo->cookie2;
+    if (fpTclo != NULL)
+    {
+        rpc.channel = fpTclo->channel;
+        rpc.cookie1 = fpTclo->cookie1;
+        rpc.cookie2 = fpTclo->cookie2;
 
-    VMAuxRpcClose(&rpc);
+        VMAuxRpcClose(&rpc);
+    }
 
 #ifdef DEBUG
     rpc.channel = fpRpcd->channel;
